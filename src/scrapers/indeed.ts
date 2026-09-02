@@ -7,7 +7,7 @@ export class IndeedScraper implements JobScraper {
 
   async scrape(): Promise<RawJob[]> {
     const jobs: RawJob[] = [];
-    const searchUrl = 'https://br.indeed.com/jobs?q=full+stack+junior&fromage=5';
+    const searchUrl = 'https://br.indeed.com/jobs?q=desenvolvedor+full+stack+junior&l=Brasil&fromage=5';
 
     const { browser, context, page } = await createStealthContext();
 

@@ -5,11 +5,13 @@ import { IndeedScraper } from './indeed.js';
 import { GoogleJobsScraper } from './googleJobs.js';
 import { TelegramScraper } from './telegram.js';
 import { RawJob } from '../types/job.js';
+import { TelegramNotifier } from '../services/telegramNotifier.js';
 
 export class ScraperOrchestrator {
   private scrapers: JobScraper[];
+  private notifier: TelegramNotifier;
 
-  constructor() {
+  constructor(notifier?: TelegramNotifier) {
     this.scrapers = [
       new GupyScraper(),
       new LinkedInScraper(),
@@ -17,6 +19,7 @@ export class ScraperOrchestrator {
       new GoogleJobsScraper(),
       new TelegramScraper(),
     ];
+    this.notifier = notifier || new TelegramNotifier();
   }
 
   async runAll(): Promise<RawJob[]> {
@@ -30,7 +33,12 @@ export class ScraperOrchestrator {
         console.log(`[ScraperOrchestrator] ${scraper.name} encontrou ${jobs.length} vagas recentes.`);
         allJobs.push(...jobs);
       } catch (err) {
-        console.error(`[ScraperOrchestrator] Falha crítica no scraper ${scraper.name}:`, err);
+        const errorMsg = (err as Error).message || String(err);
+        console.error(`[ScraperOrchestrator] ⚠️ Falha isolada no scraper ${scraper.name}:`, errorMsg);
+        
+        // Enviar alerta direto no Telegram
+        const alertText = `⚠️ [ALERTA] O scraper ${scraper.name} falhou: ${errorMsg}`;
+        await this.notifier.sendAlert(alertText);
       }
     }
 
