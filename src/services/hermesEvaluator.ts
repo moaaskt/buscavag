@@ -35,16 +35,17 @@ Você é um recrutador técnico especialista avaliando vagas para o perfil de **
 - **Nível:** Junior / Entry Level / Trainee / Sem especificação de nível.
 - **Stack Principal:** Node.js, TypeScript, PHP (Laravel / CodeIgniter), NestJS, Express, React, Next.js, JavaScript, Python, Golang, Tailwind CSS, Bootstrap, MySQL, PostgreSQL, Supabase, Docker, REST APIs.
 
-**REGRAS DE LOCALIZAÇÃO E MODELO DE TRABALHO (ESTRITO):**
-1. **APROVAR**: Qualquer vaga **REMOTA** (Remoto Brasil, Portugal ou Global).
-2. **APROVAR**: Vaga **PRESENCIAL** ou **HÍBRIDA** nas cidades de **Palhoça (SC)** ou **São José (SC)** (Atenção: Rejeitar São José dos Campos/SP).
-3. **APROVAR**: Vaga **HÍBRIDA** em **Florianópolis (SC)** ou **Floripa**.
-4. **REJEITAR**: Vaga **PRESENCIAL** em **Florianópolis**.
-5. **REJEITAR**: Vaga **PRESENCIAL** ou **HÍBRIDA** em qualquer outra cidade (ex: São José dos Campos/SP, São Paulo, Rio de Janeiro, Curitiba, etc.).
+**REGRAS DE LOCALIZAÇÃO E MODELO DE TRABALHO (ESTRITO E PRIORITÁRIO):**
+1. **APROVAR REMOTO PRIMEIRO**: Se a vaga for **REMOTA** (contendo "remoto", "remote", "home office", "teletrabalho", "work from home", "anywhere" ou localização genérica "Brasil", "Brazil", "Portugal"), **APROVE A LOCALIZAÇÃO IMEDIATAMENTE** independentemente da cidade indicada.
+2. **SE NÃO FOR REMOTA (PRESENCIAL / HÍBRIDO):**
+   - **APROVAR**: Presencial ou Híbrido em **Palhoça (SC)** ou **São José (SC)** (Atenção: Rejeitar São José dos Campos/SP).
+   - **APROVAR**: Híbrido em **Florianópolis (SC)** ou **Floripa**.
+   - **REJEITAR**: Presencial em **Florianópolis (SC)**.
+   - **REJEITAR**: Presencial ou Híbrido em qualquer outra cidade (ex: São Paulo, Curitiba, Belo Horizonte, etc.).
 
 **REGRAS DE SENIORIDADE E TOLERÂNCIA TÉCNICA:**
 - **REJEITAR** apenas se houver termos explícitos de senioridade avançada: Pleno, Sênior, Sr, Lead, Tech Lead, Staff, Arqueto.
-- **NÃO REJEITAR** vagas Jr/Entry level apenas por citarem tecnologias secundárias. Se a vaga utilizar JS, TS, Node, React, PHP, Python, Go, SQL, Docker ou APIs, mantenha aprovação ALTA.
+- **NÃO REJEITAR** vagas Jr/Entry level por tecnologias secundárias. Se utilizar JS, TS, Node, React, PHP, Python, Go, SQL, Docker ou APIs, mantenha aprovação ALTA.
 - **REJEITAR** apenas perfis completamente desalinhados (ex: COBOL, Swift/iOS nativo exclusivo).
 
 **Vaga a ser analisada:**
@@ -87,16 +88,13 @@ Responda APENAS em formato JSON no seguinte modelo:
   private evaluateHeuristic(job: RawJob): EvaluationResult {
     const text = `${job.title} ${job.description}`.toLowerCase();
     const location = (job.location || '').toLowerCase();
+    const titleLower = job.title.toLowerCase();
 
-    // 1. FILTRO DE LOCALIZAÇÃO E MODELO DE TRABALHO (COM DESAMBIGUAÇÃO DE SÃO JOSÉ SC vs SP)
-    const isRemote = location.includes('remoto') || location.includes('remote') || text.includes('100% remoto') || text.includes('trabalho remoto') || text.includes('home office');
-    const isHybrid = location.includes('híbrido') || location.includes('hibrido') || text.includes('híbrido') || text.includes('hibrido');
-    
-    // Desambiguação de São José (SC vs SP/SJC)
-    const isSaoJoseCampos = location.includes('dos campos') || location.includes('sjc') || location.includes('sp');
-    const isSaoJose = (location.includes('são josé') || location.includes('sao jose')) && !isSaoJoseCampos;
-    const isPalhoca = location.includes('palhoça') || location.includes('palhoca');
-    const isFlorianopolis = location.includes('florianópolis') || location.includes('florianopolis') || location.includes('floripa');
+    // 1. DETECÇÃO PRIORITÁRIA DE TRABALHO REMOTO
+    const remoteKeywords = ['remoto', 'remote', 'home office', 'teletrabalho', 'work from home', 'anywhere'];
+    const isGenericCountry = location === 'brasil' || location === 'brazil' || location === 'portugal' || location === 'remoto';
+
+    const isRemote = remoteKeywords.some((kw) => location.includes(kw) || titleLower.includes(kw) || text.includes(kw)) || isGenericCountry;
 
     let isLocationAccepted = false;
     let locationReason = '';
@@ -104,29 +102,40 @@ Responda APENAS em formato JSON no seguinte modelo:
     if (isRemote) {
       isLocationAccepted = true;
       locationReason = 'Modelo Remoto';
-    } else if (isPalhoca || isSaoJose) {
-      isLocationAccepted = true;
-      locationReason = `Presencial/Híbrido em ${isPalhoca ? 'Palhoça (SC)' : 'São José (SC)'}`;
-    } else if (isFlorianopolis) {
-      if (isHybrid) {
+    } else {
+      // 2. REGRA PARA PRESENCIAL / HÍBRIDO (SE NÃO FOR REMOTO)
+      const isHybrid = location.includes('híbrido') || location.includes('hibrido') || text.includes('híbrido') || text.includes('hibrido');
+      
+      // Desambiguação de São José (SC vs SP/SJC)
+      const isSaoJoseCampos = location.includes('dos campos') || location.includes('sjc') || location.includes('sp');
+      const isSaoJose = (location.includes('são josé') || location.includes('sao jose')) && !isSaoJoseCampos;
+      const isPalhoca = location.includes('palhoça') || location.includes('palhoca');
+      const isFlorianopolis = location.includes('florianópolis') || location.includes('florianopolis') || location.includes('floripa');
+
+      if (isPalhoca || isSaoJose) {
         isLocationAccepted = true;
-        locationReason = 'Híbrido em Florianópolis (SC)';
+        locationReason = `Presencial/Híbrido em ${isPalhoca ? 'Palhoça (SC)' : 'São José (SC)'}`;
+      } else if (isFlorianopolis) {
+        if (isHybrid) {
+          isLocationAccepted = true;
+          locationReason = 'Híbrido em Florianópolis (SC)';
+        } else {
+          return {
+            isJuniorFullStack: false,
+            score: 0,
+            reasoning: 'Rejeitada via Heurística: Vaga presencial em Florianópolis não aceita.',
+          };
+        }
       } else {
         return {
           isJuniorFullStack: false,
           score: 0,
-          reasoning: 'Rejeitada via Heurística: Vaga presencial em Florianópolis não aceita.',
+          reasoning: `Rejeitada via Heurística: Vaga presencial/híbrida fora de Palhoça/São José(SC)/Florianópolis (${job.location || 'Local externo'}).`,
         };
       }
-    } else {
-      return {
-        isJuniorFullStack: false,
-        score: 0,
-        reasoning: `Rejeitada via Heurística: Vaga presencial/híbrida fora de Palhoça/São José(SC)/Florianópolis (${job.location || 'Local externo'}).`,
-      };
     }
 
-    // 2. FILTRO DE SENIORIDADE
+    // 3. FILTRO DE SENIORIDADE
     const seniorKeywords = ['pleno', 'sênior', 'senior', 'sr.', 'sr ', 'lead', 'lider', 'líder', 'architect', 'arqueto', 'staff', 'principal'];
     const juniorKeywords = ['junior', 'júnior', 'jr', 'entry level', 'iniciante', 'trainee', 'associado', 'associate'];
 
@@ -141,7 +150,7 @@ Responda APENAS em formato JSON no seguinte modelo:
       };
     }
 
-    // 3. TOLERÂNCIA E MATCH DE STACK DO MOACIR NETO
+    // 4. TOLERÂNCIA E MATCH DE STACK DO MOACIR NETO
     const targetStack = [
       'node', 'nodejs', 'typescript', 'php', 'laravel', 'codeigniter',
       'nestjs', 'express', 'react', 'next', 'nextjs', 'javascript', 'js', 'ts',
@@ -164,7 +173,6 @@ Responda APENAS em formato JSON no seguinte modelo:
     const fullstackKeywords = ['full stack', 'fullstack', 'full-stack', 'frontend e backend', 'front e back', 'desenvolvedor web', 'software engineer', 'engenheiro de software', 'desenvolvedor'];
     const hasFullStack = fullstackKeywords.some((kw) => text.includes(kw));
 
-    // Pontuação calibrada para alta tolerância em vagas Jr/Web
     let score = (hasJunior ? 45 : 30) + (hasFullStack ? 35 : 20) + Math.min(matchedStackCount * 5, 25);
 
     return {
