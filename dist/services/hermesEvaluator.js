@@ -17,27 +17,34 @@ export class HermesEvaluator {
         }
         try {
             const prompt = `
-Você é um recrutador técnico especialista. Avalie a seguinte vaga para determinar se ela atende estritamente ao perfil "Desenvolvedor Full Stack Júnior" ou "Desenvolvedor Júnior".
+Você é um recrutador técnico especialista avaliando vagas para o perfil de **Moacir Neto** (Dev Full Stack Junior).
 
-**Regras de Rejeição (isJuniorFullStack = false, score < 50):**
-- Vagas de nível Pleno, Sênior, Sr, Specialist, Tech Lead ou Arqueto.
-- Vagas que exijam mais de 3 anos de experiência comprovada.
-- Vagas exclusivas de Estágio ou Trainee que não contratem efetivo Jr (a menos que seja vaga Jr inicial).
+**Perfil de Moacir Neto:**
+- **Nível:** Junior / Entry Level / Trainee.
+- **Stack Principal:** Node.js, TypeScript, PHP (Laravel / CodeIgniter), NestJS, Express, React, Next.js, JavaScript, Tailwind CSS, Bootstrap, MySQL, PostgreSQL, Supabase, Docker, REST APIs.
 
-**Regras de Aprovação (isJuniorFullStack = true, score >= 70):**
-- Vagas explicitamente marcadas como "Junior", "Jr", "Iniciante", "Entry level" ou sem nível mas com requisitos básicos.
-- Vagas com escopo Full Stack (Frontend + Backend) ou com abertura para aprendizado em ambos.
+**REGRAS DE LOCALIZAÇÃO E MODELO DE TRABALHO (ESTRITO):**
+1. **APROVAR**: Qualquer vaga **REMOTA** (Remoto Brasil, Portugal ou Global).
+2. **APROVAR**: Vaga **PRESENCIAL** ou **HÍBRIDA** nas cidades de **Palhoça** ou **São José** (SC).
+3. **APROVAR**: Vaga **HÍBRIDA** em **Florianópolis** (ou Floripa).
+4. **REJEITAR**: Vaga **PRESENCIAL** em **Florianópolis**.
+5. **REJEITAR**: Vaga **PRESENCIAL** ou **HÍBRIDA** em qualquer outra cidade fora de Palhoça, São José ou Florianópolis (ex: São Paulo, Rio de Janeiro, Curitiba, etc.).
+
+**REGRAS DE SENIORIDADE E STACK:**
+- **REJEITAR** vagas de nível Pleno, Sênior, Sr, Lead, Tech Lead, Staff ou Arqueto.
+- **DEDUZIR PONTOS / REJEITAR** vagas focadas exclusivamente em stacks distantes do perfil (ex: Java puro, C#/.NET, Ruby, Swift, Kotlin), a menos que seja vaga Full Stack Jr aberta a aprendizado.
 
 **Vaga a ser analisada:**
 - Título: ${job.title}
 - Empresa: ${job.company}
+- Localização indicada: ${job.location || 'Não informada'}
 - Descrição: ${job.description}
 
 Responda APENAS em formato JSON no seguinte modelo:
 {
   "isJuniorFullStack": boolean,
   "score": number,
-  "reasoning": "Breve justificativa explicativa em português (máx 2 frases)"
+  "reasoning": "Justificativa clara em português indicando adequação de localização, senioridade e stack"
 }
 `;
             const response = await this.client.chat.completions.create({
@@ -64,28 +71,48 @@ Responda APENAS em formato JSON no seguinte modelo:
     evaluateHeuristic(job) {
         const text = `${job.title} ${job.description}`.toLowerCase();
         const location = (job.location || '').toLowerCase();
-        // Palavras-chave de localização internacional a rejeitar (exceto Brasil e Portugal)
-        const intlLocations = [
-            'united states', 'usa', 'u.s.', 'canada', 'uk', 'united kingdom', 'england',
-            'germany', 'alemanha', 'berlin', 'spain',
-            'espanha', 'madrid', 'barcelona', 'france', 'frança', 'paris', 'utah', 'california',
-            'texas', 'florida', 'new york', 'maryland', 'virginia', 'carolina', 'colorado',
-            'kansas', 'massachusetts', 'indiana', 'distrito de colúmbia', 'dc',
-        ];
-        const isIntlLocation = intlLocations.some((loc) => location.includes(loc) || job.title.toLowerCase().includes(loc));
-        if (isIntlLocation) {
+        // 1. FILTRO DE LOCALIZAÇÃO E MODELO DE TRABALHO
+        const isRemote = location.includes('remoto') || location.includes('remote') || text.includes('100% remoto') || text.includes('trabalho remoto') || text.includes('home office');
+        const isHybrid = location.includes('híbrido') || location.includes('hibrido') || text.includes('híbrido') || text.includes('hibrido');
+        const isPalhoca = location.includes('palhoça') || location.includes('palhoca');
+        const isSaoJose = location.includes('são josé') || location.includes('sao jose');
+        const isFlorianopolis = location.includes('florianópolis') || location.includes('florianopolis') || location.includes('floripa');
+        let isLocationAccepted = false;
+        let locationReason = '';
+        if (isRemote) {
+            isLocationAccepted = true;
+            locationReason = 'Modelo Remoto';
+        }
+        else if (isPalhoca || isSaoJose) {
+            isLocationAccepted = true;
+            locationReason = `Presencial/Híbrido em ${isPalhoca ? 'Palhoça' : 'São José'}`;
+        }
+        else if (isFlorianopolis) {
+            if (isHybrid) {
+                isLocationAccepted = true;
+                locationReason = 'Híbrido em Florianópolis';
+            }
+            else {
+                return {
+                    isJuniorFullStack: false,
+                    score: 0,
+                    reasoning: 'Rejeitada via Heurística: Vaga presencial em Florianópolis não aceita.',
+                };
+            }
+        }
+        else {
+            // Outras cidades presenciais/híbridas (fora de Palhoça/São José/Florianópolis)
             return {
                 isJuniorFullStack: false,
                 score: 0,
-                reasoning: 'Rejeitada via Heurística: Vaga internacional fora do escopo (Brasil / Portugal / Remoto BR/PT).',
+                reasoning: `Rejeitada via Heurística: Vaga presencial/híbrida fora de Palhoça/São José/Florianópolis (${job.location || 'Local externo'}).`,
             };
         }
+        // 2. FILTRO DE SENIORIDADE
         const seniorKeywords = ['pleno', 'sênior', 'senior', 'sr.', 'sr ', 'lead', 'lider', 'líder', 'architect', 'arqueto', 'staff', 'principal'];
         const juniorKeywords = ['junior', 'júnior', 'jr', 'entry level', 'iniciante', 'trainee', 'associado', 'associate'];
-        const fullstackKeywords = ['full stack', 'fullstack', 'full-stack', 'frontend e backend', 'front e back'];
         const hasSenior = seniorKeywords.some((kw) => text.includes(kw));
         const hasJunior = juniorKeywords.some((kw) => text.includes(kw));
-        const hasFullStack = fullstackKeywords.some((kw) => text.includes(kw));
         if (hasSenior && !hasJunior) {
             return {
                 isJuniorFullStack: false,
@@ -93,18 +120,29 @@ Responda APENAS em formato JSON no seguinte modelo:
                 reasoning: 'Rejeitada via Heurística: Identificados termos de nível Pleno/Sênior/Lead no título ou descrição.',
             };
         }
-        if (hasJunior || hasFullStack) {
-            const score = (hasJunior ? 50 : 30) + (hasFullStack ? 40 : 20);
+        // 3. MATCH DE STACK DO MOACIR NETO
+        const targetStack = [
+            'node', 'nodejs', 'typescript', 'php', 'laravel', 'codeigniter',
+            'nestjs', 'express', 'react', 'next', 'nextjs', 'javascript',
+            'tailwind', 'bootstrap', 'mysql', 'postgres', 'postgresql', 'supabase', 'docker', 'rest'
+        ];
+        const unalignedStack = ['java', 'c#', '.net', 'csharp', 'ruby', 'swift', 'kotlin'];
+        const matchedStackCount = targetStack.filter((tech) => text.includes(tech)).length;
+        const hasUnalignedOnly = unalignedStack.some((tech) => text.includes(tech)) && matchedStackCount === 0;
+        if (hasUnalignedOnly) {
             return {
-                isJuniorFullStack: score >= 60,
-                score,
-                reasoning: `Aprovada via Heurística: ${hasJunior ? 'Termo Júnior identificado. ' : ''}${hasFullStack ? 'Escopo Full Stack identificado.' : ''}`,
+                isJuniorFullStack: false,
+                score: 20,
+                reasoning: 'Rejeitada via Heurística: Stack focada em tecnologias fora do perfil prioritário (Java/C#/Mobile/etc).',
             };
         }
+        const fullstackKeywords = ['full stack', 'fullstack', 'full-stack', 'frontend e backend', 'front e back', 'desenvolvedor web'];
+        const hasFullStack = fullstackKeywords.some((kw) => text.includes(kw));
+        let score = (hasJunior ? 40 : 25) + (hasFullStack ? 35 : 20) + Math.min(matchedStackCount * 5, 25);
         return {
-            isJuniorFullStack: false,
-            score: 40,
-            reasoning: 'Rejeitada via Heurística: Nível ou escopo técnico indeterminado/incompatível.',
+            isJuniorFullStack: score >= 60 && isLocationAccepted,
+            score,
+            reasoning: `Aprovada via Heurística (${locationReason}): ${hasJunior ? 'Nível Jr. ' : ''}${hasFullStack ? 'Full Stack. ' : ''}${matchedStackCount} tecnologias compatíveis com o CV.`,
         };
     }
 }
