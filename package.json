@@ -2,9 +2,12 @@
   "name": "buscavag",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
+  "type": "module",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "build": "tsc",
+    "start": "tsx src/index.ts",
+    "prod": "node dist/index.js",
+    "test": "tsx src/test-phase1.ts"
   },
   "keywords": [],
   "author": "",

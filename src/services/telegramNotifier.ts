@@ -39,8 +39,8 @@ export class TelegramNotifier {
 
     try {
       await this.bot.api.sendMessage(this.chatId, message, { parse_mode: 'HTML' });
-      // Throttling 500ms
-      await new Promise((resolve) => setTimeout(resolve, 500));
+      // Throttling 800ms entre requisições para evitar rate-limit/ETIMEDOUT
+      await new Promise((resolve) => setTimeout(resolve, 800));
       return true;
     } catch (err) {
       console.error(`[TelegramNotifier] Erro ao enviar notificação da vaga "${job.title}":`, err);
@@ -48,11 +48,32 @@ export class TelegramNotifier {
     }
   }
 
+  public async sendAlert(alertMessage: string): Promise<boolean> {
+    const formattedAlert = `⚠️ <b>[ALERTA DE SISTEMA]</b>\n${this.escapeHtml(alertMessage)}`;
+
+    if (!this.bot || !this.chatId) {
+      console.warn(`[TelegramNotifier MOCK MODE] Alerta gerado:\n${formattedAlert}\n`);
+      return true;
+    }
+
+    try {
+      await this.bot.api.sendMessage(this.chatId, formattedAlert, { parse_mode: 'HTML' });
+      await new Promise((resolve) => setTimeout(resolve, 800));
+      return true;
+    } catch (err) {
+      console.error(`[TelegramNotifier] Erro ao enviar alerta no Telegram:`, err);
+      return false;
+    }
+  }
+
   public async sendBatchNotifications(jobs: ProcessedJob[]): Promise<number> {
     let sentCount = 0;
+    const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
     for (const job of jobs) {
       const success = await this.sendNotification(job);
       if (success) sentCount++;
+      await delay(800); // Aguarda 800ms adicionais no envio de lotes
     }
     return sentCount;
   }
