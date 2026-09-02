@@ -80,13 +80,13 @@ Responda APENAS em formato JSON no seguinte modelo:
     const text = `${job.title} ${job.description}`.toLowerCase();
     const location = (job.location || '').toLowerCase();
 
-    // Palavras-chave de localização internacional a rejeitar
+    // Palavras-chave de localização internacional a rejeitar (exceto Brasil e Portugal)
     const intlLocations = [
       'united states', 'usa', 'u.s.', 'canada', 'uk', 'united kingdom', 'england',
-      'lisbon', 'lisboa', 'portugal', 'germany', 'alemanha', 'berlin', 'spain',
+      'germany', 'alemanha', 'berlin', 'spain',
       'espanha', 'madrid', 'barcelona', 'france', 'frança', 'paris', 'utah', 'california',
       'texas', 'florida', 'new york', 'maryland', 'virginia', 'carolina', 'colorado',
-      'kansas', 'massachusetts', 'indiana', 'kansas', 'distrito de colúmbia', 'dc',
+      'kansas', 'massachusetts', 'indiana', 'distrito de colúmbia', 'dc',
     ];
 
     const isIntlLocation = intlLocations.some((loc) => location.includes(loc) || job.title.toLowerCase().includes(loc));
@@ -95,7 +95,7 @@ Responda APENAS em formato JSON no seguinte modelo:
       return {
         isJuniorFullStack: false,
         score: 0,
-        reasoning: 'Rejeitada via Heurística: Vaga internacional (fora do Brasil/Remoto BR).',
+        reasoning: 'Rejeitada via Heurística: Vaga internacional fora do escopo (Brasil / Portugal / Remoto BR/PT).',
       };
     }
 
