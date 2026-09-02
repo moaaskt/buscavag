@@ -5,7 +5,7 @@ export class IndeedScraper {
     name = 'Indeed';
     async scrape() {
         const jobs = [];
-        const searchUrl = 'https://br.indeed.com/jobs?q=full+stack+junior&fromage=5';
+        const searchUrl = 'https://br.indeed.com/jobs?q=desenvolvedor+full+stack+junior&l=Brasil&fromage=5';
         const { browser, context, page } = await createStealthContext();
         try {
             await page.goto(searchUrl, { waitUntil: 'domcontentloaded', timeout: 30000 });

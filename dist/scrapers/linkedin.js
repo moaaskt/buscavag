@@ -5,7 +5,7 @@ export class LinkedInScraper {
     name = 'LinkedIn';
     async scrape() {
         const jobs = [];
-        const searchUrl = 'https://www.linkedin.com/jobs/search?keywords=Full%20Stack%20Junior&location=Brasil&f_TPR=r604800'; // r604800 = 1 semana
+        const searchUrl = 'https://www.linkedin.com/jobs/search?keywords=Desenvolvedor%20Full%20Stack%20Junior&location=Brasil&geoId=106057199&f_TPR=r604800'; // Brasil, 1 semana
         const { browser, context, page } = await createStealthContext();
         try {
             await page.goto(searchUrl, { waitUntil: 'domcontentloaded', timeout: 30000 });
