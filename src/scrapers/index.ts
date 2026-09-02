@@ -3,6 +3,7 @@ import { GupyScraper } from './gupy.js';
 import { LinkedInScraper } from './linkedin.js';
 import { IndeedScraper } from './indeed.js';
 import { GoogleJobsScraper } from './googleJobs.js';
+import { TelegramScraper } from './telegram.js';
 import { RawJob } from '../types/job.js';
 
 export class ScraperOrchestrator {
@@ -14,6 +15,7 @@ export class ScraperOrchestrator {
       new LinkedInScraper(),
       new IndeedScraper(),
       new GoogleJobsScraper(),
+      new TelegramScraper(),
     ];
   }
 
