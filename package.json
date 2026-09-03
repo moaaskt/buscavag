@@ -20,10 +20,12 @@
   "license": "ISC",
   "dependencies": {
     "@google/genai": "^2.21.0",
+    "@types/cheerio": "^0.22.35",
     "@types/node": "^26.4.1",
     "autoprefixer": "^10.5.4",
     "axios": "^1.20.0",
     "better-sqlite3": "^13.0.3",
+    "cheerio": "^1.2.0",
     "clsx": "^2.1.1",
     "dotenv": "^17.4.2",
     "grammy": "^1.46.0",

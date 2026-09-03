@@ -10,6 +10,24 @@ export enum PlatformSource {
   REMOTAR = 'remotar',
   CATHO = 'catho',
   GLASSDOOR = 'glassdoor',
+  // Regional SC
+  SAO_JOSE = 'sao_jose',
+  VAGAS_SC = 'vagas_sc',
+  VAGAS_FLORIPA = 'vagas_floripa',
+  EMPREGA_PALHOCA = 'emprega_palhoca',
+  // Nacionais
+  INFOJOBS = 'infojobs',
+  CHAWORK = 'chawork',
+  TRABALHA_BRASIL = 'trabalha_brasil',
+  BNE = 'bne',
+  BEBEE = 'bebee',
+  EMPREGOS = 'empregos',
+  RECRUTA_SIMPLES = 'recruta_simples',
+  // ATSs
+  RECRUTEI_EMPREGOS = 'recrutei_empregos',
+  QUICKIN = 'quickin',
+  RECRUTEI_JOBS = 'recrutei_jobs',
+  PANDAPE = 'pandape',
 }
 
 export const RawJobSchema = z.object({

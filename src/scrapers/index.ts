@@ -8,6 +8,25 @@ import { ProgramathorScraper } from './programathor.js';
 import { RemotarScraper } from './remotar.js';
 import { CathoScraper } from './catho.js';
 import { GlassdoorScraper } from './glassdoor.js';
+// Regionais SC
+import { SaoJoseScraper } from './saoJose.js';
+import { VagasScScraper } from './vagasSc.js';
+import { VagasFloripaScraper } from './vagasFloripa.js';
+import { EmpregaPalhocaScraper } from './empregaPalhoca.js';
+// Nacionais
+import { InfojobsScraper } from './infojobs.js';
+import { ChaworkScraper } from './chawork.js';
+import { TrabalhaBrasilScraper } from './trabalhaBrasil.js';
+import { BneScraper } from './bne.js';
+import { BebeeScraper } from './bebee.js';
+import { EmpregosScraper } from './empregos.js';
+import { RecrutaSimplesScraper } from './recrutaSimples.js';
+// ATSs
+import { RecruteiEmpregosScraper } from './recruteiEmpregos.js';
+import { QuickinScraper } from './quickin.js';
+import { RecruteiJobsScraper } from './recruteiJobs.js';
+import { PandapeScraper } from './pandape.js';
+
 import { RawJob } from '../types/job.js';
 import { TelegramNotifier } from '../services/telegramNotifier.js';
 
@@ -26,6 +45,24 @@ export class ScraperOrchestrator {
       new RemotarScraper(),
       new CathoScraper(),
       new GlassdoorScraper(),
+      // Regionais SC
+      new SaoJoseScraper(),
+      new VagasScScraper(),
+      new VagasFloripaScraper(),
+      new EmpregaPalhocaScraper(),
+      // Nacionais
+      new InfojobsScraper(),
+      new ChaworkScraper(),
+      new TrabalhaBrasilScraper(),
+      new BneScraper(),
+      new BebeeScraper(),
+      new EmpregosScraper(),
+      new RecrutaSimplesScraper(),
+      // ATSs
+      new RecruteiEmpregosScraper(),
+      new QuickinScraper(),
+      new RecruteiJobsScraper(),
+      new PandapeScraper(),
     ];
     this.notifier = notifier || new TelegramNotifier();
   }
