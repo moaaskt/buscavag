@@ -6,6 +6,10 @@ export enum PlatformSource {
   GUPY = 'gupy',
   GOOGLE_JOBS = 'google_jobs',
   TELEGRAM = 'telegram',
+  PROGRAMATHOR = 'programathor',
+  REMOTAR = 'remotar',
+  CATHO = 'catho',
+  GLASSDOOR = 'glassdoor',
 }
 
 export const RawJobSchema = z.object({
