@@ -1,67 +1,99 @@
-# Guia de Implantação e Automação na VPS - Buscavag
+# 🚀 Deploy - Buscavag
 
-Este documento detalha como implantar o **Buscavag** em uma VPS Linux para execução autônoma 24/7.
+Guia rápido para deploy do Buscavag em produção usando Docker Compose.
 
----
+## Pré-requisitos
 
-## 1. Pré-requisitos na VPS Linux
+- Docker >= 24.0
+- Docker Compose >= 2.20
+- Arquivo `.env` configurado na raiz do projeto
 
-- Node.js (v18 ou superior) e npm.
-- Git.
-- Instalação das dependências nativas do Playwright Chromium no Linux:
+## Variáveis de Ambiente
 
-```bash
-npx playwright install-deps chromium
+Crie um arquivo `.env` na raiz do projeto com as seguintes variáveis:
+
+```env
+# Telegram Bot
+TELEGRAM_BOT_TOKEN=seu_token_aqui
+TELEGRAM_CHAT_ID=seu_chat_id_aqui
+
+# OpenAI (para o Hermes Evaluator)
+OPENAI_API_KEY=sua_chave_aqui
+
+# Agendamento (opcional, padrão: a cada 4 horas)
+CRON_SCHEDULE=0 */4 * * *
 ```
 
----
+## Comandos
 
-## 2. Instalação e Build do Projeto
-
-1. Clone o repositório na VPS:
+### Build das imagens
 ```bash
-git clone https://github.com/seu-usuario/buscavag.git
-cd buscavag
+docker-compose build
 ```
 
-2. Instale as dependências:
+### Iniciar em background
 ```bash
-npm install
+docker-compose up -d
 ```
 
-3. Configure o arquivo `.env`:
+### Ver logs em tempo real
 ```bash
-cp .env.example .env
-nano .env
-```
-Preencha o `TELEGRAM_BOT_TOKEN` e `TELEGRAM_CHAT_ID`.
+# Todos os serviços
+docker-compose logs -f
 
-4. Realize o build para compilar o projeto TypeScript:
-```bash
-npm run build
-```
+# Apenas o scraper
+docker-compose logs -f scraper
 
----
-
-## 3. Automação de Execução via Cron (2x ao dia)
-
-Abra o crontab do usuário:
-```bash
-crontab -e
+# Apenas o dashboard
+docker-compose logs -f web
 ```
 
-Adicione a seguinte linha para rodar o monitoramento 2 vezes ao dia (às 08:00 e 18:00):
-
-```cron
-0 8,18 * * * cd /caminho/para/buscavag && /usr/bin/npm run prod >> /var/log/buscavag.log 2>&1
+### Parar os serviços
+```bash
+docker-compose down
 ```
 
----
-
-## 4. Testando a Execução Manual
-
-Para rodar manualmente o ciclo completo a qualquer momento:
-
+### Rebuild após atualização de código
 ```bash
-npm run start
+docker-compose build --no-cache
+docker-compose up -d
+```
+
+## Arquitetura
+
+```
+┌─────────────────────────────────────────────────┐
+│                  Docker Compose                  │
+│                                                  │
+│  ┌──────────────────┐  ┌──────────────────────┐  │
+│  │  buscavag-web    │  │  buscavag-scraper    │  │
+│  │  (Next.js)       │  │  (Node + Playwright) │  │
+│  │  Porta: 3000     │  │  node-cron (4h)      │  │
+│  └────────┬─────────┘  └──────────┬───────────┘  │
+│           │                       │              │
+│           └───────────┬───────────┘              │
+│                       │                          │
+│              ┌────────▼────────┐                 │
+│              │  buscavag-data  │                 │
+│              │  (Volume)       │                 │
+│              │  buscavag.db    │                 │
+│              └─────────────────┘                 │
+└─────────────────────────────────────────────────┘
+```
+
+- **buscavag-web**: Dashboard Next.js acessível em `http://localhost:3000`
+- **buscavag-scraper**: Processo contínuo executando os scrapers a cada 4h via `node-cron`
+- **buscavag-data**: Volume Docker compartilhado contendo o banco SQLite
+
+## Monitoramento
+
+Os alertas de falha nos scrapers são enviados automaticamente para o chat do Telegram configurado, com a tag `⚠️ [ALERTA DE SISTEMA]`.
+
+Para verificar a saúde do sistema:
+```bash
+# Verificar se os containers estão rodando
+docker-compose ps
+
+# Verificar uso de recursos
+docker stats buscavag-web buscavag-scraper
 ```

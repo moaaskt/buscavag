@@ -1,0 +1,54 @@
+# ==============================================================================
+# Docker Compose - Buscavag Production Stack
+# ==============================================================================
+# Dois serviços independentes compartilhando o banco SQLite via volume.
+#
+# Uso:
+#   docker-compose build
+#   docker-compose up -d
+#   docker-compose logs -f scraper
+#   docker-compose logs -f web
+
+services:
+  # --------------------------------------------------------------------------
+  # Frontend Dashboard (Next.js)
+  # --------------------------------------------------------------------------
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile.web
+    container_name: buscavag-web
+    ports:
+      - "3000:3000"
+    volumes:
+      - buscavag-data:/app/data
+    environment:
+      - DATABASE_PATH=/app/data/buscavag.db
+      - NODE_ENV=production
+    restart: unless-stopped
+    depends_on:
+      - scraper
+
+  # --------------------------------------------------------------------------
+  # Backend Scrapers + Cron (Node.js + Playwright)
+  # --------------------------------------------------------------------------
+  scraper:
+    build:
+      context: .
+      dockerfile: Dockerfile.scraper
+    container_name: buscavag-scraper
+    volumes:
+      - buscavag-data:/app/data
+    environment:
+      - DATABASE_PATH=/app/data/buscavag.db
+      - NODE_ENV=production
+      - CRON_SCHEDULE=${CRON_SCHEDULE:-0 */4 * * *}
+      - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN}
+      - TELEGRAM_CHAT_ID=${TELEGRAM_CHAT_ID}
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+    restart: unless-stopped
+
+# Volume nomeado para persistência do banco SQLite
+volumes:
+  buscavag-data:
+    driver: local
