@@ -18,11 +18,11 @@ export class RemotarScraper implements JobScraper {
 
   private async scrapeViaHttp(): Promise<RawJob[]> {
     const jobs: RawJob[] = [];
-    const categories = ['desenvolvimento', 'tecnologia'];
+    const searchTerms = ['desenvolvedor junior', 'full stack', 'frontend', 'backend', 'react'];
 
-    for (const category of categories) {
+    for (const term of searchTerms) {
       try {
-        const url = `https://remotar.com.br/vagas/${category}`;
+        const url = `https://remotar.com.br/search?q=${encodeURIComponent(term)}`;
         const response = await axios.get(url, {
           headers: {
             'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
@@ -72,7 +72,7 @@ export class RemotarScraper implements JobScraper {
           });
         }
       } catch (err) {
-        console.warn(`[RemotarScraper] HTTP erro para "${category}":`, (err as Error).message);
+        console.warn(`[RemotarScraper] HTTP erro para "${term}":`, (err as Error).message);
       }
     }
 
@@ -82,7 +82,7 @@ export class RemotarScraper implements JobScraper {
 
   private async scrapeViaPlaywright(): Promise<RawJob[]> {
     const jobs: RawJob[] = [];
-    const searchUrl = 'https://remotar.com.br/vagas/desenvolvimento';
+    const searchUrl = 'https://remotar.com.br/search?q=desenvolvedor';
     const { browser, context, page } = await createStealthContext();
 
     try {

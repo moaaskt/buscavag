@@ -16,10 +16,10 @@ export class ProgramathorScraper {
     }
     async scrapeViaHttp() {
         const jobs = [];
-        const keywords = ['full stack junior', 'fullstack', 'desenvolvedor junior', 'frontend junior', 'backend junior'];
-        for (const kw of keywords) {
+        const slugs = ['jobs-full-stack', 'jobs-javascript', 'jobs-react', 'jobs-node', 'jobs-typescript'];
+        for (const slug of slugs) {
             try {
-                const url = `https://programathor.com.br/jobs/search?query=${encodeURIComponent(kw)}`;
+                const url = `https://programathor.com.br/${slug}`;
                 const response = await axios.get(url, {
                     headers: {
                         'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
@@ -66,7 +66,7 @@ export class ProgramathorScraper {
                 }
             }
             catch (err) {
-                console.warn(`[ProgramathorScraper] HTTP erro para "${kw}":`, err.message);
+                console.warn(`[ProgramathorScraper] HTTP erro para "${slug}":`, err.message);
             }
         }
         if (jobs.length > 0)
@@ -75,7 +75,7 @@ export class ProgramathorScraper {
     }
     async scrapeViaPlaywright() {
         const jobs = [];
-        const searchUrl = 'https://programathor.com.br/jobs?expertise=junior&skills=fullstack';
+        const searchUrl = 'https://programathor.com.br/jobs-full-stack';
         const { browser, context, page } = await createStealthContext();
         try {
             await page.goto(searchUrl, { waitUntil: 'domcontentloaded', timeout: 30000 });
