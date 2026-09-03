@@ -17,8 +17,8 @@ Crie um arquivo `.env` na raiz do projeto com as seguintes variáveis:
 TELEGRAM_BOT_TOKEN=seu_token_aqui
 TELEGRAM_CHAT_ID=seu_chat_id_aqui
 
-# OpenAI (para o Hermes Evaluator)
-OPENAI_API_KEY=sua_chave_aqui
+# Gemini (para o Hermes Evaluator)
+GEMINI_API_KEY=sua_chave_aqui
 
 # Agendamento (opcional, padrão: a cada 4 horas)
 CRON_SCHEDULE=0 */4 * * *
