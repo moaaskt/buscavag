@@ -10,15 +10,29 @@ export class TelegramNotifier {
         }
     }
     formatJobMessage(job) {
-        const scoreBadge = job.scoreIa ? `⭐ <b>Score IA:</b> ${job.scoreIa}/100\n` : '';
-        const reasoning = job.aiReasoning ? `💡 <b>Parecer IA:</b> ${job.aiReasoning}\n` : '';
+        const categoryBadge = job.category ? `🏷️ <b>Categoria:</b> ${this.escapeHtml(job.category)}\n` : '';
+        let scoreBadge = '';
+        const scoreVal = job.overallScore ?? job.scoreIa;
+        if (scoreVal !== undefined) {
+            scoreBadge = `⭐ <b>Score Geral:</b> ${scoreVal}/100\n`;
+            if (job.stackScore !== undefined && job.seniorityScore !== undefined && job.locationScore !== undefined) {
+                scoreBadge += `   📊 <i>Stack: ${job.stackScore}/100 | Nível: ${job.seniorityScore}/100 | Local: ${job.locationScore}/100</i>\n`;
+            }
+        }
+        let gapsBadge = '';
+        if (job.gaps && job.gaps.length > 0) {
+            gapsBadge = `⚠️ <b>Gaps / Requisitos adicionais:</b> ${this.escapeHtml(job.gaps.join(', '))}\n`;
+        }
+        const reasoning = job.aiReasoning ? `💡 <b>Parecer IA:</b> ${this.escapeHtml(job.aiReasoning)}\n` : '';
         return `🚨 <b>NOVA VAGA ENCONTRADA!</b>\n\n` +
             `📌 <b>Título:</b> ${this.escapeHtml(job.title)}\n` +
             `🏢 <b>Empresa:</b> ${this.escapeHtml(job.company)}\n` +
             `🌐 <b>Plataforma:</b> ${job.platform.toUpperCase()}\n` +
             `📍 <b>Local:</b> ${this.escapeHtml(job.location || 'Não especificado')}\n` +
             `📅 <b>Publicado em:</b> ${job.publishedAt.toLocaleDateString('pt-BR')}\n` +
+            `${categoryBadge}` +
             `${scoreBadge}` +
+            `${gapsBadge}` +
             `${reasoning}\n` +
             `🔗 <a href="${job.url}">Clique aqui para ver a vaga</a>`;
     }

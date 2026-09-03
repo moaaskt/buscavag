@@ -35,13 +35,13 @@ async function runPipeline() {
             evaluatedCount++;
             if (evalResult.isJuniorFullStack) {
                 approvedCount++;
-                console.log(`   [APROVADA JR] Score: ${evalResult.score}/100 | ${evalResult.reasoning}`);
+                console.log(`   [APROVADA JR] Score: ${evalResult.overallScore}/100 (Stack: ${evalResult.stackScore} | Nível: ${evalResult.seniorityScore} | Local: ${evalResult.locationScore}) [${evalResult.category}] | ${evalResult.reasoning}`);
             }
             else {
-                console.log(`   [REJEITADA] Score: ${evalResult.score}/100 | ${evalResult.reasoning}`);
+                console.log(`   [REJEITADA] Score: ${evalResult.overallScore}/100 (Stack: ${evalResult.stackScore} | Nível: ${evalResult.seniorityScore} | Local: ${evalResult.locationScore}) [${evalResult.category}] | ${evalResult.reasoning}`);
             }
-            // Inserir no banco de dados
-            repo.insert(job, evalResult.isJuniorFullStack, evalResult.score, evalResult.reasoning);
+            // Inserir no banco de dados com análise enriquecida
+            repo.insert(job, evalResult);
         }
     }
     console.log(`\nEstatísticas do ciclo:`);
