@@ -6,6 +6,10 @@ export var PlatformSource;
     PlatformSource["GUPY"] = "gupy";
     PlatformSource["GOOGLE_JOBS"] = "google_jobs";
     PlatformSource["TELEGRAM"] = "telegram";
+    PlatformSource["PROGRAMATHOR"] = "programathor";
+    PlatformSource["REMOTAR"] = "remotar";
+    PlatformSource["CATHO"] = "catho";
+    PlatformSource["GLASSDOOR"] = "glassdoor";
 })(PlatformSource || (PlatformSource = {}));
 export const RawJobSchema = z.object({
     title: z.string().min(1),
