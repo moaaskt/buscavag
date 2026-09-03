@@ -24,13 +24,11 @@ export function initDatabase() {
       category TEXT,
       gaps TEXT,
       resume_tips TEXT,
+      application_status TEXT DEFAULT 'pending',
       ai_reasoning TEXT,
       notified INTEGER DEFAULT 0,
       created_at TEXT NOT NULL
     );
-
-    CREATE INDEX IF NOT EXISTS idx_jobs_platform ON jobs(platform);
-    CREATE INDEX IF NOT EXISTS idx_jobs_notified ON jobs(notified);
   `);
 
   // Migração automática para bancos já existentes
@@ -44,6 +42,7 @@ export function initDatabase() {
       { name: 'category', type: 'TEXT' },
       { name: 'gaps', type: 'TEXT' },
       { name: 'resume_tips', type: 'TEXT' },
+      { name: 'application_status', type: "TEXT DEFAULT 'pending'" },
     ];
 
     for (const col of columnsToAdd) {
@@ -53,5 +52,16 @@ export function initDatabase() {
     }
   } catch (err) {
     console.warn('[DB Migration] Aviso ao verificar colunas da tabela jobs:', (err as Error).message);
+  }
+
+  // Criação segura de índices após migrações
+  try {
+    db.exec(`
+      CREATE INDEX IF NOT EXISTS idx_jobs_platform ON jobs(platform);
+      CREATE INDEX IF NOT EXISTS idx_jobs_notified ON jobs(notified);
+      CREATE INDEX IF NOT EXISTS idx_jobs_app_status ON jobs(application_status);
+    `);
+  } catch (err) {
+    console.warn('[DB Migration] Aviso ao criar índices:', (err as Error).message);
   }
 }

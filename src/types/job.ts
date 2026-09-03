@@ -36,6 +36,7 @@ export const ProcessedJobSchema = RawJobSchema.extend({
   gaps: z.array(z.string()).optional(),
   resumeTips: z.string().optional(),
   aiReasoning: z.string().optional(),
+  applicationStatus: z.enum(['pending', 'applied', 'interview', 'offer', 'rejected']).default('pending').optional(),
   notified: z.boolean().default(false),
   createdAt: z.date().default(() => new Date()),
 });
