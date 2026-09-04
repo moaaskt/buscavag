@@ -171,14 +171,10 @@ export default function DashboardPage() {
             type="button"
             className="h-9 px-3.5 rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 hover:bg-zinc-50 dark:hover:bg-zinc-800 text-zinc-700 dark:text-zinc-300 transition-colors flex items-center gap-2 text-xs md:text-sm font-medium shadow-sm disabled:opacity-60"
           >
-            {refreshing || loading ? (
-              <div className="relative flex items-center justify-center w-4 h-4">
-                <LoaderThree size={16} className="absolute inset-0 text-emerald-500" />
-                <FlashIcon className="w-2.5 h-2.5 text-emerald-500" />
-              </div>
-            ) : (
-              <FlashIcon className="w-3.5 h-3.5 text-zinc-500 dark:text-zinc-400" />
-            )}
+            <FlashIcon 
+              loading={refreshing || loading} 
+              className={`w-4 h-4 ${refreshing || loading ? 'text-emerald-500' : 'text-zinc-500 dark:text-zinc-400'}`} 
+            />
             <span>Atualizar Dados</span>
           </button>
           <Link

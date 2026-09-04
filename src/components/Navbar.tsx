@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import { LoaderThree } from '@/components/ui/loader';
 import { FlashIcon } from '@/components/ui/flash-icon';
+import { cn } from '@/lib/utils';
 import { CanvasText } from '@/components/ui/canvas-text';
 import {
   ResizableNavbarContainer,
@@ -97,14 +98,7 @@ export function Navbar({
       title: isSyncing ? 'Sincronizando...' : 'Sincronizar',
       href: '#',
       onClick: handleSync,
-      icon: isSyncing ? (
-        <div className="relative flex items-center justify-center w-full h-full">
-          <LoaderThree size={18} className="absolute inset-0 text-emerald-500" />
-          <FlashIcon className="w-3 h-3 text-emerald-500" />
-        </div>
-      ) : (
-        <FlashIcon className="h-full w-full" />
-      ),
+      icon: <FlashIcon loading={isSyncing} className={cn("h-full w-full", isSyncing ? "text-emerald-500" : "")} />,
     },
     {
       title: isDarkMode ? 'Modo Claro' : 'Modo Escuro',
@@ -209,14 +203,10 @@ export function Navbar({
               className="flex items-center gap-1.5 rounded-lg border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900 px-2.5 py-1.5 text-xs font-medium text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 hover:text-zinc-900 dark:hover:text-zinc-100 active:scale-95 transition-all disabled:opacity-50 shadow-sm"
               title="Sincronizar dados agora"
             >
-              {isSyncing ? (
-                <div className="relative flex items-center justify-center w-4 h-4">
-                  <LoaderThree size={16} className="absolute inset-0 text-emerald-500" />
-                  <FlashIcon className="w-2.5 h-2.5 text-emerald-500" />
-                </div>
-              ) : (
-                <FlashIcon className="h-3.5 w-3.5 text-zinc-400" />
-              )}
+              <FlashIcon 
+                loading={isSyncing} 
+                className={cn("w-4 h-4", isSyncing ? "text-emerald-500" : "text-zinc-400")} 
+              />
               <span className="hidden sm:inline">Sincronizar</span>
             </button>
 
