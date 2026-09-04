@@ -31,6 +31,7 @@ export default function JobsPage() {
   const [category, setCategory] = useState('all');
   const [status, setStatus] = useState('all');
   const [period, setPeriod] = useState('all');
+  const [locationFilter, setLocationFilter] = useState('all');
   const [minScore, setMinScore] = useState(0);
   const [onlyApproved, setOnlyApproved] = useState(false);
 
@@ -47,6 +48,7 @@ export default function JobsPage() {
       if (category !== 'all') params.set('category', category);
       if (status !== 'all') params.set('status', status);
       if (period !== 'all') params.set('period', period);
+      if (locationFilter !== 'all') params.set('location', locationFilter);
       if (minScore > 0) params.set('minScore', minScore.toString());
       if (onlyApproved) params.set('onlyApproved', 'true');
 
@@ -66,7 +68,7 @@ export default function JobsPage() {
 
   useEffect(() => {
     fetchJobs();
-  }, [platform, category, status, period, minScore, onlyApproved]);
+  }, [platform, category, status, period, locationFilter, minScore, onlyApproved]);
 
   // Listen for cross-component refetch events (e.g. Navbar scraper trigger)
   useEffect(() => {
@@ -75,7 +77,8 @@ export default function JobsPage() {
     };
     window.addEventListener('buscavag:refetch-jobs', handleRefetch);
     return () => window.removeEventListener('buscavag:refetch-jobs', handleRefetch);
-  }, [platform, category, status, period, minScore, onlyApproved, search]);
+  }, [platform, category, status, period, locationFilter, minScore, onlyApproved, search]);
+
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -224,12 +227,14 @@ export default function JobsPage() {
     setCategory('all');
     setStatus('all');
     setPeriod('all');
+    setLocationFilter('all');
     setMinScore(0);
     setOnlyApproved(false);
   };
 
   const hasActiveFilters =
-    search || platform !== 'all' || category !== 'all' || status !== 'all' || period !== 'all' || minScore > 0 || onlyApproved;
+    search || platform !== 'all' || category !== 'all' || status !== 'all' || period !== 'all' || locationFilter !== 'all' || minScore > 0 || onlyApproved;
+
 
   // Pagination slice
   const totalItems = jobs.length;
@@ -251,8 +256,9 @@ export default function JobsPage() {
             <span className="w-1 h-1 rounded-full bg-zinc-300 dark:bg-zinc-700"></span>
             <span className="font-mono text-xs text-emerald-600 dark:text-emerald-400 flex items-center gap-1.5 font-medium">
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 dark:bg-emerald-400"></span>
-              26+ Fontes Integradas
+              35+ Fontes Integradas
             </span>
+
           </div>
           <h1 className="text-2xl md:text-3xl lg:text-4xl font-semibold tracking-tight text-zinc-900 dark:text-zinc-100">
             Explorador Inteligente de Vagas
@@ -308,7 +314,7 @@ export default function JobsPage() {
         </form>
 
         {/* Filters Row */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 items-center">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-7 gap-3 items-center">
           {/* Plataforma */}
           <div className="flex flex-col gap-1">
             <label className="font-mono text-[11px] uppercase tracking-wider text-zinc-500 dark:text-zinc-400 font-medium">
@@ -319,37 +325,70 @@ export default function JobsPage() {
               onChange={(e) => setPlatform(e.target.value)}
               className="w-full h-9 px-2.5 bg-zinc-50 dark:bg-zinc-800/80 rounded-lg border border-zinc-200 dark:border-zinc-700/60 text-xs text-zinc-900 dark:text-zinc-100 focus:outline-none focus:border-zinc-400 dark:focus:border-zinc-600 transition-colors cursor-pointer"
             >
-              <option value="all">Todas as Fontes (26+)</option>
-              <optgroup label="Principais">
+              <option value="all">Todas as Fontes (35+)</option>
+              <optgroup label="Freelance & Projetos">
+                <option value="99freelas">99Freelas (Projetos &lt; 48h)</option>
+                <option value="workana">Workana (Projetos Tech)</option>
+              </optgroup>
+              <optgroup label="Tech Especializadas">
+                <option value="geekhunter">GeekHunter</option>
+                <option value="revelo">Revelo</option>
+                <option value="programathor">Programathor</option>
+                <option value="trampos">Trampos.co</option>
+                <option value="runtalent">RunTalent</option>
+                <option value="99jobs">99jobs</option>
+                <option value="solides">Sólides Vagas</option>
+              </optgroup>
+              <optgroup label="Principais & ATSs">
                 <option value="linkedin">LinkedIn</option>
                 <option value="gupy">Gupy</option>
                 <option value="indeed">Indeed</option>
                 <option value="glassdoor">Glassdoor</option>
                 <option value="catho">Catho</option>
                 <option value="google_jobs">Google Jobs</option>
-                <option value="programathor">Programathor</option>
                 <option value="remotar">Remotar</option>
                 <option value="telegram">Telegram</option>
+                <option value="quickin">Quickin ATS</option>
+                <option value="recrutei_jobs">PeoplePlan (Recrutei)</option>
+                <option value="pandape">PandaPé ATS</option>
               </optgroup>
               <optgroup label="Regionais SC">
+                <option value="nerdin">Nerdin (TI SC)</option>
                 <option value="sao_jose">São José Empregos</option>
                 <option value="vagas_sc">Vagas SC</option>
                 <option value="vagas_floripa">Vagas Floripa</option>
                 <option value="emprega_palhoca">Emprega Palhoça</option>
               </optgroup>
-              <optgroup label="Nacionais & ATSs">
+              <optgroup label="Nacionais">
                 <option value="infojobs">Infojobs</option>
                 <option value="chawork">Chawork</option>
+                <option value="empregare">Empregare</option>
                 <option value="trabalha_brasil">Trabalha Brasil</option>
                 <option value="bne">BNE Empregos</option>
                 <option value="bebee">beBee</option>
                 <option value="empregos">Empregos.com.br</option>
                 <option value="recruta_simples">Recruta Simples</option>
                 <option value="recrutei_empregos">Recrutei Empregos</option>
-                <option value="quickin">Quickin ATS</option>
-                <option value="recrutei_jobs">PeoplePlan (Recrutei)</option>
-                <option value="pandape">PandaPé ATS</option>
               </optgroup>
+
+            </select>
+          </div>
+
+          {/* Localização / Cidade */}
+          <div className="flex flex-col gap-1">
+            <label className="font-mono text-[11px] uppercase tracking-wider text-zinc-500 dark:text-zinc-400 font-medium">
+              Cidade / Local
+            </label>
+            <select
+              value={locationFilter}
+              onChange={(e) => setLocationFilter(e.target.value)}
+              className="w-full h-9 px-2.5 bg-zinc-50 dark:bg-zinc-800/80 rounded-lg border border-zinc-200 dark:border-zinc-700/60 text-xs text-zinc-900 dark:text-zinc-100 focus:outline-none focus:border-zinc-400 dark:focus:border-zinc-600 transition-colors cursor-pointer"
+            >
+              <option value="all">Todas as Cidades</option>
+              <option value="remoto">🌐 100% Remoto</option>
+              <option value="florianopolis">📍 Florianópolis / Floripa (SC)</option>
+              <option value="sao_jose">📍 São José (SC)</option>
+              <option value="palhoca">📍 Palhoça (SC)</option>
             </select>
           </div>
 
@@ -441,6 +480,7 @@ export default function JobsPage() {
             </label>
           </div>
         </div>
+
       </div>
 
       {/* Results Counter & Helper Line */}

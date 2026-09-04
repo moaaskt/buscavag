@@ -160,11 +160,13 @@ export function JobModal({ job, onClose, onStatusChange }: JobModalProps) {
               <div className="p-3.5 rounded-xl bg-zinc-50 dark:bg-zinc-800/40 border border-zinc-200 dark:border-zinc-800/80 flex items-start gap-2.5">
                 <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5" />
                 <p className="text-xs md:text-sm text-zinc-700 dark:text-zinc-300 leading-relaxed font-mono">
-                  <strong className="text-zinc-900 dark:text-zinc-100">Parecer:</strong> {job.aiReasoning}
+                  <strong className="text-zinc-900 dark:text-zinc-100">Parecer:</strong>{' '}
+                  {renderHighlightedModalReasoning(job.aiReasoning)}
                 </p>
               </div>
             )}
           </section>
+
 
           {/* Gaps Analysis */}
           {job.gaps && job.gaps.length > 0 && (
@@ -281,3 +283,29 @@ export function JobModal({ job, onClose, onStatusChange }: JobModalProps) {
     </div>
   );
 }
+
+function renderHighlightedModalReasoning(text: string) {
+  if (!text) return null;
+
+  const parts = text.split(/(\b(?:Aprovada|aprovada|Rejeitada|rejeitada|Descartada|descartada)\b)/g);
+
+  return parts.map((part, index) => {
+    const lower = part.toLowerCase();
+    if (lower === 'aprovada') {
+      return (
+        <span key={index} className="text-emerald-600 dark:text-emerald-400 font-semibold">
+          {part}
+        </span>
+      );
+    }
+    if (lower === 'rejeitada' || lower === 'descartada') {
+      return (
+        <span key={index} className="text-rose-600 dark:text-red-400 font-semibold">
+          {part}
+        </span>
+      );
+    }
+    return <span key={index}>{part}</span>;
+  });
+}
+

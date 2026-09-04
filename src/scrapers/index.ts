@@ -26,6 +26,18 @@ import { RecruteiEmpregosScraper } from './recruteiEmpregos.js';
 import { QuickinScraper } from './quickin.js';
 import { RecruteiJobsScraper } from './recruteiJobs.js';
 import { PandapeScraper } from './pandape.js';
+// Freelance & Projetos
+import { Freelas99Scraper } from './99freelas.js';
+import { WorkanaScraper } from './workana.js';
+// Novas Fontes Tech
+import { GeekHunterScraper } from './geekhunter.js';
+import { NerdinScraper } from './nerdin.js';
+import { ReveloScraper } from './revelo.js';
+import { NoventaENoveJobsScraper } from './noventaENoveJobs.js';
+import { SolidesScraper } from './solides.js';
+import { RunTalentScraper } from './runTalent.js';
+import { EmpregareScraper } from './empregare.js';
+import { TramposScraper } from './trampos.js';
 
 import { RawJob } from '../types/job.js';
 import { TelegramNotifier } from '../services/telegramNotifier.js';
@@ -69,6 +81,7 @@ export class ScraperOrchestrator {
       new VagasScScraper(),
       new VagasFloripaScraper(),
       new EmpregaPalhocaScraper(),
+      new NerdinScraper(),
       // Nacionais
       new InfojobsScraper(),
       new ChaworkScraper(),
@@ -82,7 +95,20 @@ export class ScraperOrchestrator {
       new QuickinScraper(),
       new RecruteiJobsScraper(),
       new PandapeScraper(),
+      // Tech Especializadas
+      new GeekHunterScraper(),
+      new ReveloScraper(),
+      new NoventaENoveJobsScraper(),
+      new SolidesScraper(),
+      new RunTalentScraper(),
+      new EmpregareScraper(),
+      new TramposScraper(),
+      // Freelance
+      new Freelas99Scraper(),
+      new WorkanaScraper(),
     ];
+
+
     this.notifier = notifier || new TelegramNotifier();
     this.concurrency = options?.concurrency || 5;
     this.timeoutPerScraperMs = options?.timeoutPerScraperMs || 45000;

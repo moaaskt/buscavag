@@ -47,10 +47,8 @@ Você é um recrutador técnico especialista avaliando vagas para o perfil de **
 **REGRAS DE LOCALIZAÇÃO E MODELO DE TRABALHO (ESTRITO E PRIORITÁRIO):**
 1. **APROVAR REMOTO PRIMEIRO**: Se a vaga for **REMOTA** (contendo "remoto", "remote", "home office", "teletrabalho", "work from home", "anywhere" ou localização genérica "Brasil", "Brazil", "Portugal"), defina **locationScore = 100** independentemente da cidade indicada.
 2. **SE NÃO FOR REMOTA (PRESENCIAL / HÍBRIDO):**
-   - Presencial ou Híbrido em **Palhoça (SC)** ou **São José (SC)**: locationScore = 100. (Atenção: Rejeitar São José dos Campos/SP).
-   - Híbrido em **Florianópolis (SC)** ou **Floripa**: locationScore = 100.
-   - Presencial em **Florianópolis (SC)**: locationScore = 0 (REJEITAR).
-   - Presencial ou Híbrido em qualquer outra cidade (ex: São Paulo, Curitiba, Belo Horizonte, etc.): locationScore = 0 (REJEITAR).
+   - Presencial ou Híbrido em **Florianópolis (SC)**, **Floripa**, **Palhoça (SC)** ou **São José (SC)**: locationScore = 100 (Aceitar todas na Grande Florianópolis). (Atenção: Rejeitar São José dos Campos/SP).
+   - Presencial ou Híbrido em qualquer outra cidade fora da Grande Florianópolis (ex: São Paulo, Curitiba, Belo Horizonte, etc.): locationScore = 0 (REJEITAR).
 
 **REGRAS DE SENIORIDADE E ESCOPO:**
 - Junior / Entry Level / Trainee / Sem nível especificado: seniorityScore entre 80 e 100.
@@ -151,33 +149,25 @@ Responda APENAS em formato JSON no seguinte modelo:
       locationScore = 100;
       locationReason = 'Modelo Remoto';
     } else {
-      // 2. REGRA PARA PRESENCIAL / HÍBRIDO
+      // 2. REGRA PARA PRESENCIAL / HÍBRIDO (GRANDE FLORIANÓPOLIS)
       const isHybrid = location.includes('híbrido') || location.includes('hibrido') || text.includes('híbrido') || text.includes('hibrido');
       const isSaoJoseCampos = location.includes('dos campos') || location.includes('sjc') || location.includes('sp');
       const isSaoJose = (location.includes('são josé') || location.includes('sao jose')) && !isSaoJoseCampos;
       const isPalhoca = location.includes('palhoça') || location.includes('palhoca');
       const isFlorianopolis = location.includes('florianópolis') || location.includes('florianopolis') || location.includes('floripa');
 
-      if (isPalhoca || isSaoJose) {
+      if (isPalhoca || isSaoJose || isFlorianopolis) {
         isLocationAccepted = true;
         locationScore = 100;
-        locationReason = `Presencial/Híbrido em ${isPalhoca ? 'Palhoça (SC)' : 'São José (SC)'}`;
-      } else if (isFlorianopolis) {
-        if (isHybrid) {
-          isLocationAccepted = true;
-          locationScore = 100;
-          locationReason = 'Híbrido em Florianópolis (SC)';
-        } else {
-          isLocationAccepted = false;
-          locationScore = 0;
-          locationReason = 'Presencial em Florianópolis não aceito';
-        }
+        const cityName = isFlorianopolis ? 'Florianópolis (SC)' : isPalhoca ? 'Palhoça (SC)' : 'São José (SC)';
+        locationReason = `${isHybrid ? 'Híbrido' : 'Presencial'} em ${cityName}`;
       } else {
         isLocationAccepted = false;
         locationScore = 0;
-        locationReason = `Presencial/híbrido fora de Palhoça/São José(SC)/Florianópolis (${job.location || 'Externo'})`;
+        locationReason = `Presencial/híbrido fora da Grande Florianópolis (${job.location || 'Externo'})`;
       }
     }
+
 
     // 3. FILTRO DE SENIORIDADE
     const seniorKeywords = ['pleno', 'sênior', 'senior', 'sr.', 'sr ', 'lead', 'lider', 'líder', 'architect', 'arquiteto', 'staff', 'principal'];

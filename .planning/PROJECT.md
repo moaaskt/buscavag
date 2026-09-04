@@ -2,7 +2,7 @@
 
 ## Current State
 
-- **Shipped Milestone**: v6.0 — Sanitização e Triagem Inteligente de Vagas (2026-09-04)
+- **Shipped Milestone**: v8.0 — Expansão Massiva de Fontes (11 Canais & Freelas 48h), Hub Florianópolis e Melhorias no Card (2026-09-04)
 
 <details>
 <summary>Previous Milestones</summary>
@@ -12,21 +12,19 @@
 - v3.0 — Expansão Massiva de Fontes e Especialização IoT
 - v4.0 — Redesign Completo do Dashboard & Design System (Shadcn + Framer Motion)
 - v5.0 — Gestão Avançada, Bulk Actions e Sincronização Real-time
+- v6.0 — Sanitização e Triagem Inteligente de Vagas
+- v7.0 — Observabilidade, Streaming de Logs em Tempo Real e Gestão de Erros
 
 </details>
 
-## What's in v6.0
+## What's in v8.0
 
-- **Blacklist Centralizada de Cargos**: Configuração em `src/config/jobFilters.ts` para descarte imediato no pipeline de termos operacionais (pedreiro, motorista, etc.).
-- **Tech-Whitelist Obrigatória**: Vagas só entram no pipeline de avaliação se o título contiver termos de tecnologia.
-- **Hermes IA Zero-Score Lock**: Trava automática que força `score=0` e reprovação quando `stackScore=0` e nenhum termo tech existe no título.
-- **Auto Status 'rejected'**: Vagas não aprovadas como Júnior Full Stack são automaticamente inseridas com `applicationStatus = 'rejected'`, preservando o Inbox limpo.
-- **Banco de Dados Purge API & SQL**: `JobRepository.purgeNonTech()` e rota `POST /api/jobs/purge-non-tech`.
-- **UI de Purga na Navbar**: Botão rápido "Purgar Não-Tech" Desktop & Mobile com modal SweetAlert2 e toast de confirmação.
+- **Destaque Visual no `JobCard`**: Palavra "Aprovada" em verde e "Rejeitada"/"Descartada" em vermelho no parecer da IA.
+- **Hub Florianópolis no HermesEvaluator**: Vagas presenciais e híbridas em Florianópolis/Floripa aceitas com pontuação máxima de localização (`locationScore = 100`).
+- **Filtro de Localização / Cidade**: Seletor no Explorador `/jobs`, API `GET /api/jobs` e `JobRepository` com suporte a cidades e busca remota.
+- **Módulo Freelance (99Freelas 48h)**: Scraper de projetos em 99freelas com filtro estrito de tech stack e trava rigorosa de 48 horas.
+- **10 Novas Fontes Tech**: GeekHunter, Nerdin (TI SC), Revelo, 99jobs, Sólides, RunTalent, Empregare, Workana, Trampos.co e Programathor revisado, totalizando 35+ canais integrados.
 
-## Next Milestone Goals — v7.0
+## Next Milestone Goals
 
-**Observabilidade, Streaming de Logs em Tempo Real e Gestão de Erros dos Scrapers**
-- **Infraestrutura de Logs & Event Streaming**: Tabela `scraper_logs` no SQLite, endpoint de streaming via SSE (`/api/scraper/stream`), e adaptação dos scrapers com disparos estruturados de logs (INFO, WARN, ERROR).
-- **Console Terminal em Tempo Real (UI/UX)**: Modal/Drawer estilo Terminal Hacker escuro na Navbar com streaming SSE, auto-scroll, indicador de progresso por scraper/fonte e resumo final de execução.
-- **Painel de Histórico de Logs & Diagnóstico**: Página/Modal de histórico (`/logs`) com filtros por status, fonte e data, exibição de stack trace expansível e cópia de detalhes de erro.
+- Definições de novos requisitos e roadmap para o próximo marco (use `/gsd-new-milestone`).

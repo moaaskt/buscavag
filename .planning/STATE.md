@@ -1,11 +1,15 @@
 # Project Memory & State
 
 ## Current Position
-- **Last Completed Milestone**: v6.0 — Sanitização e Triagem Inteligente de Vagas (2026-09-04)
-- **Current Milestone**: v7.0 — Observabilidade, Streaming de Logs em Tempo Real e Gestão de Erros
-- **Current Status**: Phase 27 concluída. Pronto para a Phase 28.
+- **Last Completed Milestone**: v8.0 — Expansão Massiva de Fontes (11 Canais & Freelas 48h), Hub Florianópolis e Melhorias no Card (2026-09-04)
+- **Current Milestone**: Nenhum milestone ativo
+- **Current Status**: Milestone 8 concluído e arquivado com sucesso. Pronto para `/gsd-new-milestone`.
 
-## Milestone 7 Roadmap
-- [x] Phase 26: Infraestrutura de Logs e Event Streaming (Backend & SSE)
-- [x] Phase 27: Console / Terminal em Tempo Real na UI (Navbar + Drawer/Modal)
-- [ ] Phase 28: Painel de Histórico de Logs e Gestão de Erros (`/logs`)
+## Quick Tasks Completed
+| Task | Description | Date | Status |
+|---|---|---|---|
+| `fix-theme-persistence` | Persistência do tema claro/escuro via localStorage e script anti-flash no layout | 2026-09-04 | complete ✓ |
+| `pip-terminal-modal` | Modo Picture-in-Picture flutuante com ticker em tempo real e atalho para logs | 2026-09-04 | complete ✓ |
+| `phase-29` | Highlight visual no card, Hub Florianópolis (Hermes IA) e Filtro de Cidade | 2026-09-04 | complete ✓ |
+| `phase-30` | Conector 99Freelas com trava temporal de 48h e filtro por tech stack | 2026-09-04 | complete ✓ |
+| `phase-31` | 10 novos scrapers tech e freelance com orquestração paralela e stealth context | 2026-09-04 | complete ✓ |
