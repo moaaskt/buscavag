@@ -12,6 +12,7 @@ import {
   LayoutDashboard,
   User,
 } from 'lucide-react';
+import { LoaderThree } from '@/components/ui/loader';
 
 interface NavbarProps {
   scrapersActiveCount?: number;
@@ -123,11 +124,11 @@ export function Navbar({
             className="flex items-center gap-1.5 rounded-md border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900 px-2.5 py-1.5 text-xs font-medium text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 hover:text-zinc-900 dark:hover:text-zinc-100 active:scale-95 transition-all disabled:opacity-50 shadow-sm"
             title="Sincronizar dados agora"
           >
-            <RotateCw
-              className={`h-3.5 w-3.5 ${
-                isSyncing ? 'animate-spin text-emerald-500' : 'text-zinc-400'
-              }`}
-            />
+            {isSyncing ? (
+              <LoaderThree size={14} className="text-emerald-500" />
+            ) : (
+              <RotateCw className="h-3.5 w-3.5 text-zinc-400" />
+            )}
             <span className="hidden sm:inline">Sincronizar</span>
           </button>
 
