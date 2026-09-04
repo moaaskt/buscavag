@@ -1,11 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { runPipeline } from '@/index';
+import { spawn } from 'child_process';
 import { ScraperLogger } from '@/services/scraperLogger';
 
 export const dynamic = 'force-dynamic';
-
-// Variável para prevenir execuções concorrentes acidentais se já houver um ciclo rodando
-let isPipelineRunning = false;
 
 export async function POST(request: NextRequest) {
   try {
@@ -17,31 +14,34 @@ export async function POST(request: NextRequest) {
       // Body vazio é aceitável
     }
 
-    if (isPipelineRunning) {
-      return NextResponse.json({
-        success: true,
-        alreadyRunning: true,
-        message: 'O scraper já está em execução.',
-      });
-    }
-
     const logger = new ScraperLogger('Pipeline', runId || undefined);
-    
-    // Dispara a execução do pipeline de forma assíncrona (não-bloqueante para a resposta HTTP)
-    isPipelineRunning = true;
-    (async () => {
-      try {
-        await runPipeline(logger);
-      } catch (err) {
-        logger.error(`Falha crítica durante execução do pipeline: ${(err as Error).message}`, err);
-      } finally {
-        isPipelineRunning = false;
-      }
-    })();
+    const resolvedRunId = logger.getRunId();
+
+    const cwd = process.cwd();
+    const env = {
+      ...process.env,
+      SCRAPER_RUN_ID: resolvedRunId,
+    };
+
+    // Emite log inicial informando disparo do processo autônomo
+    logger.info('Iniciando pipeline de scraper via processo isolado...', {
+      step: 'START',
+      data: { runId: resolvedRunId },
+    });
+
+    // Spawn the scraper process detached so it runs in background and emits logs to database/SSE
+    const child = spawn('npm', ['run', 'start'], {
+      cwd,
+      detached: true,
+      stdio: 'ignore',
+      env,
+    });
+
+    child.unref();
 
     return NextResponse.json({
       success: true,
-      runId: logger.getRunId(),
+      runId: resolvedRunId,
       message: 'Sincronização iniciada com sucesso.',
     });
   } catch (error) {
