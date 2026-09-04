@@ -13,6 +13,7 @@ import {
   User,
 } from 'lucide-react';
 import { LoaderThree } from '@/components/ui/loader';
+import { FlashIcon } from '@/components/ui/flash-icon';
 import { CanvasText } from '@/components/ui/canvas-text';
 import {
   ResizableNavbarContainer,
@@ -97,9 +98,12 @@ export function Navbar({
       href: '#',
       onClick: handleSync,
       icon: isSyncing ? (
-        <LoaderThree size={18} className="text-emerald-500" />
+        <div className="relative flex items-center justify-center w-full h-full">
+          <LoaderThree size={18} className="absolute inset-0 text-emerald-500" />
+          <FlashIcon className="w-3 h-3 text-emerald-500" />
+        </div>
       ) : (
-        <RotateCw className="h-full w-full" />
+        <FlashIcon className="h-full w-full" />
       ),
     },
     {
@@ -125,15 +129,15 @@ export function Navbar({
             backgroundClassName="bg-emerald-600 dark:bg-emerald-500"
             colors={[
               "rgba(16, 185, 129, 1)",
-              "rgba(16, 185, 129, 0.9)",
-              "rgba(52, 211, 153, 0.85)",
-              "rgba(45, 212, 191, 0.75)",
-              "rgba(6, 182, 212, 0.65)",
-              "rgba(16, 185, 129, 0.5)",
-              "rgba(52, 211, 153, 0.4)",
-              "rgba(45, 212, 191, 0.3)",
+              "rgba(255, 255, 255, 0.9)",
+              "rgba(16, 185, 129, 0.8)",
+              "rgba(255, 255, 255, 0.7)",
+              "rgba(16, 185, 129, 0.6)",
+              "rgba(255, 255, 255, 0.5)",
+              "rgba(16, 185, 129, 0.4)",
+              "rgba(255, 255, 255, 0.3)",
               "rgba(16, 185, 129, 0.2)",
-              "rgba(16, 185, 129, 0.1)",
+              "rgba(255, 255, 255, 0.1)",
             ]}
             lineGap={4}
             animationDuration={15}
@@ -163,15 +167,15 @@ export function Navbar({
               backgroundClassName="bg-emerald-600 dark:bg-emerald-500"
               colors={[
                 "rgba(16, 185, 129, 1)",
-                "rgba(16, 185, 129, 0.9)",
-                "rgba(52, 211, 153, 0.85)",
-                "rgba(45, 212, 191, 0.75)",
-                "rgba(6, 182, 212, 0.65)",
-                "rgba(16, 185, 129, 0.5)",
-                "rgba(52, 211, 153, 0.4)",
-                "rgba(45, 212, 191, 0.3)",
+                "rgba(255, 255, 255, 0.9)",
+                "rgba(16, 185, 129, 0.8)",
+                "rgba(255, 255, 255, 0.7)",
+                "rgba(16, 185, 129, 0.6)",
+                "rgba(255, 255, 255, 0.5)",
+                "rgba(16, 185, 129, 0.4)",
+                "rgba(255, 255, 255, 0.3)",
                 "rgba(16, 185, 129, 0.2)",
-                "rgba(16, 185, 129, 0.1)",
+                "rgba(255, 255, 255, 0.1)",
               ]}
               lineGap={4}
               animationDuration={15}
@@ -206,9 +210,12 @@ export function Navbar({
               title="Sincronizar dados agora"
             >
               {isSyncing ? (
-                <LoaderThree size={14} className="text-emerald-500" />
+                <div className="relative flex items-center justify-center w-4 h-4">
+                  <LoaderThree size={16} className="absolute inset-0 text-emerald-500" />
+                  <FlashIcon className="w-2.5 h-2.5 text-emerald-500" />
+                </div>
               ) : (
-                <RotateCw className="h-3.5 w-3.5 text-zinc-400" />
+                <FlashIcon className="h-3.5 w-3.5 text-zinc-400" />
               )}
               <span className="hidden sm:inline">Sincronizar</span>
             </button>
