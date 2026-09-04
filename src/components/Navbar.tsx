@@ -95,7 +95,7 @@ export function Navbar({
     if (isSyncing) return;
     setIsSyncing(true);
     try {
-      const res = await fetch('/api/scraper/trigger', { method: 'POST' });
+      const res = await fetch('/api/scraper/run', { method: 'POST' });
       const json = await res.json();
 
       // Notify the toast
