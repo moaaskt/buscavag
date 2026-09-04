@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
@@ -42,6 +42,25 @@ export function Navbar({
   const [isSyncing, setIsSyncing] = useState(false);
   const [isPurging, setIsPurging] = useState(false);
   const [isTerminalOpen, setIsTerminalOpen] = useState(false);
+
+  // Carrega e sincroniza o estado do tema com o localStorage no mount
+  useEffect(() => {
+    try {
+      const storedTheme = localStorage.getItem('buscavag_theme');
+      if (storedTheme === 'light') {
+        setIsDarkMode(false);
+        document.documentElement.classList.remove('dark');
+      } else if (storedTheme === 'dark') {
+        setIsDarkMode(true);
+        document.documentElement.classList.add('dark');
+      } else {
+        const isDarkDefault = document.documentElement.classList.contains('dark');
+        setIsDarkMode(isDarkDefault);
+      }
+    } catch {
+      setIsDarkMode(true);
+    }
+  }, []);
 
   const navItems = [
     {
@@ -145,6 +164,9 @@ export function Navbar({
   const toggleTheme = () => {
     const isDark = document.documentElement.classList.toggle('dark');
     setIsDarkMode(isDark);
+    try {
+      localStorage.setItem('buscavag_theme', isDark ? 'dark' : 'light');
+    } catch {}
   };
 
   const mobileDockItems: FloatingDockItem[] = [
