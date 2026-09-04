@@ -2,8 +2,7 @@
 
 ## Current State
 
-- **Active Milestone**: Milestone 8 — Expansão Massiva de Fontes (11 Canais & Freelas 48h), Hub Florianópolis e Melhorias no Card (Em andamento)
-- **Last Shipped Milestone**: v7.0 — Observabilidade, Streaming de Logs em Tempo Real e Gestão de Erros (2026-09-04)
+- **Shipped Milestone**: v8.0 — Expansão Massiva de Fontes (11 Canais & Freelas 48h), Hub Florianópolis e Melhorias no Card (2026-09-04)
 
 <details>
 <summary>Previous Milestones</summary>
@@ -18,9 +17,14 @@
 
 </details>
 
-## What's in Milestone 8
+## What's in v8.0
 
-1. **Ajuste Visual no `JobCard`**: Destaque dinâmico das palavras "Aprovada" (verde) e "Rejeitada"/"Descartada" (vermelho) no feedback da IA.
-2. **Hub Florianópolis & Filtro de Cidade**: HermesEvaluator aceitando Presencial e Híbrido em Florianópolis/Floripa com pontuação máxima, além de novo seletor/filtro de Cidade no `/jobs`.
-3. **Módulo Freelance (99Freelas 48h)**: Scraper de projetos em 99freelas com filtro exclusivo das stacks do perfil e trava temporal rigorosa de 48h.
-4. **10 Novas Fontes Tech**: GeekHunter, Nerdin, Programathor, Revelo, 99jobs, Sólides, RunTalent, Empregare, Workana, Trampos.co.
+- **Destaque Visual no `JobCard`**: Palavra "Aprovada" em verde e "Rejeitada"/"Descartada" em vermelho no parecer da IA.
+- **Hub Florianópolis no HermesEvaluator**: Vagas presenciais e híbridas em Florianópolis/Floripa aceitas com pontuação máxima de localização (`locationScore = 100`).
+- **Filtro de Localização / Cidade**: Seletor no Explorador `/jobs`, API `GET /api/jobs` e `JobRepository` com suporte a cidades e busca remota.
+- **Módulo Freelance (99Freelas 48h)**: Scraper de projetos em 99freelas com filtro estrito de tech stack e trava rigorosa de 48 horas.
+- **10 Novas Fontes Tech**: GeekHunter, Nerdin (TI SC), Revelo, 99jobs, Sólides, RunTalent, Empregare, Workana, Trampos.co e Programathor revisado, totalizando 35+ canais integrados.
+
+## Next Milestone Goals
+
+- Definições de novos requisitos e roadmap para o próximo marco (use `/gsd-new-milestone`).

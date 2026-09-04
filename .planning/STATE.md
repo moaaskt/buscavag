@@ -1,9 +1,9 @@
 # Project Memory & State
 
 ## Current Position
-- **Active Milestone**: Milestone 8 — Expansão Massiva de Fontes (11 Canais & Freelas 48h), Hub Florianópolis e Melhorias no Card
-- **Current Phase**: Phase 31 — Expansão das 10 Novas Fontes de Vagas Tech (Concluída ✓)
-- **Current Status**: Todas as fases do Milestone 8 foram concluídas e verificadas com sucesso! Pronto para `/gsd-complete-milestone`.
+- **Last Completed Milestone**: v8.0 — Expansão Massiva de Fontes (11 Canais & Freelas 48h), Hub Florianópolis e Melhorias no Card (2026-09-04)
+- **Current Milestone**: Nenhum milestone ativo
+- **Current Status**: Milestone 8 concluído e arquivado com sucesso. Pronto para `/gsd-new-milestone`.
 
 ## Quick Tasks Completed
 | Task | Description | Date | Status |
