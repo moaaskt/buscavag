@@ -163,16 +163,39 @@ export default function JobsPage() {
               onChange={(e) => setPlatform(e.target.value)}
               className="w-full bg-slate-900 border border-slate-700 text-slate-200 rounded-lg p-2 focus:outline-none focus:border-sky-500"
             >
-              <option value="all">Todas as Fontes</option>
-              <option value="programathor">Programathor</option>
-              <option value="remotar">Remotar</option>
-              <option value="catho">Catho</option>
-              <option value="glassdoor">Glassdoor</option>
-              <option value="linkedin">LinkedIn</option>
-              <option value="gupy">Gupy</option>
-              <option value="indeed">Indeed</option>
-              <option value="google_jobs">Google Jobs</option>
-              <option value="telegram">Telegram</option>
+              <option value="all">Todas as Fontes (20+)</option>
+              <optgroup label="Principais / Globais">
+                <option value="linkedin">LinkedIn</option>
+                <option value="gupy">Gupy</option>
+                <option value="indeed">Indeed</option>
+                <option value="glassdoor">Glassdoor</option>
+                <option value="catho">Catho</option>
+                <option value="google_jobs">Google Jobs</option>
+                <option value="programathor">Programathor</option>
+                <option value="remotar">Remotar</option>
+                <option value="telegram">Telegram Channels</option>
+              </optgroup>
+              <optgroup label="Regionais Santa Catarina">
+                <option value="sao_jose">São José Mais Empregos</option>
+                <option value="vagas_sc">Vagas SC</option>
+                <option value="vagas_floripa">Vagas Floripa</option>
+                <option value="emprega_palhoca">Emprega Palhoça</option>
+              </optgroup>
+              <optgroup label="Portais Nacionais">
+                <option value="infojobs">Infojobs</option>
+                <option value="chawork">Chawork</option>
+                <option value="trabalha_brasil">Trabalha Brasil</option>
+                <option value="bne">BNE Empregos</option>
+                <option value="bebee">beBee</option>
+                <option value="empregos">Empregos.com.br</option>
+                <option value="recruta_simples">Recruta Simples</option>
+              </optgroup>
+              <optgroup label="ATSs & Integradores">
+                <option value="recrutei_empregos">Recrutei Empregos</option>
+                <option value="quickin">Quickin ATS</option>
+                <option value="recrutei_jobs">PeoplePlan (Recrutei)</option>
+                <option value="pandape">PandaPé ATS (GTO RH)</option>
+              </optgroup>
             </select>
           </div>
 
@@ -185,6 +208,7 @@ export default function JobsPage() {
               className="w-full bg-slate-900 border border-slate-700 text-slate-200 rounded-lg p-2 focus:outline-none focus:border-sky-500"
             >
               <option value="all">Todas as Categorias</option>
+              <option value="IoT & Automação">⚡ IoT & Automação (ESP32/MQTT)</option>
               <option value="Full Stack">Full Stack</option>
               <option value="Frontend">Frontend</option>
               <option value="Backend">Backend</option>

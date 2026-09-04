@@ -34,6 +34,34 @@ export function JobCard({ job, onSelect, compact = false }: JobCardProps) {
     remotar: 'bg-teal-500/10 text-teal-400 border-teal-500/20',
     catho: 'bg-rose-500/10 text-rose-400 border-rose-500/20',
     glassdoor: 'bg-green-500/10 text-green-400 border-green-500/20',
+    // Regionais SC
+    sao_jose: 'bg-cyan-500/10 text-cyan-400 border-cyan-500/20',
+    vagas_sc: 'bg-blue-600/10 text-blue-300 border-blue-600/20',
+    vagas_floripa: 'bg-sky-600/10 text-sky-300 border-sky-600/20',
+    emprega_palhoca: 'bg-teal-600/10 text-teal-300 border-teal-600/20',
+    // Nacionais
+    infojobs: 'bg-orange-500/10 text-orange-400 border-orange-500/20',
+    chawork: 'bg-yellow-500/10 text-yellow-400 border-yellow-500/20',
+    trabalha_brasil: 'bg-lime-500/10 text-lime-400 border-lime-500/20',
+    bne: 'bg-emerald-600/10 text-emerald-300 border-emerald-600/20',
+    bebee: 'bg-amber-600/10 text-amber-300 border-amber-600/20',
+    empregos: 'bg-red-500/10 text-red-400 border-red-500/20',
+    recruta_simples: 'bg-purple-600/10 text-purple-300 border-purple-600/20',
+    // ATSs
+    recrutei_empregos: 'bg-pink-500/10 text-pink-400 border-pink-500/20',
+    quickin: 'bg-violet-500/10 text-violet-400 border-violet-500/20',
+    recrutei_jobs: 'bg-fuchsia-500/10 text-fuchsia-400 border-fuchsia-500/20',
+    pandape: 'bg-rose-600/10 text-rose-300 border-rose-600/20',
+  };
+
+  const categoryStyles: Record<string, string> = {
+    'IoT & Automação': 'bg-amber-500/15 text-amber-300 border-amber-500/30 shadow-sm shadow-amber-500/10',
+    'Frontend': 'bg-pink-500/10 text-pink-300 border-pink-500/20',
+    'Backend': 'bg-indigo-500/10 text-indigo-300 border-indigo-500/20',
+    'Full Stack': 'bg-sky-500/10 text-sky-300 border-sky-500/20',
+    'Mobile': 'bg-violet-500/10 text-violet-300 border-violet-500/20',
+    'DevOps': 'bg-emerald-500/10 text-emerald-300 border-emerald-500/20',
+    'Data': 'bg-purple-500/10 text-purple-300 border-purple-500/20',
   };
 
   const statusBadges: Record<string, { label: string; color: string }> = {
@@ -103,7 +131,11 @@ export function JobCard({ job, onSelect, compact = false }: JobCardProps) {
               {job.platform}
             </span>
             {job.category && (
-              <span className="text-[10px] font-semibold px-2.5 py-0.5 rounded-md bg-indigo-500/10 text-indigo-300 border border-indigo-500/20">
+              <span
+                className={`text-[10px] font-semibold px-2.5 py-0.5 rounded-md border ${
+                  categoryStyles[job.category] || 'bg-indigo-500/10 text-indigo-300 border-indigo-500/20'
+                }`}
+              >
                 {job.category}
               </span>
             )}
