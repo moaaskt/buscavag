@@ -38,3 +38,38 @@ export async function confirmDelete(options: {
 
   return result.isConfirmed;
 }
+
+/**
+ * Confirm de purga de vagas não-tech com tema Buscavag (zinc dark + rose/amber accents).
+ * Retorna `true` se o usuário confirmou.
+ */
+export async function confirmPurge(): Promise<boolean> {
+  const result = await Swal.fire({
+    title: 'Purgar vagas não-tech?',
+    text: 'Esta ação irá remover permanentemente do banco todas as vagas com cargos operacionais (pedreiro, motorista, etc.).',
+    icon: 'warning',
+    showCancelButton: true,
+    confirmButtonText: 'Sim, purgar banco',
+    cancelButtonText: 'Cancelar',
+
+    // ── Theming ──────────────────────────────────────────────────────────────
+    background: '#18181b',          // zinc-900
+    color: '#f4f4f5',               // zinc-100
+    iconColor: '#f59e0b',           // amber-500
+
+    customClass: {
+      popup:         'swal-buscavag-popup',
+      title:         'swal-buscavag-title',
+      htmlContainer: 'swal-buscavag-text',
+      confirmButton: 'swal-buscavag-confirm bg-rose-600 hover:bg-rose-500 text-white font-medium px-4 py-2 rounded-lg transition-colors text-sm shadow-sm',
+      cancelButton:  'swal-buscavag-cancel',
+      actions:       'swal-buscavag-actions',
+    },
+
+    buttonsStyling: false,
+    reverseButtons: true,
+    focusCancel: true,
+  });
+
+  return result.isConfirmed;
+}

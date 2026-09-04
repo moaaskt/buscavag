@@ -6,6 +6,7 @@ import { CheckCircle2, AlertCircle, Zap, X } from 'lucide-react';
 
 interface SyncPayload {
   success: boolean;
+  title?: string;
   newJobsCount?: number;
   message?: string;
 }
@@ -19,18 +20,30 @@ export function SyncToast() {
       const payload = (e as CustomEvent<SyncPayload>).detail;
       setToast(payload);
       setVisible(true);
+    };
 
-      // Auto-dismiss after 5s
-      const timer = setTimeout(() => {
-        setVisible(false);
-      }, 5000);
-
-      return () => clearTimeout(timer);
+    const handlePurgeDone = (e: Event) => {
+      const payload = (e as CustomEvent<SyncPayload>).detail;
+      setToast(payload);
+      setVisible(true);
     };
 
     window.addEventListener('buscavag:sync-done', handleSyncDone);
-    return () => window.removeEventListener('buscavag:sync-done', handleSyncDone);
+    window.addEventListener('buscavag:purge-done', handlePurgeDone);
+
+    return () => {
+      window.removeEventListener('buscavag:sync-done', handleSyncDone);
+      window.removeEventListener('buscavag:purge-done', handlePurgeDone);
+    };
   }, []);
+
+  useEffect(() => {
+    if (!visible) return;
+    const timer = setTimeout(() => {
+      setVisible(false);
+    }, 5000);
+    return () => clearTimeout(timer);
+  }, [visible, toast]);
 
   return (
     <AnimatePresence>
@@ -62,14 +75,12 @@ export function SyncToast() {
             {/* Content */}
             <div className="flex-1 min-w-0">
               <p className="text-sm font-semibold leading-snug">
-                {toast.success ? 'Sincronização iniciada!' : 'Falha na sincronização'}
+                {toast.title || (toast.success ? 'Sincronização iniciada!' : 'Falha na operação')}
               </p>
               <p className="text-xs text-zinc-400 font-mono mt-0.5 leading-snug">
-                {toast.success
-                  ? toast.message || 'Scraper iniciado em background. Novas vagas aparecerão em breve.'
-                  : toast.message || 'Não foi possível iniciar o scraper. Tente novamente.'}
+                {toast.message || (toast.success ? 'Operação executada com sucesso.' : 'Ocorreu um erro ao processar a requisição.')}
               </p>
-              {toast.success && (
+              {toast.success && !toast.title && (
                 <div className="flex items-center gap-1.5 mt-1.5">
                   <Zap className="w-3 h-3 text-emerald-500" />
                   <span className="text-[11px] font-mono text-emerald-400">

@@ -11,11 +11,13 @@ import {
   KanbanSquare,
   LayoutDashboard,
   User,
+  Trash2,
 } from 'lucide-react';
 import { LoaderThree } from '@/components/ui/loader';
 import { FlashIcon } from '@/components/ui/flash-icon';
 import { cn } from '@/lib/utils';
 import { CanvasText } from '@/components/ui/canvas-text';
+import { confirmPurge } from '@/lib/alerts';
 import {
   ResizableNavbarContainer,
   NavBody,
@@ -37,6 +39,7 @@ export function Navbar({
   const pathname = usePathname();
   const [isDarkMode, setIsDarkMode] = useState(true);
   const [isSyncing, setIsSyncing] = useState(false);
+  const [isPurging, setIsPurging] = useState(false);
 
   const navItems = [
     {
@@ -91,6 +94,45 @@ export function Navbar({
     }
   };
 
+  const handlePurge = async () => {
+    if (isPurging) return;
+    const confirmed = await confirmPurge();
+    if (!confirmed) return;
+
+    setIsPurging(true);
+    try {
+      const res = await fetch('/api/jobs/purge-non-tech', { method: 'POST' });
+      const json = await res.json();
+
+      window.dispatchEvent(
+        new CustomEvent('buscavag:purge-done', {
+          detail: {
+            success: json.success,
+            title: json.success ? 'Purga concluída!' : 'Falha na purga',
+            message: json.message || (json.success ? `${json.deletedCount} vagas não-tech removidas.` : json.error),
+          },
+        })
+      );
+
+      if (json.success) {
+        window.dispatchEvent(new CustomEvent('buscavag:refetch-jobs'));
+      }
+    } catch (e) {
+      console.error('[Navbar purge error]:', e);
+      window.dispatchEvent(
+        new CustomEvent('buscavag:purge-done', {
+          detail: {
+            success: false,
+            title: 'Falha na purga',
+            message: 'Erro de comunicação ao purgar vagas não-tech.',
+          },
+        })
+      );
+    } finally {
+      setIsPurging(false);
+    }
+  };
+
   const toggleTheme = () => {
     const isDark = document.documentElement.classList.toggle('dark');
     setIsDarkMode(isDark);
@@ -114,6 +156,12 @@ export function Navbar({
       href: '/board',
       icon: <KanbanSquare className="h-full w-full" />,
       active: pathname.startsWith('/board'),
+    },
+    {
+      title: isPurging ? 'Purgando...' : 'Purgar Não-Tech',
+      href: '#',
+      onClick: handlePurge,
+      icon: <Trash2 className={cn("h-full w-full", isPurging ? "text-rose-400 animate-spin" : "text-zinc-400 hover:text-rose-400")} />,
     },
     {
       title: isSyncing ? 'Executando Scraper...' : 'Sincronizar',
@@ -215,6 +263,26 @@ export function Navbar({
                 </strong>
               </span>
             </div>
+
+            {/* Botão Purgar Não-Tech */}
+            <button
+              onClick={handlePurge}
+              disabled={isPurging}
+              type="button"
+              className={`flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-xs font-medium transition-all active:scale-95 shadow-sm disabled:cursor-not-allowed ${
+                isPurging
+                  ? 'border-rose-700/60 bg-rose-950/40 text-rose-400 opacity-90'
+                  : 'border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900 text-zinc-700 dark:text-zinc-300 hover:bg-rose-500/10 hover:border-rose-500/40 hover:text-rose-400'
+              }`}
+              title="Purgar vagas não-tech do banco de dados"
+            >
+              <Trash2
+                className={cn('w-3.5 h-3.5', isPurging ? 'text-rose-400 animate-spin' : 'text-zinc-400')}
+              />
+              <span className="hidden lg:inline">
+                {isPurging ? 'Purgando...' : 'Purgar Não-Tech'}
+              </span>
+            </button>
 
             {/* Botão Sincronizar com LoaderThree */}
             <button
