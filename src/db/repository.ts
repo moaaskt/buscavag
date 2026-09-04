@@ -2,6 +2,7 @@ import { db, initDatabase } from './index';
 import { ProcessedJob, RawJob } from '../types/job';
 import { generateJobHash } from '../utils/hash';
 import { EvaluationResult } from '../services/hermesEvaluator';
+import { TITLE_BLACKLIST } from '../config/jobFilters';
 
 export interface JobFilterOptions {
   category?: string;
@@ -151,6 +152,20 @@ export class JobRepository {
     const stmt = db.prepare(`DELETE FROM jobs WHERE id IN (${placeholders})`);
     const result = stmt.run(...ids);
     return result.changes > 0;
+  }
+
+  public purgeNonTech(): { deletedCount: number } {
+    if (!TITLE_BLACKLIST || TITLE_BLACKLIST.length === 0) {
+      return { deletedCount: 0 };
+    }
+
+    const conditions = TITLE_BLACKLIST.map(() => 'LOWER(title) LIKE ?').join(' OR ');
+    const params = TITLE_BLACKLIST.map((term) => `%${term.toLowerCase()}%`);
+
+    const stmt = db.prepare(`DELETE FROM jobs WHERE ${conditions}`);
+    const result = stmt.run(...params);
+
+    return { deletedCount: result.changes };
   }
 
   public getAllJobs(filters?: JobFilterOptions): ProcessedJob[] {
