@@ -118,29 +118,26 @@ export function Navbar({
     <>
       {/* Mobile Top Minimal Bar */}
       <header className="sticky top-0 z-40 flex w-full items-center justify-between border-b border-zinc-200/60 dark:border-zinc-800/60 bg-white/80 dark:bg-zinc-950/80 px-4 py-2.5 backdrop-blur-md transition-colors md:hidden">
-        <Link href="/" className="flex items-center gap-2">
-          <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400">
-            <Compass className="h-4 w-4" />
-          </div>
+        <Link href="/" className="flex items-center">
           <CanvasText
             text="Buscavag"
-            className="text-sm font-semibold tracking-tight"
-            backgroundClassName="bg-zinc-900 dark:bg-zinc-100"
+            className="text-lg font-bold tracking-tight font-sans"
+            backgroundClassName="bg-emerald-600 dark:bg-emerald-500"
             colors={[
-              "#10b981",
-              "#06b6d4",
-              "#3b82f6",
-              "#8b5cf6",
-              "#34d399",
-              "#38bdf8",
+              "rgba(16, 185, 129, 1)",
+              "rgba(16, 185, 129, 0.9)",
+              "rgba(52, 211, 153, 0.85)",
+              "rgba(45, 212, 191, 0.75)",
+              "rgba(6, 182, 212, 0.65)",
+              "rgba(16, 185, 129, 0.5)",
+              "rgba(52, 211, 153, 0.4)",
+              "rgba(45, 212, 191, 0.3)",
+              "rgba(16, 185, 129, 0.2)",
+              "rgba(16, 185, 129, 0.1)",
             ]}
             lineGap={4}
-            lineWidth={1.2}
-            animationDuration={8}
+            animationDuration={15}
           />
-          <span className="rounded border border-zinc-200 dark:border-zinc-800 bg-zinc-100 dark:bg-zinc-900 px-1 py-0.5 text-[8px] font-mono font-medium text-zinc-500 dark:text-zinc-400 uppercase">
-            v2.4
-          </span>
         </Link>
 
         <div className="flex items-center gap-2">
@@ -159,31 +156,26 @@ export function Navbar({
       <ResizableNavbarContainer className="hidden md:block">
         <NavBody>
           {/* Brand / Logo */}
-          <Link href="/" className="flex items-center gap-2.5 group shrink-0">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 group-hover:border-emerald-500/40 transition-colors">
-              <Compass className="h-4 w-4" />
-            </div>
-            <div className="flex items-center gap-1.5">
-              <CanvasText
-                text="Buscavag"
-                className="text-sm font-semibold tracking-tight"
-                backgroundClassName="bg-zinc-900 dark:bg-zinc-100"
-                colors={[
-                  "#10b981",
-                  "#06b6d4",
-                  "#3b82f6",
-                  "#8b5cf6",
-                  "#34d399",
-                  "#38bdf8",
-                ]}
-                lineGap={4}
-                lineWidth={1.2}
-                animationDuration={8}
-              />
-              <span className="rounded border border-zinc-200 dark:border-zinc-800 bg-zinc-100 dark:bg-zinc-900 px-1.5 py-0.5 text-[9px] font-mono font-medium text-zinc-500 dark:text-zinc-400 uppercase">
-                v2.4 Pro
-              </span>
-            </div>
+          <Link href="/" className="flex items-center shrink-0 pr-2">
+            <CanvasText
+              text="Buscavag"
+              className="text-lg md:text-xl font-extrabold tracking-tight font-sans"
+              backgroundClassName="bg-emerald-600 dark:bg-emerald-500"
+              colors={[
+                "rgba(16, 185, 129, 1)",
+                "rgba(16, 185, 129, 0.9)",
+                "rgba(52, 211, 153, 0.85)",
+                "rgba(45, 212, 191, 0.75)",
+                "rgba(6, 182, 212, 0.65)",
+                "rgba(16, 185, 129, 0.5)",
+                "rgba(52, 211, 153, 0.4)",
+                "rgba(45, 212, 191, 0.3)",
+                "rgba(16, 185, 129, 0.2)",
+                "rgba(16, 185, 129, 0.1)",
+              ]}
+              lineGap={4}
+              animationDuration={15}
+            />
           </Link>
 
           {/* Dynamic Center Navigation Items */}
