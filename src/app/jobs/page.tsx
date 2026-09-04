@@ -1,17 +1,17 @@
 'use client';
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect } from 'react';
 import { ProcessedJob } from '@/types/job';
 import { JobCard } from '@/components/JobCard';
 import { JobModal } from '@/components/JobModal';
 import {
   Search,
-  Filter,
   RefreshCw,
-  SlidersHorizontal,
-  Briefcase,
-  CheckCircle2,
   X,
+  ChevronLeft,
+  ChevronRight,
+  Info,
+  SlidersHorizontal,
 } from 'lucide-react';
 
 export default function JobsPage() {
@@ -26,6 +26,10 @@ export default function JobsPage() {
   const [status, setStatus] = useState('all');
   const [minScore, setMinScore] = useState(0);
   const [onlyApproved, setOnlyApproved] = useState(false);
+
+  // Pagination
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(12);
 
   const fetchJobs = async () => {
     setLoading(true);
@@ -42,6 +46,7 @@ export default function JobsPage() {
       const json = await res.json();
       if (json.success) {
         setJobs(json.data);
+        setCurrentPage(1); // Reset to page 1 on new filter/search
       }
     } catch (err) {
       console.error('Erro ao buscar vagas:', err);
@@ -96,25 +101,43 @@ export default function JobsPage() {
   const hasActiveFilters =
     search || platform !== 'all' || category !== 'all' || status !== 'all' || minScore > 0 || onlyApproved;
 
+  // Pagination slice
+  const totalItems = jobs.length;
+  const totalPages = Math.max(1, Math.ceil(totalItems / itemsPerPage));
+  const paginatedJobs = jobs.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
+
   return (
-    <div className="space-y-6 animate-in fade-in duration-300">
-      {/* Page Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl md:text-3xl font-extrabold text-white tracking-tight flex items-center gap-2.5">
-            <Briefcase className="w-6 h-6 text-indigo-400" />
-            <span>Explorador Inteligente de Vagas</span>
+    <div className="flex flex-col gap-6 md:gap-8 animate-in fade-in duration-300">
+      {/* Top Header Area */}
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 pb-1 border-b border-zinc-200 dark:border-zinc-800/80">
+        <div className="flex flex-col gap-1.5 max-w-3xl">
+          <div className="flex items-center gap-2">
+            <span className="font-mono text-xs uppercase tracking-wider text-zinc-500 dark:text-zinc-400 font-medium">
+              Live Sync
+            </span>
+            <span className="w-1 h-1 rounded-full bg-zinc-300 dark:bg-zinc-700"></span>
+            <span className="font-mono text-xs text-emerald-600 dark:text-emerald-400 flex items-center gap-1.5 font-medium">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 dark:bg-emerald-400"></span>
+              26+ Fontes Integradas
+            </span>
+          </div>
+          <h1 className="text-2xl md:text-3xl lg:text-4xl font-semibold tracking-tight text-zinc-900 dark:text-zinc-100">
+            Explorador Inteligente de Vagas
           </h1>
-          <p className="text-xs md:text-sm text-slate-400 mt-1">
-            Filtre por pontuação de compatibilidade da IA, tecnologia, modelo de trabalho e plataforma.
+          <p className="text-sm md:text-base text-zinc-600 dark:text-zinc-400 leading-relaxed">
+            Filtre por pontuação de compatibilidade, tecnologia, modelo de trabalho e plataforma de recrutamento.
           </p>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 shrink-0">
           {hasActiveFilters && (
             <button
               onClick={clearFilters}
-              className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold text-rose-400 bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/20 transition-all"
+              type="button"
+              className="h-9 px-3.5 rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 hover:bg-zinc-50 dark:hover:bg-zinc-800 text-zinc-600 dark:text-zinc-400 hover:text-rose-600 dark:hover:text-rose-400 transition-colors flex items-center gap-1.5 text-xs md:text-sm font-medium shadow-sm"
             >
               <X className="w-3.5 h-3.5" />
               <span>Limpar Filtros</span>
@@ -123,118 +146,148 @@ export default function JobsPage() {
           <button
             onClick={fetchJobs}
             disabled={loading}
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition-all"
+            type="button"
+            className="h-9 px-3.5 rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 hover:bg-zinc-50 dark:hover:bg-zinc-800 text-zinc-700 dark:text-zinc-300 transition-colors flex items-center gap-2 text-xs md:text-sm font-medium shadow-sm"
           >
-            <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
+            <RefreshCw className={`w-3.5 h-3.5 text-zinc-500 dark:text-zinc-400 ${loading ? 'animate-spin' : ''}`} />
             <span>Atualizar</span>
           </button>
         </div>
       </div>
 
-      {/* Filter Panel */}
-      <div className="p-5 rounded-2xl glass-panel border border-slate-800 space-y-4">
-        {/* Search Bar */}
-        <form onSubmit={handleSearchSubmit} className="flex gap-2">
-          <div className="relative flex-1">
-            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+      {/* Search & Filter Controls (Linear / Shadcn Zinc Style) */}
+      <div className="bg-white dark:bg-zinc-900/70 p-4 md:p-5 rounded-xl border border-zinc-200 dark:border-zinc-800/80 shadow-sm flex flex-col gap-4">
+        {/* Search Row */}
+        <form onSubmit={handleSearchSubmit} className="flex flex-col sm:flex-row items-center gap-2">
+          <div className="relative w-full flex items-center">
+            <Search className="absolute left-3.5 w-4 h-4 text-zinc-400 pointer-events-none" />
             <input
               type="text"
               placeholder="Buscar por cargo (ex: Full Stack, React, Node), empresa ou tecnologia..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-slate-900/80 border border-slate-700 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-sky-500 focus:ring-1 focus:ring-sky-500 transition-all"
+              className="w-full h-10 pl-10 pr-4 bg-zinc-50 dark:bg-zinc-800/80 rounded-lg border border-zinc-200 dark:border-zinc-700/60 text-sm text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 dark:placeholder:text-zinc-500 focus:outline-none focus:border-zinc-400 dark:focus:border-zinc-600 transition-colors"
             />
           </div>
           <button
             type="submit"
-            className="px-5 py-2.5 rounded-xl bg-sky-500 hover:bg-sky-400 text-white text-xs font-bold transition-all shadow-md shadow-sky-500/20"
+            className="w-full sm:w-auto h-10 px-5 bg-zinc-900 hover:bg-zinc-800 dark:bg-zinc-100 dark:hover:bg-white text-zinc-100 dark:text-zinc-900 text-xs md:text-sm font-semibold rounded-lg transition-colors flex items-center justify-center gap-2 whitespace-nowrap shadow-sm"
           >
-            Buscar
+            <span>Buscar</span>
           </button>
         </form>
 
-        {/* Filter Dropdowns Grid */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 pt-1 text-xs">
-          {/* Platform */}
-          <div className="space-y-1">
-            <label className="text-slate-400 font-medium">Plataforma:</label>
+        {/* Filters Row */}
+        <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-5 gap-3 items-center">
+          {/* Plataforma */}
+          <div className="flex flex-col gap-1">
+            <label className="font-mono text-[11px] uppercase tracking-wider text-zinc-500 dark:text-zinc-400 font-medium">
+              Plataforma
+            </label>
             <select
               value={platform}
               onChange={(e) => setPlatform(e.target.value)}
-              className="w-full bg-slate-900 border border-slate-700 text-slate-200 rounded-lg p-2 focus:outline-none focus:border-sky-500"
+              className="w-full h-9 px-2.5 bg-zinc-50 dark:bg-zinc-800/80 rounded-lg border border-zinc-200 dark:border-zinc-700/60 text-xs text-zinc-900 dark:text-zinc-100 focus:outline-none focus:border-zinc-400 dark:focus:border-zinc-600 transition-colors cursor-pointer"
             >
-              <option value="all">Todas as Fontes</option>
-              <option value="programathor">Programathor</option>
-              <option value="remotar">Remotar</option>
-              <option value="catho">Catho</option>
-              <option value="glassdoor">Glassdoor</option>
-              <option value="linkedin">LinkedIn</option>
-              <option value="gupy">Gupy</option>
-              <option value="indeed">Indeed</option>
-              <option value="google_jobs">Google Jobs</option>
-              <option value="telegram">Telegram</option>
+              <option value="all">Todas as Fontes (26+)</option>
+              <optgroup label="Principais">
+                <option value="linkedin">LinkedIn</option>
+                <option value="gupy">Gupy</option>
+                <option value="indeed">Indeed</option>
+                <option value="glassdoor">Glassdoor</option>
+                <option value="catho">Catho</option>
+                <option value="google_jobs">Google Jobs</option>
+                <option value="programathor">Programathor</option>
+                <option value="remotar">Remotar</option>
+                <option value="telegram">Telegram</option>
+              </optgroup>
+              <optgroup label="Regionais SC">
+                <option value="sao_jose">São José Empregos</option>
+                <option value="vagas_sc">Vagas SC</option>
+                <option value="vagas_floripa">Vagas Floripa</option>
+                <option value="emprega_palhoca">Emprega Palhoça</option>
+              </optgroup>
+              <optgroup label="Nacionais & ATSs">
+                <option value="infojobs">Infojobs</option>
+                <option value="chawork">Chawork</option>
+                <option value="trabalha_brasil">Trabalha Brasil</option>
+                <option value="bne">BNE Empregos</option>
+                <option value="bebee">beBee</option>
+                <option value="empregos">Empregos.com.br</option>
+                <option value="recruta_simples">Recruta Simples</option>
+                <option value="recrutei_empregos">Recrutei Empregos</option>
+                <option value="quickin">Quickin ATS</option>
+                <option value="recrutei_jobs">PeoplePlan (Recrutei)</option>
+                <option value="pandape">PandaPé ATS</option>
+              </optgroup>
             </select>
           </div>
 
-          {/* Category */}
-          <div className="space-y-1">
-            <label className="text-slate-400 font-medium">Categoria:</label>
+          {/* Categoria */}
+          <div className="flex flex-col gap-1">
+            <label className="font-mono text-[11px] uppercase tracking-wider text-zinc-500 dark:text-zinc-400 font-medium">
+              Categoria
+            </label>
             <select
               value={category}
               onChange={(e) => setCategory(e.target.value)}
-              className="w-full bg-slate-900 border border-slate-700 text-slate-200 rounded-lg p-2 focus:outline-none focus:border-sky-500"
+              className="w-full h-9 px-2.5 bg-zinc-50 dark:bg-zinc-800/80 rounded-lg border border-zinc-200 dark:border-zinc-700/60 text-xs text-zinc-900 dark:text-zinc-100 focus:outline-none focus:border-zinc-400 dark:focus:border-zinc-600 transition-colors cursor-pointer"
             >
               <option value="all">Todas as Categorias</option>
+              <option value="IoT & Automação">⚡ IoT & Automação (ESP32/MQTT)</option>
               <option value="Full Stack">Full Stack</option>
               <option value="Frontend">Frontend</option>
               <option value="Backend">Backend</option>
               <option value="Mobile">Mobile</option>
               <option value="DevOps">DevOps</option>
-              <option value="Data">Data</option>
+              <option value="Data">Data / Analytics</option>
             </select>
           </div>
 
-          {/* Status */}
-          <div className="space-y-1">
-            <label className="text-slate-400 font-medium">Status Candidatura:</label>
+          {/* Status Candidatura */}
+          <div className="flex flex-col gap-1">
+            <label className="font-mono text-[11px] uppercase tracking-wider text-zinc-500 dark:text-zinc-400 font-medium">
+              Status Candidatura
+            </label>
             <select
               value={status}
               onChange={(e) => setStatus(e.target.value)}
-              className="w-full bg-slate-900 border border-slate-700 text-slate-200 rounded-lg p-2 focus:outline-none focus:border-sky-500"
+              className="w-full h-9 px-2.5 bg-zinc-50 dark:bg-zinc-800/80 rounded-lg border border-zinc-200 dark:border-zinc-700/60 text-xs text-zinc-900 dark:text-zinc-100 focus:outline-none focus:border-zinc-400 dark:focus:border-zinc-600 transition-colors cursor-pointer"
             >
               <option value="all">Todos os Status</option>
               <option value="pending">Inbox (Pendente)</option>
               <option value="applied">Aplicado</option>
-              <option value="interview">Entrevista</option>
-              <option value="offer">Oferta</option>
+              <option value="interview">Em Entrevista</option>
+              <option value="offer">Oferta Recebida</option>
               <option value="rejected">Descartado</option>
             </select>
           </div>
 
-          {/* Min Score */}
-          <div className="space-y-1">
-            <label className="text-slate-400 font-medium">Score Mínimo IA:</label>
+          {/* Score Mínimo IA */}
+          <div className="flex flex-col gap-1">
+            <label className="font-mono text-[11px] uppercase tracking-wider text-zinc-500 dark:text-zinc-400 font-medium">
+              Score Mínimo IA
+            </label>
             <select
               value={minScore}
               onChange={(e) => setMinScore(Number(e.target.value))}
-              className="w-full bg-slate-900 border border-slate-700 text-slate-200 rounded-lg p-2 focus:outline-none focus:border-sky-500"
+              className="w-full h-9 px-2.5 bg-zinc-50 dark:bg-zinc-800/80 rounded-lg border border-zinc-200 dark:border-zinc-700/60 text-xs text-zinc-900 dark:text-zinc-100 focus:outline-none focus:border-zinc-400 dark:focus:border-zinc-600 transition-colors cursor-pointer"
             >
               <option value={0}>Qualquer Score</option>
-              <option value={40}>Score &gt;= 40%</option>
-              <option value={55}>Score &gt;= 55% (Aprovadas)</option>
-              <option value={70}>Score &gt;= 70% (Alta Afinidade)</option>
-              <option value={85}>Score &gt;= 85% (Match Perfeito)</option>
+              <option value={75}>&gt; 75% Alta Afinidade</option>
+              <option value={60}>&gt; 60% Média Afinidade</option>
+              <option value={40}>&gt; 40% Score Base</option>
             </select>
           </div>
 
-          {/* Only Approved Toggle */}
-          <div className="flex items-end pb-0.5">
-            <label className="flex items-center gap-2 cursor-pointer select-none text-slate-300 font-medium">
+          {/* Checkbox Apenas Jr */}
+          <div className="col-span-2 sm:col-span-2 lg:col-span-1 flex items-center justify-start lg:justify-end pt-2 lg:pt-4">
+            <label className="inline-flex items-center gap-2 cursor-pointer select-none text-xs text-zinc-700 dark:text-zinc-300 font-medium">
               <input
                 type="checkbox"
                 checked={onlyApproved}
                 onChange={(e) => setOnlyApproved(e.target.checked)}
-                className="w-4 h-4 rounded border-slate-700 text-sky-500 focus:ring-sky-500 bg-slate-900"
+                className="w-4 h-4 rounded border-zinc-300 dark:border-zinc-700 text-zinc-900 dark:text-zinc-100 focus:ring-0 focus:ring-offset-0 bg-zinc-50 dark:bg-zinc-800 cursor-pointer"
               />
               <span>Apenas Jr Aprovadas</span>
             </label>
@@ -242,43 +295,96 @@ export default function JobsPage() {
         </div>
       </div>
 
-      {/* Results Section */}
-      <div className="space-y-3">
-        <div className="flex items-center justify-between text-xs text-slate-400 px-1">
-          <span>
-            Exibindo <strong>{jobs.length}</strong> {jobs.length === 1 ? 'vaga encontrada' : 'vagas encontradas'}
+      {/* Results Counter & Helper Line */}
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
+        <div className="flex items-center gap-2">
+          <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
+          <span className="font-mono text-xs md:text-sm text-zinc-800 dark:text-zinc-200 font-medium">
+            Exibindo {totalItems} {totalItems === 1 ? 'vaga encontrada' : 'vagas encontradas'}
           </span>
+        </div>
+        <div className="flex items-center gap-1.5 text-zinc-500 dark:text-zinc-400 font-mono text-xs">
+          <Info className="w-3.5 h-3.5" />
           <span>Clique em qualquer vaga para ver a análise completa da IA e dicas</span>
         </div>
+      </div>
 
-        {loading ? (
-          <div className="p-12 text-center text-slate-400 glass-panel rounded-2xl">
-            <RefreshCw className="w-8 h-8 animate-spin mx-auto mb-3 text-sky-400" />
-            <p className="font-semibold text-slate-300">Carregando oportunidades...</p>
-          </div>
-        ) : jobs.length > 0 ? (
-          <div className="grid grid-cols-1 gap-3.5">
-            {jobs.map((job) => (
-              <JobCard
-                key={job.id}
-                job={job}
-                onSelect={(j: ProcessedJob) => setSelectedJob(j)}
-              />
-            ))}
-          </div>
-        ) : (
-          <div className="p-12 text-center text-slate-400 glass-panel rounded-2xl space-y-3">
-            <Briefcase className="w-10 h-10 mx-auto text-slate-500" />
-            <p className="text-base font-semibold text-slate-300">Nenhuma vaga encontrada com os filtros selecionados.</p>
+      {/* Job Cards List */}
+      {loading ? (
+        <div className="p-12 text-center text-zinc-500 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/40">
+          <RefreshCw className="w-6 h-6 animate-spin mx-auto mb-2 text-zinc-400" />
+          <p className="text-xs font-mono">Carregando oportunidades...</p>
+        </div>
+      ) : paginatedJobs.length > 0 ? (
+        <div className="flex flex-col gap-2.5">
+          {paginatedJobs.map((job) => (
+            <JobCard
+              key={job.id}
+              job={job}
+              onSelect={(j: ProcessedJob) => setSelectedJob(j)}
+            />
+          ))}
+        </div>
+      ) : (
+        <div className="p-12 text-center text-zinc-500 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/40 space-y-3">
+          <p className="text-sm font-medium text-zinc-700 dark:text-zinc-300 font-mono">
+            Nenhuma vaga encontrada com os filtros selecionados.
+          </p>
+          {hasActiveFilters && (
             <button
               onClick={clearFilters}
-              className="px-4 py-2 rounded-xl text-xs font-bold bg-sky-500/10 text-sky-400 border border-sky-500/20 hover:bg-sky-500/20 transition-all"
+              className="px-4 py-2 rounded-lg text-xs font-semibold bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-300 border border-zinc-200 dark:border-zinc-700 transition-colors"
             >
               Resetar Filtros
             </button>
+          )}
+        </div>
+      )}
+
+      {/* Pagination & Footer Navigation */}
+      {totalItems > 0 && (
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-2 pb-6 border-t border-zinc-200 dark:border-zinc-800/60">
+          <div className="flex items-center gap-2 text-zinc-500 dark:text-zinc-400 font-mono text-xs">
+            <span>Itens por página:</span>
+            <select
+              value={itemsPerPage}
+              onChange={(e) => {
+                setItemsPerPage(Number(e.target.value));
+                setCurrentPage(1);
+              }}
+              className="h-8 px-2 bg-zinc-50 dark:bg-zinc-800/80 rounded border border-zinc-200 dark:border-zinc-700/60 text-xs text-zinc-900 dark:text-zinc-100 focus:outline-none cursor-pointer"
+            >
+              <option value={12}>12</option>
+              <option value={24}>24</option>
+              <option value={48}>48</option>
+            </select>
+            <span className="ml-2">
+              Página {currentPage} de {totalPages}
+            </span>
           </div>
-        )}
-      </div>
+
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+              disabled={currentPage === 1}
+              type="button"
+              className="h-8 px-3 rounded-lg bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-300 disabled:opacity-40 disabled:cursor-not-allowed text-xs font-medium flex items-center gap-1 transition-colors"
+            >
+              <ChevronLeft className="w-3.5 h-3.5" />
+              <span>Anterior</span>
+            </button>
+            <button
+              onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+              disabled={currentPage === totalPages}
+              type="button"
+              className="h-8 px-3 rounded-lg bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-300 disabled:opacity-40 disabled:cursor-not-allowed text-xs font-medium flex items-center gap-1 transition-colors"
+            >
+              <span>Próximo</span>
+              <ChevronRight className="w-3.5 h-3.5" />
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Job Details Modal */}
       <JobModal

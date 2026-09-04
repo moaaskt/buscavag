@@ -36,11 +36,12 @@ export class HermesEvaluator {
 
     try {
       const prompt = `
-Você é um recrutador técnico especialista avaliando vagas para o perfil de **Moacir Neto** (Dev Full Stack Junior).
+Você é um recrutador técnico especialista avaliando vagas para o perfil de **Moacir Neto** (Dev Full Stack Junior & Especialista IoT / Automação Residencial).
 
 **Perfil de Moacir Neto:**
 - **Nível:** Junior / Entry Level / Trainee / Sem especificação de nível.
-- **Stack Principal:** Node.js, TypeScript, PHP (Laravel / CodeIgniter), NestJS, Express, React, Next.js, JavaScript, Python, Golang, Tailwind CSS, Bootstrap, MySQL, PostgreSQL, Supabase, Docker, REST APIs.
+- **Stack Principal Web & Backend:** Node.js, TypeScript, PHP (Laravel / CodeIgniter), NestJS, Express, React, Next.js, JavaScript, Python, Golang, Tailwind CSS, Bootstrap, MySQL, PostgreSQL, Supabase, Docker, REST APIs.
+- **Especialização em IoT, Hardware & Automação:** Microcontroladores ESP32, ESP8266, Arduino, Raspberry Pi, MQTT, Home Assistant, ESPHome, C/C++ para embarcados, sensores/atuadores, automação residencial e integração hardware-web via WebSockets e APIs.
 
 **REGRAS DE LOCALIZAÇÃO E MODELO DE TRABALHO (ESTRITO E PRIORITÁRIO):**
 1. **APROVAR REMOTO PRIMEIRO**: Se a vaga for **REMOTA** (contendo "remoto", "remote", "home office", "teletrabalho", "work from home", "anywhere" ou localização genérica "Brasil", "Brazil", "Portugal"), defina **locationScore = 100** independentemente da cidade indicada.
@@ -55,12 +56,12 @@ Você é um recrutador técnico especialista avaliando vagas para o perfil de **
 - Pleno, Sênior, Sr, Lead, Tech Lead, Staff, Arquiteto: seniorityScore entre 0 e 20 (REJEITAR).
 
 **REGRAS DE STACK E LACUNAS (GAPS):**
-- stackScore (0 a 100): Avalie a aderência com a stack de Moacir (Node, TS, React, PHP, Python, Go, Docker, SQL, etc.).
-- gaps: Liste apenas tecnologias ou requisitos essenciais da vaga que NÃO constam na stack de Moacir (ex: ["Kubernetes", "AWS", "GraphQL", "Ruby"]). Se não houver lacunas relevantes, retorne [].
-- resumeTips: Dica concisa de até 2 frases de como Moacir pode adaptar seu currículo ou carta para esta vaga específica.
+- stackScore (0 a 100): Avalie a aderência com a stack de Moacir (Web Full Stack e/ou IoT/ESP32/Automação).
+- gaps: Liste apenas tecnologias essenciais da vaga que NÃO constam na stack de Moacir (ex: ["Kubernetes", "AWS", "Ruby", "Swift"]). Tecnologias de IoT, MQTT, ESP32, C++ básico NÃO são gaps, são pontos fortes. Se não houver lacunas relevantes, retorne [].
+- resumeTips: Dica concisa de até 2 frases de como Moacir pode adaptar seu currículo ou carta para esta vaga específica (destacando projetos Web ou IoT conforme a vaga).
 
 **CATEGORIZAÇÃO:**
-- category: Classifique estritamente em uma das opções: "Frontend", "Backend", "Full Stack", "DevOps", "Data", "Mobile" ou "Other".
+- category: Classifique estritamente em uma das opções: "Frontend", "Backend", "Full Stack", "DevOps", "Data", "Mobile", "IoT & Automação" ou "Other".
 
 **Vaga a ser analisada:**
 - Título: ${job.title}
@@ -75,10 +76,10 @@ Responda APENAS em formato JSON no seguinte modelo:
   "stackScore": number,
   "seniorityScore": number,
   "locationScore": number,
-  "category": "Frontend" | "Backend" | "Full Stack" | "DevOps" | "Data" | "Mobile" | "Other",
+  "category": "Frontend" | "Backend" | "Full Stack" | "DevOps" | "Data" | "Mobile" | "IoT & Automação" | "Other",
   "gaps": string[],
   "resumeTips": string,
-  "reasoning": "Justificativa clara em português indicando adequação de localização, senioridade e stack"
+  "reasoning": "Justificativa clara em português indicando adequação de localização, senioridade e stack (incluindo IoT/Automação se aplicável)"
 }
 `;
 
@@ -182,11 +183,14 @@ Responda APENAS em formato JSON no seguinte modelo:
       seniorityScore = 100;
     }
 
-    // 4. STACK DO MOACIR NETO
+    // 4. STACK DO MOACIR NETO (WEB FULL STACK + IOT / HARDWARE / AUTOMAÇÃO)
     const targetStack = [
+      // Web / Backend / Frontend
       'node', 'nodejs', 'typescript', 'php', 'laravel', 'codeigniter',
       'nestjs', 'express', 'react', 'next', 'nextjs', 'javascript', 'js', 'ts',
-      'python', 'golang', 'go', 'tailwind', 'bootstrap', 'mysql', 'postgres', 'postgresql', 'supabase', 'docker', 'rest', 'sql'
+      'python', 'golang', 'go', 'tailwind', 'bootstrap', 'mysql', 'postgres', 'postgresql', 'supabase', 'docker', 'rest', 'sql',
+      // IoT / Embarcados / Automação
+      'esp32', 'esp8266', 'arduino', 'raspberry', 'iot', 'mqtt', 'home assistant', 'esphome', 'automacao', 'automação', 'embarcados', 'firmware', 'c++', 'c/c++'
     ];
     const rejectedStack = ['cobol', 'swift', 'objective-c'];
 
@@ -201,7 +205,11 @@ Responda APENAS em formato JSON no seguinte modelo:
 
     // 5. CATEGORIZAÇÃO
     let category = 'Full Stack';
-    if (text.includes('react native') || text.includes('flutter') || text.includes('mobile') || text.includes('android') || text.includes('ios')) {
+    const isIotMatch = text.includes('esp32') || text.includes('esp8266') || text.includes('arduino') || text.includes('raspberry') || text.includes('iot') || text.includes('mqtt') || text.includes('home assistant') || text.includes('embarcados') || text.includes('automação') || text.includes('automacao');
+
+    if (isIotMatch) {
+      category = 'IoT & Automação';
+    } else if (text.includes('react native') || text.includes('flutter') || text.includes('mobile') || text.includes('android') || text.includes('ios')) {
       category = 'Mobile';
     } else if (text.includes('devops') || text.includes('sre') || text.includes('cloud') || text.includes('kubernetes') || text.includes('infra')) {
       category = 'DevOps';
@@ -221,20 +229,24 @@ Responda APENAS em formato JSON no seguinte modelo:
 
     // 6. DETECÇÃO DE GAPS
     const potentialGaps = [
-      'aws', 'gcp', 'azure', 'kubernetes', 'graphql', 'c#', '.net', 'c++', 'ruby', 'rails', 'java',
+      'aws', 'gcp', 'azure', 'kubernetes', 'graphql', 'c#', '.net', 'ruby', 'rails', 'java',
       'spring', 'angular', 'vue', 'mongodb', 'redis', 'kafka', 'rabbitmq', 'elixir'
     ];
     const gaps = potentialGaps.filter((tech) => {
-      // Evitar falso positivo com substrings
       const regex = new RegExp(`\\b${tech.replace('+', '\\+')}\\b`, 'i');
       return regex.test(text);
     });
 
     // 7. DICAS DE CURRÍCULO
     const topTechs = matchedStackList.slice(0, 3).map((t) => t.toUpperCase()).join(', ');
-    const resumeTips = topTechs
-      ? `Destaque no topo do currículo sua experiência com ${topTechs} e mencione projetos práticos desenvolvidos com essas tecnologias.`
-      : 'Destaque seus projetos full stack e capacidade de rápida adaptação técnica.';
+    let resumeTips = '';
+    if (category === 'IoT & Automação') {
+      resumeTips = 'Destaque seus projetos práticos com microcontroladores (ESP32/Arduino), integrações MQTT e automação com Home Assistant.';
+    } else if (topTechs) {
+      resumeTips = `Destaque no topo do currículo sua experiência com ${topTechs} e mencione projetos práticos desenvolvidos com essas tecnologias.`;
+    } else {
+      resumeTips = 'Destaque seus projetos full stack e capacidade de rápida adaptação técnica.';
+    }
 
     // 8. OVERALL SCORE PONDERADO
     let overallScore = Math.round(
@@ -255,7 +267,8 @@ Responda APENAS em formato JSON no seguinte modelo:
     } else if (hasSenior && !hasJunior) {
       reasoning = 'Rejeitada via Heurística: Vaga com exigência de nível Pleno/Sênior/Lead.';
     } else {
-      reasoning = `Aprovada via Heurística (${locationReason}): ${hasJunior ? 'Nível Jr/Entry. ' : ''}${matchedStackCount} tecnologias compatíveis (${topTechs || 'Gerais'}).`;
+      const specNote = category === 'IoT & Automação' ? 'Especialização em IoT/Automação detectada. ' : '';
+      reasoning = `Aprovada via Heurística (${locationReason}): ${specNote}${hasJunior ? 'Nível Jr/Entry. ' : ''}${matchedStackCount} tecnologias compatíveis (${topTechs || 'Gerais'}).`;
     }
 
     return {
