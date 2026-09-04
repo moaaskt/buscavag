@@ -6,7 +6,7 @@ async function testPhase19() {
 
   // 1. Inserir 2 vagas dummy para teste de exclusão em lote
   const now = new Date();
-  const job1 = {
+  const job1: any = {
     url: 'https://test.com/job-p19-1',
     title: 'Test Job P19 1',
     company: 'TestCorp',
@@ -14,7 +14,7 @@ async function testPhase19() {
     description: 'Test description 1',
     publishedAt: now,
   };
-  const job2 = {
+  const job2: any = {
     url: 'https://test.com/job-p19-2',
     title: 'Test Job P19 2',
     company: 'TestCorp',

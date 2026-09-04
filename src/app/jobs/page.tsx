@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { ProcessedJob } from '@/types/job';
 import { JobModal } from '@/components/JobModal';
+import { FloatingActionBar } from '@/components/FloatingActionBar';
 import { JobListHoverEffect } from '@/components/ui/card-hover-effect';
 import {
   Search,
@@ -12,12 +13,16 @@ import {
   ChevronRight,
   Info,
   SlidersHorizontal,
+  CheckSquare,
+  Square,
 } from 'lucide-react';
 
 export default function JobsPage() {
   const [jobs, setJobs] = useState<ProcessedJob[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedJob, setSelectedJob] = useState<ProcessedJob | null>(null);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [isDeleting, setIsDeleting] = useState(false);
 
   // Filters
   const [search, setSearch] = useState('');
@@ -47,6 +52,7 @@ export default function JobsPage() {
       if (json.success) {
         setJobs(json.data);
         setCurrentPage(1); // Reset to page 1 on new filter/search
+        setSelectedIds(new Set()); // Reset selections
       }
     } catch (err) {
       console.error('Erro ao buscar vagas:', err);
@@ -89,6 +95,107 @@ export default function JobsPage() {
     }
   };
 
+  // Selection handlers
+  const handleToggleSelect = (id: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
+      return next;
+    });
+  };
+
+  const handleSelectAllVisible = () => {
+    if (selectedIds.size === paginatedJobs.length && paginatedJobs.length > 0) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(paginatedJobs.map((j) => j.id)));
+    }
+  };
+
+  const handleClearSelection = () => {
+    setSelectedIds(new Set());
+  };
+
+  // Delete Individual
+  const handleDeleteJob = async (id: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!confirm('Deseja realmente excluir esta vaga?')) return;
+
+    try {
+      const res = await fetch('/api/jobs', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ids: [id] }),
+      });
+      if (res.ok) {
+        setJobs((prev) => prev.filter((j) => j.id !== id));
+        setSelectedIds((prev) => {
+          const next = new Set(prev);
+          next.delete(id);
+          return next;
+        });
+      }
+    } catch (err) {
+      console.error('Erro ao excluir vaga:', err);
+    }
+  };
+
+  // Bulk Delete
+  const handleBulkDelete = async () => {
+    const ids = Array.from(selectedIds);
+    if (ids.length === 0) return;
+    if (!confirm(`Deseja realmente excluir as ${ids.length} vagas selecionadas?`)) return;
+
+    setIsDeleting(true);
+    try {
+      const res = await fetch('/api/jobs', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ids }),
+      });
+      if (res.ok) {
+        setJobs((prev) => prev.filter((j) => !selectedIds.has(j.id)));
+        setSelectedIds(new Set());
+      }
+    } catch (err) {
+      console.error('Erro ao excluir vagas em lote:', err);
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  // Bulk Status Change
+  const handleBulkStatusChange = async (newStatus: string) => {
+    const ids = Array.from(selectedIds);
+    if (ids.length === 0) return;
+
+    try {
+      await Promise.all(
+        ids.map((id) =>
+          fetch(`/api/jobs/${id}/status`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ status: newStatus }),
+          })
+        )
+      );
+
+      setJobs((prev) =>
+        prev.map((j) =>
+          selectedIds.has(j.id) ? { ...j, applicationStatus: newStatus as any } : j
+        )
+      );
+      setSelectedIds(new Set());
+    } catch (err) {
+      console.error('Erro ao alterar status em lote:', err);
+    }
+  };
+
   const clearFilters = () => {
     setSearch('');
     setPlatform('all');
@@ -110,7 +217,7 @@ export default function JobsPage() {
   );
 
   return (
-    <div className="flex flex-col gap-6 md:gap-8 animate-in fade-in duration-300">
+    <div className="flex flex-col gap-6 md:gap-8 animate-in fade-in duration-300 relative pb-16">
       {/* Top Header Area */}
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 pb-1 border-b border-zinc-200 dark:border-zinc-800/80">
         <div className="flex flex-col gap-1.5 max-w-3xl">
@@ -297,11 +404,33 @@ export default function JobsPage() {
 
       {/* Results Counter & Helper Line */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
-        <div className="flex items-center gap-2">
-          <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
-          <span className="font-mono text-xs md:text-sm text-zinc-800 dark:text-zinc-200 font-medium">
-            Exibindo {totalItems} {totalItems === 1 ? 'vaga encontrada' : 'vagas encontradas'}
-          </span>
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
+            <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
+            <span className="font-mono text-xs md:text-sm text-zinc-800 dark:text-zinc-200 font-medium">
+              Exibindo {totalItems} {totalItems === 1 ? 'vaga encontrada' : 'vagas encontradas'}
+            </span>
+          </div>
+
+          {paginatedJobs.length > 0 && (
+            <button
+              onClick={handleSelectAllVisible}
+              type="button"
+              className="text-xs font-mono text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 flex items-center gap-1.5 pl-2 border-l border-zinc-200 dark:border-zinc-800 transition-colors"
+            >
+              {selectedIds.size === paginatedJobs.length && paginatedJobs.length > 0 ? (
+                <>
+                  <CheckSquare className="w-3.5 h-3.5 text-emerald-500" />
+                  <span>Desmarcar página</span>
+                </>
+              ) : (
+                <>
+                  <Square className="w-3.5 h-3.5" />
+                  <span>Selecionar página</span>
+                </>
+              )}
+            </button>
+          )}
         </div>
         <div className="flex items-center gap-1.5 text-zinc-500 dark:text-zinc-400 font-mono text-xs">
           <Info className="w-3.5 h-3.5" />
@@ -319,6 +448,9 @@ export default function JobsPage() {
         <JobListHoverEffect
           jobs={paginatedJobs}
           onSelect={(j: ProcessedJob) => setSelectedJob(j)}
+          selectedIds={selectedIds}
+          onToggleSelect={handleToggleSelect}
+          onDeleteJob={handleDeleteJob}
         />
       ) : (
         <div className="p-12 text-center text-zinc-500 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/40 space-y-3">
@@ -380,6 +512,15 @@ export default function JobsPage() {
           </div>
         </div>
       )}
+
+      {/* Floating Action Bar for Bulk Selections */}
+      <FloatingActionBar
+        selectedCount={selectedIds.size}
+        onClearSelection={handleClearSelection}
+        onDeleteSelected={handleBulkDelete}
+        onUpdateStatusSelected={handleBulkStatusChange}
+        isDeleting={isDeleting}
+      />
 
       {/* Job Details Modal */}
       <JobModal
