@@ -2,7 +2,8 @@
 
 ## Current State
 
-- **Shipped Milestone**: v7.0 — Observabilidade, Streaming de Logs em Tempo Real e Gestão de Erros (2026-09-04)
+- **Active Milestone**: Milestone 8 — Expansão Massiva de Fontes (11 Canais & Freelas 48h), Hub Florianópolis e Melhorias no Card (Em andamento)
+- **Last Shipped Milestone**: v7.0 — Observabilidade, Streaming de Logs em Tempo Real e Gestão de Erros (2026-09-04)
 
 <details>
 <summary>Previous Milestones</summary>
@@ -13,17 +14,13 @@
 - v4.0 — Redesign Completo do Dashboard & Design System (Shadcn + Framer Motion)
 - v5.0 — Gestão Avançada, Bulk Actions e Sincronização Real-time
 - v6.0 — Sanitização e Triagem Inteligente de Vagas
+- v7.0 — Observabilidade, Streaming de Logs em Tempo Real e Gestão de Erros
 
 </details>
 
-## What's in v7.0
+## What's in Milestone 8
 
-- **Infraestrutura de Logs & Auditoria SQLite**: Tabela `scraper_logs` indexada com `LogRepository` suportando consultas paginadas e métricas agregadas de ciclo.
-- **Streaming SSE Anti-Buffering**: Endpoint `GET /api/scraper/stream` via `ReadableStream` com headers `text/event-stream` e heartbeat pings.
-- **Resiliência Total no ScraperOrchestrator**: Execuções isoladas em `try/catch` para que falhas em fontes individuais salvem `ERROR` + stack trace sem interromper o restante do pipeline.
-- **Terminal Modal Hacker em Tempo Real**: Interface escura estilo IDE na Navbar para acompanhar a sincronização linha a linha com auto-scroll e resumo final.
-- **Tela de Histórico de Logs (`/logs`)**: Painel com alternância de abas (Logs e Ciclos), filtros rápidos multi-critério (severidade, 24+ fontes, períodos) e modal de stack trace com cópia instantânea para clipboard.
-
-## Next Milestone Goals
-
-- Definições de novos requisitos e roadmap para o próximo marco (use `/gsd-new-milestone`).
+1. **Ajuste Visual no `JobCard`**: Destaque dinâmico das palavras "Aprovada" (verde) e "Rejeitada"/"Descartada" (vermelho) no feedback da IA.
+2. **Hub Florianópolis & Filtro de Cidade**: HermesEvaluator aceitando Presencial e Híbrido em Florianópolis/Floripa com pontuação máxima, além de novo seletor/filtro de Cidade no `/jobs`.
+3. **Módulo Freelance (99Freelas 48h)**: Scraper de projetos em 99freelas com filtro exclusivo das stacks do perfil e trava temporal rigorosa de 48h.
+4. **10 Novas Fontes Tech**: GeekHunter, Nerdin, Programathor, Revelo, 99jobs, Sólides, RunTalent, Empregare, Workana, Trampos.co.
