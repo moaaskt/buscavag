@@ -13,6 +13,7 @@ import {
   User,
 } from 'lucide-react';
 import { LoaderThree } from '@/components/ui/loader';
+import { CanvasText } from '@/components/ui/canvas-text';
 import {
   ResizableNavbarContainer,
   NavBody,
@@ -121,9 +122,22 @@ export function Navbar({
           <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400">
             <Compass className="h-4 w-4" />
           </div>
-          <span className="text-sm font-semibold tracking-tight text-zinc-900 dark:text-zinc-100">
-            Buscavag
-          </span>
+          <CanvasText
+            text="Buscavag"
+            className="text-sm font-semibold tracking-tight"
+            backgroundClassName="bg-zinc-900 dark:bg-zinc-100"
+            colors={[
+              "#10b981",
+              "#06b6d4",
+              "#3b82f6",
+              "#8b5cf6",
+              "#34d399",
+              "#38bdf8",
+            ]}
+            lineGap={4}
+            lineWidth={1.2}
+            animationDuration={8}
+          />
           <span className="rounded border border-zinc-200 dark:border-zinc-800 bg-zinc-100 dark:bg-zinc-900 px-1 py-0.5 text-[8px] font-mono font-medium text-zinc-500 dark:text-zinc-400 uppercase">
             v2.4
           </span>
@@ -150,9 +164,22 @@ export function Navbar({
               <Compass className="h-4 w-4" />
             </div>
             <div className="flex items-center gap-1.5">
-              <span className="text-sm font-semibold tracking-tight text-zinc-900 dark:text-zinc-100">
-                Buscavag
-              </span>
+              <CanvasText
+                text="Buscavag"
+                className="text-sm font-semibold tracking-tight"
+                backgroundClassName="bg-zinc-900 dark:bg-zinc-100"
+                colors={[
+                  "#10b981",
+                  "#06b6d4",
+                  "#3b82f6",
+                  "#8b5cf6",
+                  "#34d399",
+                  "#38bdf8",
+                ]}
+                lineGap={4}
+                lineWidth={1.2}
+                animationDuration={8}
+              />
               <span className="rounded border border-zinc-200 dark:border-zinc-800 bg-zinc-100 dark:bg-zinc-900 px-1.5 py-0.5 text-[9px] font-mono font-medium text-zinc-500 dark:text-zinc-400 uppercase">
                 v2.4 Pro
               </span>
