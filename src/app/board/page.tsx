@@ -11,7 +11,6 @@ import {
   MessageSquare,
   Trophy,
   Ban,
-  SlidersHorizontal,
   FolderOpen,
 } from 'lucide-react';
 
@@ -250,15 +249,15 @@ export default function KanbanBoardPage() {
         </div>
       </div>
 
-      {/* Kanban Board Grid */}
+      {/* Kanban Board Grid: 5 equal columns with uniform distribution */}
       {loading ? (
         <div className="p-16 text-center text-zinc-500 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/40">
           <RefreshCw className="w-6 h-6 animate-spin mx-auto mb-3 text-zinc-400" />
           <p className="font-mono text-xs">Carregando quadro de candidaturas...</p>
         </div>
       ) : (
-        <div className="overflow-x-auto pb-6">
-          <div className="flex items-start gap-4 min-w-[1100px] select-none">
+        <div className="w-full overflow-x-auto pb-6">
+          <div className="grid grid-cols-5 gap-3.5 min-w-[1000px] select-none items-stretch">
             {COLUMNS.map((col) => {
               const colJobs = jobs.filter(
                 (j) => (j.applicationStatus || 'pending') === col.id
@@ -272,33 +271,33 @@ export default function KanbanBoardPage() {
                   onDragOver={(e) => handleDragOver(e, col.id)}
                   onDragLeave={handleDragLeave}
                   onDrop={(e) => handleDrop(e, col.id)}
-                  className={`flex-1 flex flex-col rounded-xl p-3 bg-zinc-50/60 dark:bg-zinc-900/50 border transition-colors min-h-[560px] ${
+                  className={`w-full min-w-0 flex flex-col rounded-xl p-3 bg-zinc-50/60 dark:bg-zinc-900/50 border transition-colors min-h-[580px] ${
                     isOver
                       ? 'border-emerald-500/60 bg-emerald-500/5'
                       : 'border-zinc-200 dark:border-zinc-800/80'
                   }`}
                 >
                   {/* Column Header */}
-                  <div className="flex items-center justify-between pb-3 px-1 border-b border-zinc-200 dark:border-zinc-800/80 mb-3">
-                    <div className="flex items-center gap-2">
-                      <Icon className="w-3.5 h-3.5 text-zinc-500 dark:text-zinc-400" />
-                      <span className="text-xs font-semibold text-zinc-800 dark:text-zinc-200 tracking-tight">
+                  <div className="flex items-center justify-between pb-2.5 px-1 border-b border-zinc-200 dark:border-zinc-800/80 mb-3 min-w-0">
+                    <div className="flex items-center gap-1.5 min-w-0">
+                      <Icon className="w-3.5 h-3.5 text-zinc-500 dark:text-zinc-400 shrink-0" />
+                      <span className="text-xs font-semibold text-zinc-800 dark:text-zinc-200 tracking-tight truncate">
                         {col.title}
                       </span>
                     </div>
-                    <span className="font-mono text-[11px] font-medium px-2 py-0.5 rounded bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 border border-zinc-200 dark:border-zinc-700/60">
+                    <span className="font-mono text-[11px] font-medium px-1.5 py-0.5 rounded bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 border border-zinc-200 dark:border-zinc-700/60 shrink-0">
                       {colJobs.length}
                     </span>
                   </div>
 
                   {/* Cards Container */}
-                  <div className="flex-1 flex flex-col gap-2.5 overflow-y-auto max-h-[72vh] pr-0.5">
+                  <div className="flex-1 flex flex-col gap-2.5 overflow-y-auto max-h-[72vh] min-w-0 pr-0.5">
                     {colJobs.map((job) => (
                       <div
                         key={job.id}
                         draggable
                         onDragStart={(e) => handleDragStart(e, job.id)}
-                        className="cursor-grab active:cursor-grabbing transform transition-transform"
+                        className="cursor-grab active:cursor-grabbing transform transition-transform w-full min-w-0"
                       >
                         <JobCard
                           job={job}
@@ -309,10 +308,10 @@ export default function KanbanBoardPage() {
                     ))}
 
                     {colJobs.length === 0 && (
-                      <div className="h-36 rounded-xl border border-dashed border-zinc-300 dark:border-zinc-800 flex flex-col items-center justify-center p-4 text-center bg-zinc-100/30 dark:bg-zinc-900/20 text-zinc-500 dark:text-zinc-500">
+                      <div className="flex-1 w-full min-h-[220px] rounded-xl border border-dashed border-zinc-300 dark:border-zinc-800/80 flex flex-col items-center justify-center p-4 text-center bg-zinc-100/30 dark:bg-zinc-900/20 text-zinc-400 dark:text-zinc-600">
                         <FolderOpen className="w-5 h-5 text-zinc-400 dark:text-zinc-600 mb-1.5 opacity-60" />
                         <p className="font-mono text-[11px] leading-relaxed">
-                          Nenhuma vaga nesta etapa.
+                          Nenhuma vaga nesta etapa
                         </p>
                         <span className="font-mono text-[10px] text-zinc-400 dark:text-zinc-600 mt-0.5">
                           Arraste um card para cá
