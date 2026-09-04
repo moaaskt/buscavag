@@ -325,6 +325,9 @@ export default function JobsPage() {
               className="w-full h-9 px-2.5 bg-zinc-50 dark:bg-zinc-800/80 rounded-lg border border-zinc-200 dark:border-zinc-700/60 text-xs text-zinc-900 dark:text-zinc-100 focus:outline-none focus:border-zinc-400 dark:focus:border-zinc-600 transition-colors cursor-pointer"
             >
               <option value="all">Todas as Fontes (26+)</option>
+              <optgroup label="Freelance & Projetos">
+                <option value="99freelas">99Freelas (Projetos &lt; 48h)</option>
+              </optgroup>
               <optgroup label="Principais">
                 <option value="linkedin">LinkedIn</option>
                 <option value="gupy">Gupy</option>
@@ -336,6 +339,7 @@ export default function JobsPage() {
                 <option value="remotar">Remotar</option>
                 <option value="telegram">Telegram</option>
               </optgroup>
+
               <optgroup label="Regionais SC">
                 <option value="sao_jose">São José Empregos</option>
                 <option value="vagas_sc">Vagas SC</option>

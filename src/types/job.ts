@@ -28,7 +28,10 @@ export enum PlatformSource {
   QUICKIN = 'quickin',
   RECRUTEI_JOBS = 'recrutei_jobs',
   PANDAPE = 'pandape',
+  // Freelance
+  FREELAS99 = '99freelas',
 }
+
 
 export const RawJobSchema = z.object({
   title: z.string().min(1),

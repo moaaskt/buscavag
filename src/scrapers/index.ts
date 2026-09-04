@@ -26,6 +26,9 @@ import { RecruteiEmpregosScraper } from './recruteiEmpregos.js';
 import { QuickinScraper } from './quickin.js';
 import { RecruteiJobsScraper } from './recruteiJobs.js';
 import { PandapeScraper } from './pandape.js';
+// Freelance
+import { Freelas99Scraper } from './99freelas.js';
+
 
 import { RawJob } from '../types/job.js';
 import { TelegramNotifier } from '../services/telegramNotifier.js';
@@ -82,7 +85,10 @@ export class ScraperOrchestrator {
       new QuickinScraper(),
       new RecruteiJobsScraper(),
       new PandapeScraper(),
+      // Freelance
+      new Freelas99Scraper(),
     ];
+
     this.notifier = notifier || new TelegramNotifier();
     this.concurrency = options?.concurrency || 5;
     this.timeoutPerScraperMs = options?.timeoutPerScraperMs || 45000;
