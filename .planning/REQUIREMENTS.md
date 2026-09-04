@@ -25,7 +25,7 @@ O Milestone 7 introduz uma camada completa de **observabilidade em tempo real**,
 
 ### 3. Painel de Histórico de Logs & Gestão de Erros
 
-- [ ] **HST-01**: Rota API de Consulta de Logs — Criar rota `GET /api/scraper/logs` com paginação e filtros (`level`, `scraper_name`, `run_id`, `dateRange`).
-- [ ] **HST-02**: Tela / Aba de Histórico de Logs (`/logs`) — Criar página dedicada ou aba no dashboard com listagem tabular dos logs históricos das execuções de scraping.
-- [ ] **HST-03**: Filtros Rápidos de Diagnóstico — Permitir filtrar rapidamente por Nível (Apenas Erros, Alertas, Info), por Fonte (InfoJobs, Gupy, LinkedIn, etc.) e período.
-- [ ] **HST-04**: Detalhes do Erro & Copiar Stack Trace — Modal ou drawer expansível para inspecionar `details`/stack trace de logs com nível ERROR, acompanhado de botão "Copiar Log".
+- [x] **HST-01**: Rota API de Consulta de Logs — Criar rota `GET /api/scraper/logs` com paginação e filtros (`level`, `scraper_name`, `run_id`, `dateRange`).
+- [x] **HST-02**: Tela / Aba de Histórico de Logs (`/logs`) — Criar página dedicada ou aba no dashboard com listagem tabular dos logs históricos das execuções de scraping.
+- [x] **HST-03**: Filtros Rápidos de Diagnóstico — Permitir filtrar rapidamente por Nível (Apenas Erros, Alertas, Info), por Fonte (InfoJobs, Gupy, LinkedIn, etc.) e período.
+- [x] **HST-04**: Detalhes do Erro & Copiar Stack Trace — Modal ou drawer expansível para inspecionar `details`/stack trace de logs com nível ERROR, acompanhado de botão "Copiar Log".

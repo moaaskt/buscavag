@@ -62,6 +62,12 @@ export function Navbar({
       icon: KanbanSquare,
       active: pathname.startsWith('/board'),
     },
+    {
+      name: 'Logs & Auditoria',
+      link: '/logs',
+      icon: RotateCw,
+      active: pathname.startsWith('/logs'),
+    },
   ];
 
   const handleSync = async () => {
@@ -159,6 +165,12 @@ export function Navbar({
       href: '/board',
       icon: <KanbanSquare className="h-full w-full" />,
       active: pathname.startsWith('/board'),
+    },
+    {
+      title: 'Logs',
+      href: '/logs',
+      icon: <RotateCw className="h-full w-full" />,
+      active: pathname.startsWith('/logs'),
     },
     {
       title: isPurging ? 'Purgando...' : 'Purgar Não-Tech',
