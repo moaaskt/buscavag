@@ -6,16 +6,28 @@ export const dynamic = 'force-dynamic';
 
 export async function POST(request: NextRequest) {
   try {
-    // Get the project root directory (assuming this API route is built inside .next/server/...)
-    // A safer way is to just use process.cwd() since Next.js runs from the project root.
+    let runId = '';
+    try {
+      const body = await request.json();
+      runId = body?.runId || '';
+    } catch {
+      // Body vazio é aceitável
+    }
+
     const cwd = process.cwd();
 
+    // Passa o RUN_ID via variável de ambiente para unificar logs do ciclo
+    const env = {
+      ...process.env,
+      ...(runId ? { SCRAPER_RUN_ID: runId } : {}),
+    };
+
     // Spawn the scraper process detached so it runs in the background
-    // We run `npm run start` which is mapped to `tsx src/index.ts`
     const child = spawn('npm', ['run', 'start'], {
       cwd,
       detached: true,
-      stdio: 'ignore', // Ignore stdio to allow it to run completely independently
+      stdio: 'ignore',
+      env,
     });
 
     // Unref the child process so the main Node.js process doesn't wait for it
@@ -23,6 +35,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
+      runId,
       message: 'Scraper iniciado em background com sucesso.',
     });
   } catch (error) {

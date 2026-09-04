@@ -37,6 +37,16 @@ export function initDatabase() {
       notified INTEGER DEFAULT 0,
       created_at TEXT NOT NULL
     );
+
+    CREATE TABLE IF NOT EXISTS scraper_logs (
+      id TEXT PRIMARY KEY,
+      run_id TEXT NOT NULL,
+      scraper_name TEXT NOT NULL,
+      level TEXT NOT NULL,
+      message TEXT NOT NULL,
+      details TEXT,
+      created_at TEXT NOT NULL
+    );
   `);
 
   // Migração automática para bancos já existentes
@@ -68,6 +78,10 @@ export function initDatabase() {
       CREATE INDEX IF NOT EXISTS idx_jobs_platform ON jobs(platform);
       CREATE INDEX IF NOT EXISTS idx_jobs_notified ON jobs(notified);
       CREATE INDEX IF NOT EXISTS idx_jobs_app_status ON jobs(application_status);
+      CREATE INDEX IF NOT EXISTS idx_logs_run_id ON scraper_logs(run_id);
+      CREATE INDEX IF NOT EXISTS idx_logs_level ON scraper_logs(level);
+      CREATE INDEX IF NOT EXISTS idx_logs_scraper_name ON scraper_logs(scraper_name);
+      CREATE INDEX IF NOT EXISTS idx_logs_created_at ON scraper_logs(created_at);
     `);
   } catch (err) {
     console.warn('[DB Migration] Aviso ao criar índices:', (err as Error).message);
