@@ -12,7 +12,9 @@ export interface JobFilterOptions {
   search?: string;
   onlyApproved?: boolean;
   period?: string;
+  location?: string;
 }
+
 
 export interface DashboardStats {
   totalJobs: number;
@@ -215,7 +217,24 @@ export class JobRepository {
       }
     }
 
+    if (filters?.location && filters.location !== 'all') {
+      const loc = filters.location.trim().toLowerCase();
+      if (loc === 'remoto') {
+        sql += " AND (LOWER(location) LIKE '%remoto%' OR LOWER(location) LIKE '%remote%' OR LOWER(location) LIKE '%home office%' OR LOWER(location) LIKE '%teletrabalho%' OR LOWER(location) LIKE '%brasil%' OR location IS NULL OR location = '')";
+      } else if (loc === 'florianopolis' || loc === 'floripa') {
+        sql += " AND (LOWER(location) LIKE '%florianópolis%' OR LOWER(location) LIKE '%florianopolis%' OR LOWER(location) LIKE '%floripa%')";
+      } else if (loc === 'palhoca') {
+        sql += " AND (LOWER(location) LIKE '%palhoça%' OR LOWER(location) LIKE '%palhoca%')";
+      } else if (loc === 'sao_jose') {
+        sql += " AND (LOWER(location) LIKE '%são josé%' OR LOWER(location) LIKE '%sao jose%') AND LOWER(location) NOT LIKE '%campos%'";
+      } else {
+        sql += ' AND LOWER(location) LIKE ?';
+        params.push(`%${loc}%`);
+      }
+    }
+
     sql += ' ORDER BY overall_score DESC, published_at DESC';
+
 
     const stmt = db.prepare(sql);
     const rows = stmt.all(...params) as any[];

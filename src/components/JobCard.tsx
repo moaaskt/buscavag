@@ -263,11 +263,38 @@ export function JobCard({
         <div className="pt-1 border-t border-zinc-100 dark:border-zinc-800/40 flex items-center gap-1.5 min-w-0">
           <Sparkles className="w-3.5 h-3.5 text-zinc-400 dark:text-zinc-500 shrink-0" />
           <p className="font-mono text-[11px] text-zinc-500 dark:text-zinc-400 line-clamp-1 truncate">
-            {job.aiReasoning}
+            {renderHighlightedReasoning(job.aiReasoning)}
           </p>
         </div>
       )}
     </div>
   );
 }
+
+function renderHighlightedReasoning(text: string) {
+  if (!text) return null;
+
+  // Regex para capturar palavras-chave de aprovação e rejeição
+  const parts = text.split(/(\b(?:Aprovada|aprovada|Rejeitada|rejeitada|Descartada|descartada)\b)/g);
+
+  return parts.map((part, index) => {
+    const lower = part.toLowerCase();
+    if (lower === 'aprovada') {
+      return (
+        <span key={index} className="text-emerald-600 dark:text-emerald-400 font-semibold">
+          {part}
+        </span>
+      );
+    }
+    if (lower === 'rejeitada' || lower === 'descartada') {
+      return (
+        <span key={index} className="text-rose-600 dark:text-red-400 font-semibold">
+          {part}
+        </span>
+      );
+    }
+    return <span key={index}>{part}</span>;
+  });
+}
+
 

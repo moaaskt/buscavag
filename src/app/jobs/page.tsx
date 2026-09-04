@@ -31,6 +31,7 @@ export default function JobsPage() {
   const [category, setCategory] = useState('all');
   const [status, setStatus] = useState('all');
   const [period, setPeriod] = useState('all');
+  const [locationFilter, setLocationFilter] = useState('all');
   const [minScore, setMinScore] = useState(0);
   const [onlyApproved, setOnlyApproved] = useState(false);
 
@@ -47,6 +48,7 @@ export default function JobsPage() {
       if (category !== 'all') params.set('category', category);
       if (status !== 'all') params.set('status', status);
       if (period !== 'all') params.set('period', period);
+      if (locationFilter !== 'all') params.set('location', locationFilter);
       if (minScore > 0) params.set('minScore', minScore.toString());
       if (onlyApproved) params.set('onlyApproved', 'true');
 
@@ -66,7 +68,7 @@ export default function JobsPage() {
 
   useEffect(() => {
     fetchJobs();
-  }, [platform, category, status, period, minScore, onlyApproved]);
+  }, [platform, category, status, period, locationFilter, minScore, onlyApproved]);
 
   // Listen for cross-component refetch events (e.g. Navbar scraper trigger)
   useEffect(() => {
@@ -75,7 +77,8 @@ export default function JobsPage() {
     };
     window.addEventListener('buscavag:refetch-jobs', handleRefetch);
     return () => window.removeEventListener('buscavag:refetch-jobs', handleRefetch);
-  }, [platform, category, status, period, minScore, onlyApproved, search]);
+  }, [platform, category, status, period, locationFilter, minScore, onlyApproved, search]);
+
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -224,12 +227,14 @@ export default function JobsPage() {
     setCategory('all');
     setStatus('all');
     setPeriod('all');
+    setLocationFilter('all');
     setMinScore(0);
     setOnlyApproved(false);
   };
 
   const hasActiveFilters =
-    search || platform !== 'all' || category !== 'all' || status !== 'all' || period !== 'all' || minScore > 0 || onlyApproved;
+    search || platform !== 'all' || category !== 'all' || status !== 'all' || period !== 'all' || locationFilter !== 'all' || minScore > 0 || onlyApproved;
+
 
   // Pagination slice
   const totalItems = jobs.length;
@@ -308,7 +313,7 @@ export default function JobsPage() {
         </form>
 
         {/* Filters Row */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 items-center">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-7 gap-3 items-center">
           {/* Plataforma */}
           <div className="flex flex-col gap-1">
             <label className="font-mono text-[11px] uppercase tracking-wider text-zinc-500 dark:text-zinc-400 font-medium">
@@ -350,6 +355,24 @@ export default function JobsPage() {
                 <option value="recrutei_jobs">PeoplePlan (Recrutei)</option>
                 <option value="pandape">PandaPé ATS</option>
               </optgroup>
+            </select>
+          </div>
+
+          {/* Localização / Cidade */}
+          <div className="flex flex-col gap-1">
+            <label className="font-mono text-[11px] uppercase tracking-wider text-zinc-500 dark:text-zinc-400 font-medium">
+              Cidade / Local
+            </label>
+            <select
+              value={locationFilter}
+              onChange={(e) => setLocationFilter(e.target.value)}
+              className="w-full h-9 px-2.5 bg-zinc-50 dark:bg-zinc-800/80 rounded-lg border border-zinc-200 dark:border-zinc-700/60 text-xs text-zinc-900 dark:text-zinc-100 focus:outline-none focus:border-zinc-400 dark:focus:border-zinc-600 transition-colors cursor-pointer"
+            >
+              <option value="all">Todas as Cidades</option>
+              <option value="remoto">🌐 100% Remoto</option>
+              <option value="florianopolis">📍 Florianópolis / Floripa (SC)</option>
+              <option value="sao_jose">📍 São José (SC)</option>
+              <option value="palhoca">📍 Palhoça (SC)</option>
             </select>
           </div>
 
@@ -441,6 +464,7 @@ export default function JobsPage() {
             </label>
           </div>
         </div>
+
       </div>
 
       {/* Results Counter & Helper Line */}

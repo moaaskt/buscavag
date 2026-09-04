@@ -13,6 +13,7 @@ export async function GET(request: NextRequest) {
     const search = searchParams.get('search') || undefined;
     const onlyApproved = searchParams.get('onlyApproved') === 'true';
     const period = searchParams.get('period') || undefined;
+    const location = searchParams.get('location') || undefined;
 
     const repo = new JobRepository();
     const jobs = repo.getAllJobs({
@@ -23,7 +24,9 @@ export async function GET(request: NextRequest) {
       search,
       onlyApproved,
       period,
+      location,
     });
+
 
     return NextResponse.json({ success: true, count: jobs.length, data: jobs });
   } catch (error) {
