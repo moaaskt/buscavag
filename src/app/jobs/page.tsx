@@ -67,6 +67,15 @@ export default function JobsPage() {
     fetchJobs();
   }, [platform, category, status, period, minScore, onlyApproved]);
 
+  // Listen for cross-component refetch events (e.g. Navbar scraper trigger)
+  useEffect(() => {
+    const handleRefetch = () => {
+      fetchJobs();
+    };
+    window.addEventListener('buscavag:refetch-jobs', handleRefetch);
+    return () => window.removeEventListener('buscavag:refetch-jobs', handleRefetch);
+  }, [platform, category, status, period, minScore, onlyApproved, search]);
+
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     fetchJobs();

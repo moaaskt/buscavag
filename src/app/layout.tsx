@@ -5,6 +5,7 @@ import { cn } from "@/lib/utils";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Navbar } from "@/components/Navbar";
 import { AuroraBackground } from "@/components/ui/aurora-background";
+import { SyncToast } from "@/components/SyncToast";
 
 const geist = Geist({ subsets: ['latin'], variable: '--font-sans' });
 
@@ -36,6 +37,7 @@ export default function RootLayout({
               </div>
             </footer>
           </AuroraBackground>
+          <SyncToast />
         </TooltipProvider>
       </body>
     </html>

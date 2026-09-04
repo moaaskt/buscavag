@@ -60,13 +60,34 @@ export function Navbar({
   ];
 
   const handleSync = async () => {
+    if (isSyncing) return;
     setIsSyncing(true);
     try {
-      await fetch('/api/stats');
+      const res = await fetch('/api/scraper/trigger', { method: 'POST' });
+      const json = await res.json();
+
+      // Notify the toast
+      window.dispatchEvent(
+        new CustomEvent('buscavag:sync-done', {
+          detail: { success: json.success, message: json.message || json.error },
+        })
+      );
+
+      // If on /jobs page, trigger a silent refetch after a short delay
+      if (json.success) {
+        setTimeout(() => {
+          window.dispatchEvent(new CustomEvent('buscavag:refetch-jobs'));
+        }, 2500);
+      }
     } catch (e) {
-      console.error(e);
+      console.error('[Navbar sync error]:', e);
+      window.dispatchEvent(
+        new CustomEvent('buscavag:sync-done', {
+          detail: { success: false, message: 'Erro de conexão ao iniciar scraper.' },
+        })
+      );
     } finally {
-      setTimeout(() => setIsSyncing(false), 1000);
+      setIsSyncing(false);
     }
   };
 
@@ -95,10 +116,10 @@ export function Navbar({
       active: pathname.startsWith('/board'),
     },
     {
-      title: isSyncing ? 'Sincronizando...' : 'Sincronizar',
+      title: isSyncing ? 'Executando Scraper...' : 'Sincronizar',
       href: '#',
       onClick: handleSync,
-      icon: <FlashIcon loading={isSyncing} className={cn("h-full w-full", isSyncing ? "text-emerald-500" : "")} />,
+      icon: <FlashIcon loading={isSyncing} className={cn("h-full w-full", isSyncing ? "text-emerald-500 animate-pulse" : "")} />,
     },
     {
       title: isDarkMode ? 'Modo Claro' : 'Modo Escuro',
@@ -200,14 +221,20 @@ export function Navbar({
               onClick={handleSync}
               disabled={isSyncing}
               type="button"
-              className="flex items-center gap-1.5 rounded-lg border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900 px-2.5 py-1.5 text-xs font-medium text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 hover:text-zinc-900 dark:hover:text-zinc-100 active:scale-95 transition-all disabled:opacity-50 shadow-sm"
-              title="Sincronizar dados agora"
+              className={`flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-xs font-medium transition-all active:scale-95 shadow-sm disabled:cursor-not-allowed ${
+                isSyncing
+                  ? 'border-emerald-700/60 bg-emerald-950/40 text-emerald-400 opacity-90'
+                  : 'border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 hover:text-zinc-900 dark:hover:text-zinc-100'
+              }`}
+              title={isSyncing ? 'Scraper em execução...' : 'Sincronizar dados agora'}
             >
-              <FlashIcon 
-                loading={isSyncing} 
-                className={cn("w-4 h-4", isSyncing ? "text-emerald-500" : "text-zinc-400")} 
+              <FlashIcon
+                loading={isSyncing}
+                className={cn('w-4 h-4', isSyncing ? 'text-emerald-400 animate-pulse' : 'text-zinc-400')}
               />
-              <span className="hidden sm:inline">Sincronizar</span>
+              <span className="hidden sm:inline">
+                {isSyncing ? 'Executando Scraper...' : 'Sincronizar'}
+              </span>
             </button>
 
             {/* Alternador de Tema */}
