@@ -46,8 +46,8 @@
 - Criar migração e tabela `scraper_logs` no banco de dados SQLite (`id`, `run_id`, `scraper_name`, `level`, `message`, `details`, `created_at`).
 - Implementar `LogRepository` com métodos `insertLog`, `getLogs` e `getRecentRuns`.
 - Implementar `ScraperLogger` / canal global de eventos para comunicação entre processos/pipeline e API.
-- Criar endpoint SSE `GET /api/scraper/stream` para streaming de eventos em tempo real.
-- Instrumentar `ScraperOrchestrator` e pipeline principal para emitir logs detalhados (INFO, WARN, ERROR).
+- Criar endpoint SSE `GET /api/scraper/stream` com `ReadableStream` e headers anti-buffering (`Content-Type: text/event-stream`, `Cache-Control: no-cache`, `Connection: keep-alive`).
+- Instrumentar `ScraperOrchestrator` com `try/catch` individual por scraper para isolamento de falhas, registro de stack trace e emissão de logs estruturados (INFO, WARN, ERROR).
 - **Requirements:** LOG-01, LOG-02, LOG-03, LOG-04
 
 ## Phase 27: Console / Terminal em Tempo Real na UI (Navbar + Drawer/Modal)

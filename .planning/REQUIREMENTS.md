@@ -13,8 +13,8 @@ O Milestone 7 introduz uma camada completa de **observabilidade em tempo real**,
 
 - [ ] **LOG-01**: Tabela de Logs no SQLite — Criar tabela `scraper_logs` (`id`, `run_id`, `scraper_name`, `level`: 'INFO'|'WARN'|'ERROR', `message`, `details`, `created_at`) com métodos de inserção e consulta no repositório (`LogRepository`).
 - [ ] **LOG-02**: Event Emitter & Logger Centralizado — Criar classe/serviço `ScraperLogger` que emite eventos em memória e persiste logs estruturados no banco.
-- [ ] **LOG-03**: Endpoint SSE de Streaming — Criar rota `GET /api/scraper/stream` via **Server-Sent Events (SSE)** que transmite os eventos de scraping em tempo real para clientes conectados.
-- [ ] **LOG-04**: Instrumentação dos Scrapers — Atualizar orquestrador (`ScraperOrchestrator`) e conectores para emitir logs granulares durante todo o ciclo (início de fonte, vagas coletadas, descartes de filtros, erros de requisição e sumário final).
+- [ ] **LOG-03**: Endpoint SSE de Streaming — Criar rota `GET /api/scraper/stream` via **Server-Sent Events (SSE)** usando `ReadableStream` no Next.js App Router com headers explícitos (`Content-Type: text/event-stream`, `Cache-Control: no-cache`, `Connection: keep-alive`) para evitar buffering e transmitir eventos de scraping em tempo real.
+- [ ] **LOG-04**: Instrumentação & Resiliência dos Scrapers — Atualizar `ScraperOrchestrator` e pipeline para emitir logs granulares (INFO, WARN, ERROR). Cada scraper deve ser isolado com `try/catch` individual para que falhas em uma fonte persistam erro e stack trace em `scraper_logs` sem interromper a execução das demais 25+ fontes.
 
 ### 2. Console / Terminal em Tempo Real no Frontend (UI/UX)
 
