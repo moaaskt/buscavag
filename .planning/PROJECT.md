@@ -24,6 +24,9 @@
 - **Banco de Dados Purge API & SQL**: `JobRepository.purgeNonTech()` e rota `POST /api/jobs/purge-non-tech`.
 - **UI de Purga na Navbar**: Botão rápido "Purgar Não-Tech" Desktop & Mobile com modal SweetAlert2 e toast de confirmação.
 
-## Next Milestone Goals
+## Next Milestone Goals — v7.0
 
-- Definições de novos requisitos e roadmap para o próximo marco (use `/gsd-new-milestone`).
+**Observabilidade, Streaming de Logs em Tempo Real e Gestão de Erros dos Scrapers**
+- **Infraestrutura de Logs & Event Streaming**: Tabela `scraper_logs` no SQLite, endpoint de streaming via SSE (`/api/scraper/stream`), e adaptação dos scrapers com disparos estruturados de logs (INFO, WARN, ERROR).
+- **Console Terminal em Tempo Real (UI/UX)**: Modal/Drawer estilo Terminal Hacker escuro na Navbar com streaming SSE, auto-scroll, indicador de progresso por scraper/fonte e resumo final de execução.
+- **Painel de Histórico de Logs & Diagnóstico**: Página/Modal de histórico (`/logs`) com filtros por status, fonte e data, exibição de stack trace expansível e cópia de detalhes de erro.
