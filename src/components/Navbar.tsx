@@ -33,10 +33,11 @@ interface NavbarProps {
 }
 
 export function Navbar({
-  scrapersActiveCount = 26,
+  scrapersActiveCount = 35,
   userName = 'Moacir Neto',
   userRole = 'Full Stack Jr & IoT',
 }: NavbarProps) {
+
   const pathname = usePathname();
   const [isDarkMode, setIsDarkMode] = useState(true);
   const [isSyncing, setIsSyncing] = useState(false);

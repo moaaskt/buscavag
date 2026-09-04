@@ -28,9 +28,21 @@ export enum PlatformSource {
   QUICKIN = 'quickin',
   RECRUTEI_JOBS = 'recrutei_jobs',
   PANDAPE = 'pandape',
-  // Freelance
+  // Freelance & Projetos
   FREELAS99 = '99freelas',
+  WORKANA = 'workana',
+  // Novas Fontes Tech (Milestone 8)
+  GEEKHUNTER = 'geekhunter',
+  NERDIN = 'nerdin',
+  REVELO = 'revelo',
+  NOVENTA_NOVE_JOBS = '99jobs',
+  SOLIDES = 'solides',
+  RUNTALENT = 'runtalent',
+  EMPREGARE = 'empregare',
+  TRAMPOS = 'trampos',
 }
+
+
 
 
 export const RawJobSchema = z.object({

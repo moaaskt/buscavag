@@ -256,8 +256,9 @@ export default function JobsPage() {
             <span className="w-1 h-1 rounded-full bg-zinc-300 dark:bg-zinc-700"></span>
             <span className="font-mono text-xs text-emerald-600 dark:text-emerald-400 flex items-center gap-1.5 font-medium">
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 dark:bg-emerald-400"></span>
-              26+ Fontes Integradas
+              35+ Fontes Integradas
             </span>
+
           </div>
           <h1 className="text-2xl md:text-3xl lg:text-4xl font-semibold tracking-tight text-zinc-900 dark:text-zinc-100">
             Explorador Inteligente de Vagas
@@ -324,41 +325,52 @@ export default function JobsPage() {
               onChange={(e) => setPlatform(e.target.value)}
               className="w-full h-9 px-2.5 bg-zinc-50 dark:bg-zinc-800/80 rounded-lg border border-zinc-200 dark:border-zinc-700/60 text-xs text-zinc-900 dark:text-zinc-100 focus:outline-none focus:border-zinc-400 dark:focus:border-zinc-600 transition-colors cursor-pointer"
             >
-              <option value="all">Todas as Fontes (26+)</option>
+              <option value="all">Todas as Fontes (35+)</option>
               <optgroup label="Freelance & Projetos">
                 <option value="99freelas">99Freelas (Projetos &lt; 48h)</option>
+                <option value="workana">Workana (Projetos Tech)</option>
               </optgroup>
-              <optgroup label="Principais">
+              <optgroup label="Tech Especializadas">
+                <option value="geekhunter">GeekHunter</option>
+                <option value="revelo">Revelo</option>
+                <option value="programathor">Programathor</option>
+                <option value="trampos">Trampos.co</option>
+                <option value="runtalent">RunTalent</option>
+                <option value="99jobs">99jobs</option>
+                <option value="solides">Sólides Vagas</option>
+              </optgroup>
+              <optgroup label="Principais & ATSs">
                 <option value="linkedin">LinkedIn</option>
                 <option value="gupy">Gupy</option>
                 <option value="indeed">Indeed</option>
                 <option value="glassdoor">Glassdoor</option>
                 <option value="catho">Catho</option>
                 <option value="google_jobs">Google Jobs</option>
-                <option value="programathor">Programathor</option>
                 <option value="remotar">Remotar</option>
                 <option value="telegram">Telegram</option>
+                <option value="quickin">Quickin ATS</option>
+                <option value="recrutei_jobs">PeoplePlan (Recrutei)</option>
+                <option value="pandape">PandaPé ATS</option>
               </optgroup>
-
               <optgroup label="Regionais SC">
+                <option value="nerdin">Nerdin (TI SC)</option>
                 <option value="sao_jose">São José Empregos</option>
                 <option value="vagas_sc">Vagas SC</option>
                 <option value="vagas_floripa">Vagas Floripa</option>
                 <option value="emprega_palhoca">Emprega Palhoça</option>
               </optgroup>
-              <optgroup label="Nacionais & ATSs">
+              <optgroup label="Nacionais">
                 <option value="infojobs">Infojobs</option>
                 <option value="chawork">Chawork</option>
+                <option value="empregare">Empregare</option>
                 <option value="trabalha_brasil">Trabalha Brasil</option>
                 <option value="bne">BNE Empregos</option>
                 <option value="bebee">beBee</option>
                 <option value="empregos">Empregos.com.br</option>
                 <option value="recruta_simples">Recruta Simples</option>
                 <option value="recrutei_empregos">Recrutei Empregos</option>
-                <option value="quickin">Quickin ATS</option>
-                <option value="recrutei_jobs">PeoplePlan (Recrutei)</option>
-                <option value="pandape">PandaPé ATS</option>
               </optgroup>
+
             </select>
           </div>
 
