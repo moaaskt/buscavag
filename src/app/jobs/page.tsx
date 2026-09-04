@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { ProcessedJob } from '@/types/job';
+import { confirmDelete } from '@/lib/alerts';
 import { JobModal } from '@/components/JobModal';
 import { FloatingActionBar } from '@/components/FloatingActionBar';
 import { JobListHoverEffect } from '@/components/ui/card-hover-effect';
@@ -135,7 +136,12 @@ export default function JobsPage() {
   // Delete Individual
   const handleDeleteJob = async (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
-    if (!confirm('Deseja realmente excluir esta vaga?')) return;
+    const ok = await confirmDelete({
+      title: 'Excluir esta vaga?',
+      text: 'Esta ação não pode ser desfeita.',
+      confirmText: 'Sim, excluir',
+    });
+    if (!ok) return;
 
     try {
       const res = await fetch('/api/jobs', {
@@ -160,7 +166,12 @@ export default function JobsPage() {
   const handleBulkDelete = async () => {
     const ids = Array.from(selectedIds);
     if (ids.length === 0) return;
-    if (!confirm(`Deseja realmente excluir as ${ids.length} vagas selecionadas?`)) return;
+    const ok = await confirmDelete({
+      title: `Excluir ${ids.length} ${ids.length === 1 ? 'vaga' : 'vagas'}?`,
+      text: `Você vai remover permanentemente ${ids.length} ${ids.length === 1 ? 'vaga selecionada' : 'vagas selecionadas'}. Esta ação não pode ser desfeita.`,
+      confirmText: `Sim, excluir ${ids.length === 1 ? 'vaga' : `${ids.length} vagas`}`,
+    });
+    if (!ok) return;
 
     setIsDeleting(true);
     try {
