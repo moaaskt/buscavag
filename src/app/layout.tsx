@@ -30,14 +30,11 @@ export default function RootLayout({
                 </div>
                 <div>
                   <div className="flex items-center gap-2">
-                    <span className="font-extrabold text-xl tracking-tight bg-gradient-to-r from-sky-400 via-indigo-300 to-white bg-clip-text text-transparent">
+                    <span className="font-bold text-xl tracking-tight text-zinc-100">
                       BUSCAVAG
                     </span>
-                    <span className="text-[10px] uppercase font-semibold px-2 py-0.5 rounded-full bg-sky-500/10 text-sky-400 border border-sky-500/20">
-                      AI v2.0
-                    </span>
                   </div>
-                  <p className="text-xs text-slate-400">Autonomous Job Intelligence & Board</p>
+                  <p className="text-xs text-zinc-400">Painel de Controle e Candidaturas</p>
                 </div>
               </Link>
 
