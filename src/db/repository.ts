@@ -144,6 +144,14 @@ export class JobRepository {
     return this.mapRowToJob(row);
   }
 
+  public deleteJobs(ids: string[]): boolean {
+    if (!ids || ids.length === 0) return false;
+    const placeholders = ids.map(() => '?').join(',');
+    const stmt = db.prepare(`DELETE FROM jobs WHERE id IN (${placeholders})`);
+    const result = stmt.run(...ids);
+    return result.changes > 0;
+  }
+
   public getAllJobs(filters?: JobFilterOptions): ProcessedJob[] {
     let sql = 'SELECT * FROM jobs WHERE 1=1';
     const params: any[] = [];
