@@ -1,5 +1,6 @@
 import { GoogleGenAI } from '@google/genai';
 import { RawJob } from '../types/job.js';
+import { matchesWhitelist } from '../config/jobFilters.js';
 
 export interface EvaluationResult {
   isJuniorFullStack: boolean;
@@ -92,14 +93,23 @@ Responda APENAS em formato JSON no seguinte modelo:
         },
       });
 
-      const content = response.text;
+        const content = response.text;
       if (content) {
         const parsed = JSON.parse(content);
-        const overallScore = Math.min(100, Math.max(0, Number(parsed.overallScore ?? parsed.score) || 0));
+        let overallScore = Math.min(100, Math.max(0, Number(parsed.overallScore ?? parsed.score) || 0));
         const stackScore = Math.min(100, Math.max(0, Number(parsed.stackScore) || 0));
         const seniorityScore = Math.min(100, Math.max(0, Number(parsed.seniorityScore) || 0));
         const locationScore = Math.min(100, Math.max(0, Number(parsed.locationScore ?? 100)));
-        const isApproved = Boolean(parsed.isJuniorFullStack) && overallScore >= matchThreshold && locationScore > 0;
+        let isApproved = Boolean(parsed.isJuniorFullStack) && overallScore >= matchThreshold && locationScore > 0;
+        let reasoning = String(parsed.reasoning || 'Avaliação via Hermes AI');
+
+        // Trava SCR-10: Se stackScore === 0 e nenhum termo tech no título, força score 0 e rejeição
+        const titleHasTech = matchesWhitelist(job.title).matched;
+        if (stackScore === 0 && !titleHasTech) {
+          overallScore = 0;
+          isApproved = false;
+          reasoning = `Rejeitada (Trava não-tech): Stack score zerado e título sem palavra-chave de tecnologia.`;
+        }
 
         return {
           isJuniorFullStack: isApproved,
@@ -111,7 +121,7 @@ Responda APENAS em formato JSON no seguinte modelo:
           category: String(parsed.category || 'Full Stack'),
           gaps: Array.isArray(parsed.gaps) ? parsed.gaps.map(String) : [],
           resumeTips: String(parsed.resumeTips || ''),
-          reasoning: String(parsed.reasoning || 'Avaliação via Hermes AI'),
+          reasoning,
         };
       }
     } catch (err) {
@@ -259,10 +269,15 @@ Responda APENAS em formato JSON no seguinte modelo:
     }
     overallScore = Math.min(100, Math.max(0, overallScore));
 
-    const isJuniorFullStack = overallScore >= matchThreshold && isLocationAccepted && seniorityScore >= 40;
+    let isJuniorFullStack = overallScore >= matchThreshold && isLocationAccepted && seniorityScore >= 40;
 
     let reasoning = '';
-    if (!isLocationAccepted) {
+    const titleHasTech = matchesWhitelist(job.title).matched;
+    if (stackScore === 0 && !titleHasTech) {
+      overallScore = 0;
+      isJuniorFullStack = false;
+      reasoning = 'Rejeitada via Heurística (Trava não-tech): Stack score zerado e título sem palavra-chave de tecnologia.';
+    } else if (!isLocationAccepted) {
       reasoning = `Rejeitada via Heurística: ${locationReason}.`;
     } else if (hasSenior && !hasJunior) {
       reasoning = 'Rejeitada via Heurística: Vaga com exigência de nível Pleno/Sênior/Lead.';

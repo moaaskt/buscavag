@@ -30,10 +30,12 @@ import { PandapeScraper } from './pandape.js';
 import { RawJob } from '../types/job.js';
 import { TelegramNotifier } from '../services/telegramNotifier.js';
 import { runWithConcurrencyLimit, withTimeout } from '../utils/concurrency.js';
+import { ScraperLogger } from '../services/scraperLogger.js';
 
 export interface OrchestratorOptions {
   concurrency?: number;
   timeoutPerScraperMs?: number;
+  logger?: ScraperLogger;
 }
 
 export interface ScraperExecutionMetric {
@@ -49,6 +51,7 @@ export class ScraperOrchestrator {
   private notifier: TelegramNotifier;
   private concurrency: number;
   private timeoutPerScraperMs: number;
+  private logger: ScraperLogger;
 
   constructor(notifier?: TelegramNotifier, options?: OrchestratorOptions) {
     this.scrapers = [
@@ -83,17 +86,27 @@ export class ScraperOrchestrator {
     this.notifier = notifier || new TelegramNotifier();
     this.concurrency = options?.concurrency || 5;
     this.timeoutPerScraperMs = options?.timeoutPerScraperMs || 45000;
+    this.logger = options?.logger || new ScraperLogger('Orchestrator');
   }
 
   async runAll(): Promise<RawJob[]> {
-    console.log(`[ScraperOrchestrator] Iniciando execução paralela de ${this.scrapers.length} scrapers (Concorrência: ${this.concurrency}, Timeout: ${this.timeoutPerScraperMs / 1000}s)...`);
+    this.logger.info(`Iniciando execução paralela de ${this.scrapers.length} scrapers (Concorrência: ${this.concurrency}, Timeout: ${this.timeoutPerScraperMs / 1000}s)...`, {
+      step: 'START',
+      data: { totalScrapers: this.scrapers.length, concurrency: this.concurrency },
+    });
+
     const startTime = Date.now();
     const metrics: ScraperExecutionMetric[] = [];
     const allJobs: RawJob[] = [];
 
     const results = await runWithConcurrencyLimit(this.scrapers, this.concurrency, async (scraper) => {
+      const scraperLogger = this.logger.forScraper(scraper.name);
       const scraperStart = Date.now();
-      console.log(`[ScraperOrchestrator] 🚀 Iniciando: ${scraper.name}...`);
+      
+      scraperLogger.info(`Buscando vagas em ${scraper.name}...`, {
+        step: 'START',
+        data: { scraper: scraper.name },
+      });
 
       try {
         const jobs = await withTimeout(
@@ -103,7 +116,10 @@ export class ScraperOrchestrator {
         );
 
         const durationMs = Date.now() - scraperStart;
-        console.log(`[ScraperOrchestrator] ✅ ${scraper.name} finalizado em ${(durationMs / 1000).toFixed(1)}s com ${jobs.length} vagas.`);
+        scraperLogger.info(`Finalizado em ${(durationMs / 1000).toFixed(1)}s com ${jobs.length} vagas encontradas.`, {
+          step: 'FINISH',
+          data: { scraper: scraper.name, durationMs, jobsFound: jobs.length },
+        });
 
         metrics.push({
           name: scraper.name,
@@ -116,7 +132,11 @@ export class ScraperOrchestrator {
       } catch (err) {
         const durationMs = Date.now() - scraperStart;
         const errorMsg = (err as Error).message || String(err);
-        console.error(`[ScraperOrchestrator] ⚠️ Falha isolada no scraper ${scraper.name} após ${(durationMs / 1000).toFixed(1)}s: ${errorMsg}`);
+        
+        // Log estruturado com level ERROR e stack trace
+        scraperLogger.error(`Falha no scraper ${scraper.name} após ${(durationMs / 1000).toFixed(1)}s: ${errorMsg}`, err, {
+          data: { scraper: scraper.name, durationMs },
+        });
 
         metrics.push({
           name: scraper.name,
@@ -141,7 +161,13 @@ export class ScraperOrchestrator {
     }
 
     const totalDuration = ((Date.now() - startTime) / 1000).toFixed(1);
-    console.log(`[ScraperOrchestrator] 🏁 Coleta paralela concluída em ${totalDuration}s. Total de ${allJobs.length} vagas coletadas.`);
+    const successCount = metrics.filter((m) => m.success).length;
+    const errorCount = metrics.filter((m) => !m.success).length;
+
+    this.logger.info(`Coleta concluída em ${totalDuration}s. Total de ${allJobs.length} vagas de ${successCount} fontes (${errorCount} falhas).`, {
+      step: 'FINISH',
+      data: { totalJobs: allJobs.length, successCount, errorCount, durationSeconds: Number(totalDuration) },
+    });
 
     return allJobs;
   }

@@ -11,9 +11,14 @@ import {
   KanbanSquare,
   LayoutDashboard,
   User,
+  Trash2,
 } from 'lucide-react';
 import { LoaderThree } from '@/components/ui/loader';
+import { FlashIcon } from '@/components/ui/flash-icon';
+import { cn } from '@/lib/utils';
 import { CanvasText } from '@/components/ui/canvas-text';
+import { confirmPurge } from '@/lib/alerts';
+import { ScraperTerminalModal } from '@/components/ScraperTerminalModal';
 import {
   ResizableNavbarContainer,
   NavBody,
@@ -35,6 +40,8 @@ export function Navbar({
   const pathname = usePathname();
   const [isDarkMode, setIsDarkMode] = useState(true);
   const [isSyncing, setIsSyncing] = useState(false);
+  const [isPurging, setIsPurging] = useState(false);
+  const [isTerminalOpen, setIsTerminalOpen] = useState(false);
 
   const navItems = [
     {
@@ -58,13 +65,74 @@ export function Navbar({
   ];
 
   const handleSync = async () => {
+    setIsTerminalOpen(true);
+    if (isSyncing) return;
     setIsSyncing(true);
     try {
-      await fetch('/api/stats');
+      const res = await fetch('/api/scraper/trigger', { method: 'POST' });
+      const json = await res.json();
+
+      // Notify the toast
+      window.dispatchEvent(
+        new CustomEvent('buscavag:sync-done', {
+          detail: { success: json.success, message: json.message || json.error },
+        })
+      );
+
+      // If on /jobs page, trigger a silent refetch after a short delay
+      if (json.success) {
+        setTimeout(() => {
+          window.dispatchEvent(new CustomEvent('buscavag:refetch-jobs'));
+        }, 2500);
+      }
     } catch (e) {
-      console.error(e);
+      console.error('[Navbar sync error]:', e);
+      window.dispatchEvent(
+        new CustomEvent('buscavag:sync-done', {
+          detail: { success: false, message: 'Erro de conexão ao iniciar scraper.' },
+        })
+      );
     } finally {
-      setTimeout(() => setIsSyncing(false), 1000);
+      setIsSyncing(false);
+    }
+  };
+
+  const handlePurge = async () => {
+    if (isPurging) return;
+    const confirmed = await confirmPurge();
+    if (!confirmed) return;
+
+    setIsPurging(true);
+    try {
+      const res = await fetch('/api/jobs/purge-non-tech', { method: 'POST' });
+      const json = await res.json();
+
+      window.dispatchEvent(
+        new CustomEvent('buscavag:purge-done', {
+          detail: {
+            success: json.success,
+            title: json.success ? 'Purga concluída!' : 'Falha na purga',
+            message: json.message || (json.success ? `${json.deletedCount} vagas não-tech removidas.` : json.error),
+          },
+        })
+      );
+
+      if (json.success) {
+        window.dispatchEvent(new CustomEvent('buscavag:refetch-jobs'));
+      }
+    } catch (e) {
+      console.error('[Navbar purge error]:', e);
+      window.dispatchEvent(
+        new CustomEvent('buscavag:purge-done', {
+          detail: {
+            success: false,
+            title: 'Falha na purga',
+            message: 'Erro de comunicação ao purgar vagas não-tech.',
+          },
+        })
+      );
+    } finally {
+      setIsPurging(false);
     }
   };
 
@@ -93,14 +161,16 @@ export function Navbar({
       active: pathname.startsWith('/board'),
     },
     {
-      title: isSyncing ? 'Sincronizando...' : 'Sincronizar',
+      title: isPurging ? 'Purgando...' : 'Purgar Não-Tech',
+      href: '#',
+      onClick: handlePurge,
+      icon: <Trash2 className={cn("h-full w-full", isPurging ? "text-rose-400 animate-spin" : "text-zinc-400 hover:text-rose-400")} />,
+    },
+    {
+      title: isSyncing ? 'Executando Scraper...' : 'Sincronizar',
       href: '#',
       onClick: handleSync,
-      icon: isSyncing ? (
-        <LoaderThree size={18} className="text-emerald-500" />
-      ) : (
-        <RotateCw className="h-full w-full" />
-      ),
+      icon: <FlashIcon loading={isSyncing} className={cn("h-full w-full", isSyncing ? "text-emerald-500 animate-pulse" : "")} />,
     },
     {
       title: isDarkMode ? 'Modo Claro' : 'Modo Escuro',
@@ -118,29 +188,26 @@ export function Navbar({
     <>
       {/* Mobile Top Minimal Bar */}
       <header className="sticky top-0 z-40 flex w-full items-center justify-between border-b border-zinc-200/60 dark:border-zinc-800/60 bg-white/80 dark:bg-zinc-950/80 px-4 py-2.5 backdrop-blur-md transition-colors md:hidden">
-        <Link href="/" className="flex items-center gap-2">
-          <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400">
-            <Compass className="h-4 w-4" />
-          </div>
+        <Link href="/" className="flex items-center">
           <CanvasText
             text="Buscavag"
-            className="text-sm font-semibold tracking-tight"
-            backgroundClassName="bg-zinc-900 dark:bg-zinc-100"
+            className="text-lg font-bold tracking-tight font-sans"
+            backgroundClassName="bg-emerald-600 dark:bg-emerald-500"
             colors={[
-              "#10b981",
-              "#06b6d4",
-              "#3b82f6",
-              "#8b5cf6",
-              "#34d399",
-              "#38bdf8",
+              "rgba(16, 185, 129, 1)",
+              "rgba(255, 255, 255, 0.9)",
+              "rgba(16, 185, 129, 0.8)",
+              "rgba(255, 255, 255, 0.7)",
+              "rgba(16, 185, 129, 0.6)",
+              "rgba(255, 255, 255, 0.5)",
+              "rgba(16, 185, 129, 0.4)",
+              "rgba(255, 255, 255, 0.3)",
+              "rgba(16, 185, 129, 0.2)",
+              "rgba(255, 255, 255, 0.1)",
             ]}
             lineGap={4}
-            lineWidth={1.2}
-            animationDuration={8}
+            animationDuration={15}
           />
-          <span className="rounded border border-zinc-200 dark:border-zinc-800 bg-zinc-100 dark:bg-zinc-900 px-1 py-0.5 text-[8px] font-mono font-medium text-zinc-500 dark:text-zinc-400 uppercase">
-            v2.4
-          </span>
         </Link>
 
         <div className="flex items-center gap-2">
@@ -159,31 +226,26 @@ export function Navbar({
       <ResizableNavbarContainer className="hidden md:block">
         <NavBody>
           {/* Brand / Logo */}
-          <Link href="/" className="flex items-center gap-2.5 group shrink-0">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 group-hover:border-emerald-500/40 transition-colors">
-              <Compass className="h-4 w-4" />
-            </div>
-            <div className="flex items-center gap-1.5">
-              <CanvasText
-                text="Buscavag"
-                className="text-sm font-semibold tracking-tight"
-                backgroundClassName="bg-zinc-900 dark:bg-zinc-100"
-                colors={[
-                  "#10b981",
-                  "#06b6d4",
-                  "#3b82f6",
-                  "#8b5cf6",
-                  "#34d399",
-                  "#38bdf8",
-                ]}
-                lineGap={4}
-                lineWidth={1.2}
-                animationDuration={8}
-              />
-              <span className="rounded border border-zinc-200 dark:border-zinc-800 bg-zinc-100 dark:bg-zinc-900 px-1.5 py-0.5 text-[9px] font-mono font-medium text-zinc-500 dark:text-zinc-400 uppercase">
-                v2.4 Pro
-              </span>
-            </div>
+          <Link href="/" className="flex items-center shrink-0 pr-2">
+            <CanvasText
+              text="Buscavag"
+              className="text-lg md:text-xl font-extrabold tracking-tight font-sans"
+              backgroundClassName="bg-emerald-600 dark:bg-emerald-500"
+              colors={[
+                "rgba(16, 185, 129, 1)",
+                "rgba(255, 255, 255, 0.9)",
+                "rgba(16, 185, 129, 0.8)",
+                "rgba(255, 255, 255, 0.7)",
+                "rgba(16, 185, 129, 0.6)",
+                "rgba(255, 255, 255, 0.5)",
+                "rgba(16, 185, 129, 0.4)",
+                "rgba(255, 255, 255, 0.3)",
+                "rgba(16, 185, 129, 0.2)",
+                "rgba(255, 255, 255, 0.1)",
+              ]}
+              lineGap={4}
+              animationDuration={15}
+            />
           </Link>
 
           {/* Dynamic Center Navigation Items */}
@@ -205,20 +267,45 @@ export function Navbar({
               </span>
             </div>
 
+            {/* Botão Purgar Não-Tech */}
+            <button
+              onClick={handlePurge}
+              disabled={isPurging}
+              type="button"
+              className={`flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-xs font-medium transition-all active:scale-95 shadow-sm disabled:cursor-not-allowed ${
+                isPurging
+                  ? 'border-rose-700/60 bg-rose-950/40 text-rose-400 opacity-90'
+                  : 'border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900 text-zinc-700 dark:text-zinc-300 hover:bg-rose-500/10 hover:border-rose-500/40 hover:text-rose-400'
+              }`}
+              title="Purgar vagas não-tech do banco de dados"
+            >
+              <Trash2
+                className={cn('w-3.5 h-3.5', isPurging ? 'text-rose-400 animate-spin' : 'text-zinc-400')}
+              />
+              <span className="hidden lg:inline">
+                {isPurging ? 'Purgando...' : 'Purgar Não-Tech'}
+              </span>
+            </button>
+
             {/* Botão Sincronizar com LoaderThree */}
             <button
               onClick={handleSync}
               disabled={isSyncing}
               type="button"
-              className="flex items-center gap-1.5 rounded-lg border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900 px-2.5 py-1.5 text-xs font-medium text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 hover:text-zinc-900 dark:hover:text-zinc-100 active:scale-95 transition-all disabled:opacity-50 shadow-sm"
-              title="Sincronizar dados agora"
+              className={`flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-xs font-medium transition-all active:scale-95 shadow-sm disabled:cursor-not-allowed ${
+                isSyncing
+                  ? 'border-emerald-700/60 bg-emerald-950/40 text-emerald-400 opacity-90'
+                  : 'border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 hover:text-zinc-900 dark:hover:text-zinc-100'
+              }`}
+              title={isSyncing ? 'Scraper em execução...' : 'Sincronizar dados agora'}
             >
-              {isSyncing ? (
-                <LoaderThree size={14} className="text-emerald-500" />
-              ) : (
-                <RotateCw className="h-3.5 w-3.5 text-zinc-400" />
-              )}
-              <span className="hidden sm:inline">Sincronizar</span>
+              <FlashIcon
+                loading={isSyncing}
+                className={cn('w-4 h-4', isSyncing ? 'text-emerald-400 animate-pulse' : 'text-zinc-400')}
+              />
+              <span className="hidden sm:inline">
+                {isSyncing ? 'Executando Scraper...' : 'Sincronizar'}
+              </span>
             </button>
 
             {/* Alternador de Tema */}
@@ -252,6 +339,12 @@ export function Navbar({
 
       {/* Floating Dock para Mobile (Responsivo) */}
       <FloatingDockMobile items={mobileDockItems} />
+
+      {/* Terminal Hacker / Modal de Logs em Tempo Real */}
+      <ScraperTerminalModal
+        isOpen={isTerminalOpen}
+        onClose={() => setIsTerminalOpen(false)}
+      />
     </>
   );
 }

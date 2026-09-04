@@ -12,6 +12,7 @@ export async function GET(request: NextRequest) {
     const minScore = searchParams.get('minScore') ? Number(searchParams.get('minScore')) : undefined;
     const search = searchParams.get('search') || undefined;
     const onlyApproved = searchParams.get('onlyApproved') === 'true';
+    const period = searchParams.get('period') || undefined;
 
     const repo = new JobRepository();
     const jobs = repo.getAllJobs({
@@ -21,11 +22,44 @@ export async function GET(request: NextRequest) {
       minScore,
       search,
       onlyApproved,
+      period,
     });
 
     return NextResponse.json({ success: true, count: jobs.length, data: jobs });
   } catch (error) {
     console.error('[API /api/jobs error]:', error);
+    return NextResponse.json(
+      { success: false, error: (error as Error).message },
+      { status: 500 }
+    );
+  }
+}
+
+export async function DELETE(request: NextRequest) {
+  try {
+    const body = await request.json();
+    const { ids } = body;
+
+    if (!ids || !Array.isArray(ids) || ids.length === 0) {
+      return NextResponse.json(
+        { success: false, error: 'Lista de IDs inválida ou vazia.' },
+        { status: 400 }
+      );
+    }
+
+    const repo = new JobRepository();
+    const deleted = repo.deleteJobs(ids);
+
+    if (!deleted) {
+      return NextResponse.json(
+        { success: false, error: 'Nenhuma vaga foi encontrada para exclusão.' },
+        { status: 404 }
+      );
+    }
+
+    return NextResponse.json({ success: true, count: ids.length });
+  } catch (error) {
+    console.error('[API /api/jobs DELETE error]:', error);
     return NextResponse.json(
       { success: false, error: (error as Error).message },
       { status: 500 }

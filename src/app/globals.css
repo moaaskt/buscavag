@@ -118,3 +118,72 @@
 .badge-glow {
   box-shadow: 0 0 12px rgba(56, 189, 248, 0.25);
 }
+
+/* ─── SweetAlert2 – Buscavag Theme ─────────────────────────────────────── */
+.swal-buscavag-popup {
+  border-radius: 16px !important;
+  border: 1px solid rgba(63, 63, 70, 0.8) !important;   /* zinc-700 */
+  padding: 2rem 2rem 1.75rem !important;
+  font-family: var(--font-sans), ui-sans-serif, system-ui, sans-serif !important;
+  box-shadow: 0 25px 60px -12px rgba(0, 0, 0, 0.7) !important;
+  backdrop-filter: blur(12px) !important;
+}
+
+.swal-buscavag-title {
+  font-size: 1.125rem !important;
+  font-weight: 600 !important;
+  color: #f4f4f5 !important;   /* zinc-100 */
+  letter-spacing: -0.01em !important;
+  padding: 0 !important;
+  margin-bottom: 0.35rem !important;
+}
+
+.swal-buscavag-text {
+  font-size: 0.8125rem !important;
+  color: #a1a1aa !important;   /* zinc-400 */
+  font-family: ui-monospace, 'Geist Mono', monospace !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+.swal-buscavag-actions {
+  gap: 0.5rem !important;
+  margin-top: 1.5rem !important;
+}
+
+.swal-buscavag-confirm {
+  height: 36px !important;
+  padding: 0 1rem !important;
+  border-radius: 8px !important;
+  background: #f43f5e !important;     /* rose-500 */
+  color: #fff !important;
+  font-size: 0.8125rem !important;
+  font-weight: 600 !important;
+  border: none !important;
+  cursor: pointer !important;
+  transition: background 0.15s, transform 0.1s !important;
+}
+.swal-buscavag-confirm:hover {
+  background: #e11d48 !important;     /* rose-600 */
+  transform: scale(1.02) !important;
+}
+.swal-buscavag-confirm:active {
+  transform: scale(0.97) !important;
+}
+
+.swal-buscavag-cancel {
+  height: 36px !important;
+  padding: 0 1rem !important;
+  border-radius: 8px !important;
+  background: #27272a !important;     /* zinc-800 */
+  color: #a1a1aa !important;          /* zinc-400 */
+  font-size: 0.8125rem !important;
+  font-weight: 500 !important;
+  border: 1px solid #3f3f46 !important;  /* zinc-700 */
+  cursor: pointer !important;
+  transition: background 0.15s, color 0.15s !important;
+}
+.swal-buscavag-cancel:hover {
+  background: #3f3f46 !important;
+  color: #f4f4f5 !important;
+}

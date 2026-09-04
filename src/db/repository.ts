@@ -2,6 +2,7 @@ import { db, initDatabase } from './index';
 import { ProcessedJob, RawJob } from '../types/job';
 import { generateJobHash } from '../utils/hash';
 import { EvaluationResult } from '../services/hermesEvaluator';
+import { TITLE_BLACKLIST } from '../config/jobFilters';
 
 export interface JobFilterOptions {
   category?: string;
@@ -10,6 +11,7 @@ export interface JobFilterOptions {
   minScore?: number;
   search?: string;
   onlyApproved?: boolean;
+  period?: string;
 }
 
 export interface DashboardStats {
@@ -52,7 +54,6 @@ export class JobRepository {
     let gaps: string[] = [];
     let resumeTips = '';
     let aiReasoning = reasoning;
-    const applicationStatus = 'pending';
 
     if (typeof evalResultOrIsJunior === 'object' && evalResultOrIsJunior !== null) {
       isJunior = evalResultOrIsJunior.isJuniorFullStack;
@@ -69,6 +70,8 @@ export class JobRepository {
       overallScore = scoreIa;
       aiReasoning = reasoning;
     }
+
+    const applicationStatus = isJunior ? 'pending' : 'rejected';
 
     const stmt = db.prepare(`
       INSERT INTO jobs (
@@ -113,7 +116,7 @@ export class JobRepository {
       category,
       gaps,
       resumeTips,
-      applicationStatus: 'pending',
+      applicationStatus,
       aiReasoning,
       notified: false,
       createdAt,
@@ -142,6 +145,28 @@ export class JobRepository {
     const row = stmt.get(id) as any;
     if (!row) return null;
     return this.mapRowToJob(row);
+  }
+
+  public deleteJobs(ids: string[]): boolean {
+    if (!ids || ids.length === 0) return false;
+    const placeholders = ids.map(() => '?').join(',');
+    const stmt = db.prepare(`DELETE FROM jobs WHERE id IN (${placeholders})`);
+    const result = stmt.run(...ids);
+    return result.changes > 0;
+  }
+
+  public purgeNonTech(): { deletedCount: number } {
+    if (!TITLE_BLACKLIST || TITLE_BLACKLIST.length === 0) {
+      return { deletedCount: 0 };
+    }
+
+    const conditions = TITLE_BLACKLIST.map(() => 'LOWER(title) LIKE ?').join(' OR ');
+    const params = TITLE_BLACKLIST.map((term) => `%${term.toLowerCase()}%`);
+
+    const stmt = db.prepare(`DELETE FROM jobs WHERE ${conditions}`);
+    const result = stmt.run(...params);
+
+    return { deletedCount: result.changes };
   }
 
   public getAllJobs(filters?: JobFilterOptions): ProcessedJob[] {
@@ -176,6 +201,18 @@ export class JobRepository {
       sql += ' AND (title LIKE ? OR company LIKE ? OR description LIKE ?)';
       const query = `%${filters.search.trim()}%`;
       params.push(query, query, query);
+    }
+
+    if (filters?.period && filters.period !== 'all') {
+      if (filters.period === '24h') {
+        sql += " AND datetime(published_at) >= datetime('now', '-24 hours')";
+      } else if (filters.period === '48h') {
+        sql += " AND datetime(published_at) >= datetime('now', '-48 hours')";
+      } else if (filters.period === '7d') {
+        sql += " AND datetime(published_at) >= datetime('now', '-7 days')";
+      } else if (filters.period === '30d') {
+        sql += " AND datetime(published_at) >= datetime('now', '-30 days')";
+      }
     }
 
     sql += ' ORDER BY overall_score DESC, published_at DESC';

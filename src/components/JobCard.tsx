@@ -2,15 +2,33 @@
 
 import React from 'react';
 import { ProcessedJob } from '@/types/job';
-import { ChevronRight, Building2, MapPin, Calendar, Sparkles } from 'lucide-react';
+import { ChevronRight, Building2, MapPin, Sparkles, Trash2, Check, ChevronDown } from 'lucide-react';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 
 interface JobCardProps {
   job: ProcessedJob;
   onSelect: (job: ProcessedJob) => void;
   compact?: boolean;
+  isSelected?: boolean;
+  onToggleSelect?: (id: string, e: React.MouseEvent) => void;
+  onDelete?: (id: string, e: React.MouseEvent) => void;
+  onStatusChange?: (id: string, newStatus: string, e: React.MouseEvent) => void;
 }
 
-export function JobCard({ job, onSelect, compact = false }: JobCardProps) {
+export function JobCard({
+  job,
+  onSelect,
+  compact = false,
+  isSelected = false,
+  onToggleSelect,
+  onDelete,
+  onStatusChange,
+}: JobCardProps) {
   const publishedStr = new Date(job.publishedAt).toLocaleDateString('pt-BR', {
     day: '2-digit',
     month: 'short',
@@ -32,12 +50,31 @@ export function JobCard({ job, onSelect, compact = false }: JobCardProps) {
     return (
       <div
         onClick={() => onSelect(job)}
-        className="group cursor-pointer bg-white dark:bg-zinc-900/70 hover:bg-zinc-50 dark:hover:bg-zinc-800/80 p-3 rounded-xl border border-zinc-200 dark:border-zinc-800/80 shadow-sm transition-all flex flex-col gap-2 w-full min-w-0"
+        className={`group cursor-pointer bg-white dark:bg-zinc-900/70 hover:bg-zinc-50 dark:hover:bg-zinc-800/80 p-3 rounded-xl border ${
+          isSelected
+            ? 'border-emerald-500/80 bg-emerald-50/20 dark:bg-emerald-950/10'
+            : 'border-zinc-200 dark:border-zinc-800/80'
+        } shadow-sm transition-all flex flex-col gap-2 w-full min-w-0 relative`}
       >
         <div className="flex items-center justify-between gap-2 min-w-0">
-          <span className="font-mono text-[10px] uppercase font-medium px-1.5 py-0.5 rounded bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 border border-zinc-200 dark:border-zinc-700/60 truncate max-w-[90px]">
-            {job.platform}
-          </span>
+          <div className="flex items-center gap-1.5">
+            {onToggleSelect && (
+              <button
+                type="button"
+                onClick={(e) => onToggleSelect(job.id, e)}
+                className={`w-4 h-4 rounded border flex items-center justify-center transition-colors ${
+                  isSelected
+                    ? 'bg-emerald-600 border-emerald-600 text-white'
+                    : 'border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 hover:border-zinc-400'
+                }`}
+              >
+                {isSelected && <Check className="w-3 h-3 stroke-[3]" />}
+              </button>
+            )}
+            <span className="font-mono text-[10px] uppercase font-medium px-1.5 py-0.5 rounded bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 border border-zinc-200 dark:border-zinc-700/60 truncate max-w-[80px]">
+              {job.platform}
+            </span>
+          </div>
           <span className="font-mono text-xs font-semibold text-emerald-600 dark:text-emerald-400 shrink-0">
             {score}%
           </span>
@@ -58,10 +95,41 @@ export function JobCard({ job, onSelect, compact = false }: JobCardProps) {
             <MapPin className="w-3 h-3 shrink-0" />
             <span className="truncate">{job.location || 'Remoto'}</span>
           </span>
-          <span className="flex items-center gap-1 shrink-0">
-            <span className={`w-1.5 h-1.5 rounded-full ${statusInfo.dotColor}`} />
-            <span>{statusInfo.label}</span>
-          </span>
+
+          {onStatusChange ? (
+            <DropdownMenu>
+              <DropdownMenuTrigger
+                onClick={(e) => e.stopPropagation()}
+                className="font-mono text-[10px] flex items-center gap-1 text-zinc-600 dark:text-zinc-300 hover:text-zinc-900 dark:hover:text-white px-1.5 py-0.5 rounded bg-zinc-100 dark:bg-zinc-800/60 border border-zinc-200 dark:border-zinc-700/50 transition-colors cursor-pointer shrink-0"
+              >
+                <span className={`w-1.5 h-1.5 rounded-full ${statusInfo.dotColor}`} />
+                <span>{statusInfo.label}</span>
+                <ChevronDown className="w-2.5 h-2.5 opacity-60" />
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="bg-zinc-900 border-zinc-800 text-zinc-200 text-xs">
+                <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onStatusChange(job.id, 'pending', e); }} className="cursor-pointer hover:bg-zinc-800">
+                  <span className="w-2 h-2 rounded-full bg-zinc-400 mr-2" /> Inbox
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onStatusChange(job.id, 'applied', e); }} className="cursor-pointer hover:bg-zinc-800">
+                  <span className="w-2 h-2 rounded-full bg-emerald-500 mr-2" /> Aplicado
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onStatusChange(job.id, 'interview', e); }} className="cursor-pointer hover:bg-zinc-800">
+                  <span className="w-2 h-2 rounded-full bg-amber-500 mr-2" /> Entrevista
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onStatusChange(job.id, 'offer', e); }} className="cursor-pointer hover:bg-zinc-800">
+                  <span className="w-2 h-2 rounded-full bg-teal-500 mr-2" /> Oferta
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onStatusChange(job.id, 'rejected', e); }} className="cursor-pointer hover:bg-zinc-800">
+                  <span className="w-2 h-2 rounded-full bg-rose-500 mr-2" /> Descartado
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          ) : (
+            <span className="flex items-center gap-1 shrink-0">
+              <span className={`w-1.5 h-1.5 rounded-full ${statusInfo.dotColor}`} />
+              <span>{statusInfo.label}</span>
+            </span>
+          )}
         </div>
       </div>
     );
@@ -70,44 +138,95 @@ export function JobCard({ job, onSelect, compact = false }: JobCardProps) {
   return (
     <div
       onClick={() => onSelect(job)}
-      className="group cursor-pointer bg-white dark:bg-zinc-900/70 hover:bg-zinc-50 dark:hover:bg-zinc-800/80 p-4 md:p-5 rounded-xl border border-zinc-200 dark:border-zinc-800/80 shadow-sm transition-all flex flex-col gap-2.5 w-full min-w-0"
+      className={`group cursor-pointer bg-white dark:bg-zinc-900/70 hover:bg-zinc-50 dark:hover:bg-zinc-800/80 p-4 md:p-5 rounded-xl border ${
+        isSelected
+          ? 'border-emerald-500/80 bg-emerald-50/20 dark:bg-emerald-950/10'
+          : 'border-zinc-200 dark:border-zinc-800/80'
+      } shadow-sm transition-all flex flex-col gap-2.5 w-full min-w-0 relative`}
     >
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 min-w-0">
-        {/* Left: Info */}
-        <div className="flex flex-col gap-1.5 min-w-0 flex-1">
-          <div className="flex items-center flex-wrap gap-2 min-w-0">
-            <span className="text-sm md:text-base font-medium text-zinc-900 dark:text-zinc-100 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors truncate">
-              {job.title}
-            </span>
-            {/* Neutral platform tag */}
-            <span className="font-mono text-[11px] px-2 py-0.5 rounded bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 border border-zinc-200 dark:border-zinc-700/60 uppercase shrink-0">
-              {job.platform}
-            </span>
-            {/* Category tag */}
-            {job.category && (
-              <span className="font-mono text-[11px] px-2 py-0.5 rounded bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 border border-zinc-200 dark:border-zinc-700/60 shrink-0">
-                {job.category}
-              </span>
-            )}
-            {/* Minimalist status with subtle dot */}
-            <span className="font-mono text-[11px] flex items-center gap-1.5 text-zinc-500 dark:text-zinc-400 pl-1 shrink-0">
-              <span className={`w-1.5 h-1.5 rounded-full ${statusInfo.dotColor}`} />
-              <span>{statusInfo.label}</span>
-            </span>
-          </div>
+        {/* Left: Checkbox + Info */}
+        <div className="flex items-start gap-3 min-w-0 flex-1">
+          {onToggleSelect && (
+            <button
+              type="button"
+              onClick={(e) => onToggleSelect(job.id, e)}
+              className={`mt-1 w-4 h-4 rounded border flex items-center justify-center transition-colors shrink-0 ${
+                isSelected
+                  ? 'bg-emerald-600 border-emerald-600 text-white'
+                  : 'border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 hover:border-zinc-400'
+              }`}
+            >
+              {isSelected && <Check className="w-3 h-3 stroke-[3]" />}
+            </button>
+          )}
 
-          <div className="flex items-center gap-2 font-mono text-xs text-zinc-500 dark:text-zinc-400 truncate">
-            <span className="text-zinc-700 dark:text-zinc-300 font-medium truncate">
-              {job.company}
-            </span>
-            <span>•</span>
-            <span className="truncate">{job.location || 'Remoto'}</span>
-            <span>•</span>
-            <span className="shrink-0">{publishedStr}</span>
+          <div className="flex flex-col gap-1.5 min-w-0 flex-1">
+            <div className="flex items-center flex-wrap gap-2 min-w-0">
+              <span className="text-sm md:text-base font-medium text-zinc-900 dark:text-zinc-100 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors truncate">
+                {job.title}
+              </span>
+              {/* Neutral platform tag */}
+              <span className="font-mono text-[11px] px-2 py-0.5 rounded bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 border border-zinc-200 dark:border-zinc-700/60 uppercase shrink-0">
+                {job.platform}
+              </span>
+              {/* Category tag */}
+              {job.category && (
+                <span className="font-mono text-[11px] px-2 py-0.5 rounded bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 border border-zinc-200 dark:border-zinc-700/60 shrink-0">
+                  {job.category}
+                </span>
+              )}
+
+              {/* Status Dropdown ou Tag estática */}
+              {onStatusChange ? (
+                <DropdownMenu>
+                  <DropdownMenuTrigger
+                    onClick={(e) => e.stopPropagation()}
+                    className="font-mono text-[11px] flex items-center gap-1.5 text-zinc-600 dark:text-zinc-300 hover:text-zinc-900 dark:hover:text-white px-2 py-0.5 rounded bg-zinc-100 dark:bg-zinc-800/80 border border-zinc-200 dark:border-zinc-700/60 transition-colors cursor-pointer shrink-0"
+                  >
+                    <span className={`w-1.5 h-1.5 rounded-full ${statusInfo.dotColor}`} />
+                    <span>{statusInfo.label}</span>
+                    <ChevronDown className="w-3 h-3 opacity-60" />
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="start" className="bg-zinc-900 border-zinc-800 text-zinc-200 text-xs">
+                    <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onStatusChange(job.id, 'pending', e); }} className="cursor-pointer hover:bg-zinc-800">
+                      <span className="w-2 h-2 rounded-full bg-zinc-400 mr-2" /> Inbox (Pendente)
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onStatusChange(job.id, 'applied', e); }} className="cursor-pointer hover:bg-zinc-800">
+                      <span className="w-2 h-2 rounded-full bg-emerald-500 mr-2" /> Aplicado
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onStatusChange(job.id, 'interview', e); }} className="cursor-pointer hover:bg-zinc-800">
+                      <span className="w-2 h-2 rounded-full bg-amber-500 mr-2" /> Em Entrevista
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onStatusChange(job.id, 'offer', e); }} className="cursor-pointer hover:bg-zinc-800">
+                      <span className="w-2 h-2 rounded-full bg-teal-500 mr-2" /> Oferta Recebida
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onStatusChange(job.id, 'rejected', e); }} className="cursor-pointer hover:bg-zinc-800">
+                      <span className="w-2 h-2 rounded-full bg-rose-500 mr-2" /> Descartado
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              ) : (
+                <span className="font-mono text-[11px] flex items-center gap-1.5 text-zinc-500 dark:text-zinc-400 pl-1 shrink-0">
+                  <span className={`w-1.5 h-1.5 rounded-full ${statusInfo.dotColor}`} />
+                  <span>{statusInfo.label}</span>
+                </span>
+              )}
+            </div>
+
+            <div className="flex items-center gap-2 font-mono text-xs text-zinc-500 dark:text-zinc-400 truncate">
+              <span className="text-zinc-700 dark:text-zinc-300 font-medium truncate">
+                {job.company}
+              </span>
+              <span>•</span>
+              <span className="truncate">{job.location || 'Remoto'}</span>
+              <span>•</span>
+              <span className="shrink-0">{publishedStr}</span>
+            </div>
           </div>
         </div>
 
-        {/* Right: Scores & Action */}
+        {/* Right: Scores & Actions */}
         <div className="flex items-center gap-4 shrink-0 pt-2 lg:pt-0 border-t lg:border-t-0 border-zinc-100 dark:border-zinc-800/60 justify-between lg:justify-end">
           <div className="flex flex-col items-end">
             <div className="flex items-baseline gap-1.5 font-mono text-xs">
@@ -122,7 +241,20 @@ export function JobCard({ job, onSelect, compact = false }: JobCardProps) {
               </span>
             )}
           </div>
-          <ChevronRight className="w-4 h-4 text-zinc-400 group-hover:text-zinc-900 dark:group-hover:text-zinc-100 group-hover:translate-x-0.5 transition-all" />
+
+          <div className="flex items-center gap-1.5">
+            {onDelete && (
+              <button
+                type="button"
+                onClick={(e) => onDelete(job.id, e)}
+                title="Excluir vaga"
+                className="p-1.5 rounded-lg text-zinc-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/30 transition-colors opacity-0 group-hover:opacity-100 focus:opacity-100"
+              >
+                <Trash2 className="w-4 h-4" />
+              </button>
+            )}
+            <ChevronRight className="w-4 h-4 text-zinc-400 group-hover:text-zinc-900 dark:group-hover:text-zinc-100 group-hover:translate-x-0.5 transition-all" />
+          </div>
         </div>
       </div>
 
@@ -138,3 +270,4 @@ export function JobCard({ job, onSelect, compact = false }: JobCardProps) {
     </div>
   );
 }
+
