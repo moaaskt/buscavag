@@ -12,6 +12,7 @@ export const JobListHoverEffect = ({
   selectedIds,
   onToggleSelect,
   onDeleteJob,
+  onStatusChange,
   className,
 }: {
   jobs: ProcessedJob[];
@@ -19,6 +20,7 @@ export const JobListHoverEffect = ({
   selectedIds?: Set<string>;
   onToggleSelect?: (id: string, e: React.MouseEvent) => void;
   onDeleteJob?: (id: string, e: React.MouseEvent) => void;
+  onStatusChange?: (id: string, newStatus: string, e: React.MouseEvent) => void;
   className?: string;
 }) => {
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
@@ -58,6 +60,7 @@ export const JobListHoverEffect = ({
                 isSelected={isSelected}
                 onToggleSelect={onToggleSelect}
                 onDelete={onDeleteJob}
+                onStatusChange={onStatusChange}
               />
             </div>
           </div>

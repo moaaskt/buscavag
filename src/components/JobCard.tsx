@@ -2,7 +2,13 @@
 
 import React from 'react';
 import { ProcessedJob } from '@/types/job';
-import { ChevronRight, Building2, MapPin, Sparkles, Trash2, Check } from 'lucide-react';
+import { ChevronRight, Building2, MapPin, Sparkles, Trash2, Check, ChevronDown } from 'lucide-react';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 
 interface JobCardProps {
   job: ProcessedJob;
@@ -11,6 +17,7 @@ interface JobCardProps {
   isSelected?: boolean;
   onToggleSelect?: (id: string, e: React.MouseEvent) => void;
   onDelete?: (id: string, e: React.MouseEvent) => void;
+  onStatusChange?: (id: string, newStatus: string, e: React.MouseEvent) => void;
 }
 
 export function JobCard({
@@ -20,6 +27,7 @@ export function JobCard({
   isSelected = false,
   onToggleSelect,
   onDelete,
+  onStatusChange,
 }: JobCardProps) {
   const publishedStr = new Date(job.publishedAt).toLocaleDateString('pt-BR', {
     day: '2-digit',
@@ -87,10 +95,41 @@ export function JobCard({
             <MapPin className="w-3 h-3 shrink-0" />
             <span className="truncate">{job.location || 'Remoto'}</span>
           </span>
-          <span className="flex items-center gap-1 shrink-0">
-            <span className={`w-1.5 h-1.5 rounded-full ${statusInfo.dotColor}`} />
-            <span>{statusInfo.label}</span>
-          </span>
+
+          {onStatusChange ? (
+            <DropdownMenu>
+              <DropdownMenuTrigger
+                onClick={(e) => e.stopPropagation()}
+                className="font-mono text-[10px] flex items-center gap-1 text-zinc-600 dark:text-zinc-300 hover:text-zinc-900 dark:hover:text-white px-1.5 py-0.5 rounded bg-zinc-100 dark:bg-zinc-800/60 border border-zinc-200 dark:border-zinc-700/50 transition-colors cursor-pointer shrink-0"
+              >
+                <span className={`w-1.5 h-1.5 rounded-full ${statusInfo.dotColor}`} />
+                <span>{statusInfo.label}</span>
+                <ChevronDown className="w-2.5 h-2.5 opacity-60" />
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="bg-zinc-900 border-zinc-800 text-zinc-200 text-xs">
+                <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onStatusChange(job.id, 'pending', e); }} className="cursor-pointer hover:bg-zinc-800">
+                  <span className="w-2 h-2 rounded-full bg-zinc-400 mr-2" /> Inbox
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onStatusChange(job.id, 'applied', e); }} className="cursor-pointer hover:bg-zinc-800">
+                  <span className="w-2 h-2 rounded-full bg-emerald-500 mr-2" /> Aplicado
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onStatusChange(job.id, 'interview', e); }} className="cursor-pointer hover:bg-zinc-800">
+                  <span className="w-2 h-2 rounded-full bg-amber-500 mr-2" /> Entrevista
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onStatusChange(job.id, 'offer', e); }} className="cursor-pointer hover:bg-zinc-800">
+                  <span className="w-2 h-2 rounded-full bg-teal-500 mr-2" /> Oferta
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onStatusChange(job.id, 'rejected', e); }} className="cursor-pointer hover:bg-zinc-800">
+                  <span className="w-2 h-2 rounded-full bg-rose-500 mr-2" /> Descartado
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          ) : (
+            <span className="flex items-center gap-1 shrink-0">
+              <span className={`w-1.5 h-1.5 rounded-full ${statusInfo.dotColor}`} />
+              <span>{statusInfo.label}</span>
+            </span>
+          )}
         </div>
       </div>
     );
@@ -137,11 +176,42 @@ export function JobCard({
                   {job.category}
                 </span>
               )}
-              {/* Minimalist status with subtle dot */}
-              <span className="font-mono text-[11px] flex items-center gap-1.5 text-zinc-500 dark:text-zinc-400 pl-1 shrink-0">
-                <span className={`w-1.5 h-1.5 rounded-full ${statusInfo.dotColor}`} />
-                <span>{statusInfo.label}</span>
-              </span>
+
+              {/* Status Dropdown ou Tag estática */}
+              {onStatusChange ? (
+                <DropdownMenu>
+                  <DropdownMenuTrigger
+                    onClick={(e) => e.stopPropagation()}
+                    className="font-mono text-[11px] flex items-center gap-1.5 text-zinc-600 dark:text-zinc-300 hover:text-zinc-900 dark:hover:text-white px-2 py-0.5 rounded bg-zinc-100 dark:bg-zinc-800/80 border border-zinc-200 dark:border-zinc-700/60 transition-colors cursor-pointer shrink-0"
+                  >
+                    <span className={`w-1.5 h-1.5 rounded-full ${statusInfo.dotColor}`} />
+                    <span>{statusInfo.label}</span>
+                    <ChevronDown className="w-3 h-3 opacity-60" />
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="start" className="bg-zinc-900 border-zinc-800 text-zinc-200 text-xs">
+                    <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onStatusChange(job.id, 'pending', e); }} className="cursor-pointer hover:bg-zinc-800">
+                      <span className="w-2 h-2 rounded-full bg-zinc-400 mr-2" /> Inbox (Pendente)
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onStatusChange(job.id, 'applied', e); }} className="cursor-pointer hover:bg-zinc-800">
+                      <span className="w-2 h-2 rounded-full bg-emerald-500 mr-2" /> Aplicado
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onStatusChange(job.id, 'interview', e); }} className="cursor-pointer hover:bg-zinc-800">
+                      <span className="w-2 h-2 rounded-full bg-amber-500 mr-2" /> Em Entrevista
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onStatusChange(job.id, 'offer', e); }} className="cursor-pointer hover:bg-zinc-800">
+                      <span className="w-2 h-2 rounded-full bg-teal-500 mr-2" /> Oferta Recebida
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onStatusChange(job.id, 'rejected', e); }} className="cursor-pointer hover:bg-zinc-800">
+                      <span className="w-2 h-2 rounded-full bg-rose-500 mr-2" /> Descartado
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              ) : (
+                <span className="font-mono text-[11px] flex items-center gap-1.5 text-zinc-500 dark:text-zinc-400 pl-1 shrink-0">
+                  <span className={`w-1.5 h-1.5 rounded-full ${statusInfo.dotColor}`} />
+                  <span>{statusInfo.label}</span>
+                </span>
+              )}
             </div>
 
             <div className="flex items-center gap-2 font-mono text-xs text-zinc-500 dark:text-zinc-400 truncate">

@@ -12,6 +12,7 @@ export async function GET(request: NextRequest) {
     const minScore = searchParams.get('minScore') ? Number(searchParams.get('minScore')) : undefined;
     const search = searchParams.get('search') || undefined;
     const onlyApproved = searchParams.get('onlyApproved') === 'true';
+    const period = searchParams.get('period') || undefined;
 
     const repo = new JobRepository();
     const jobs = repo.getAllJobs({
@@ -21,6 +22,7 @@ export async function GET(request: NextRequest) {
       minScore,
       search,
       onlyApproved,
+      period,
     });
 
     return NextResponse.json({ success: true, count: jobs.length, data: jobs });

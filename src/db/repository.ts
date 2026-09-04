@@ -10,6 +10,7 @@ export interface JobFilterOptions {
   minScore?: number;
   search?: string;
   onlyApproved?: boolean;
+  period?: string;
 }
 
 export interface DashboardStats {
@@ -184,6 +185,18 @@ export class JobRepository {
       sql += ' AND (title LIKE ? OR company LIKE ? OR description LIKE ?)';
       const query = `%${filters.search.trim()}%`;
       params.push(query, query, query);
+    }
+
+    if (filters?.period && filters.period !== 'all') {
+      if (filters.period === '24h') {
+        sql += " AND datetime(published_at) >= datetime('now', '-24 hours')";
+      } else if (filters.period === '48h') {
+        sql += " AND datetime(published_at) >= datetime('now', '-48 hours')";
+      } else if (filters.period === '7d') {
+        sql += " AND datetime(published_at) >= datetime('now', '-7 days')";
+      } else if (filters.period === '30d') {
+        sql += " AND datetime(published_at) >= datetime('now', '-30 days')";
+      }
     }
 
     sql += ' ORDER BY overall_score DESC, published_at DESC';

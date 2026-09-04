@@ -29,6 +29,7 @@ export default function JobsPage() {
   const [platform, setPlatform] = useState('all');
   const [category, setCategory] = useState('all');
   const [status, setStatus] = useState('all');
+  const [period, setPeriod] = useState('all');
   const [minScore, setMinScore] = useState(0);
   const [onlyApproved, setOnlyApproved] = useState(false);
 
@@ -44,6 +45,7 @@ export default function JobsPage() {
       if (platform !== 'all') params.set('platform', platform);
       if (category !== 'all') params.set('category', category);
       if (status !== 'all') params.set('status', status);
+      if (period !== 'all') params.set('period', period);
       if (minScore > 0) params.set('minScore', minScore.toString());
       if (onlyApproved) params.set('onlyApproved', 'true');
 
@@ -63,7 +65,7 @@ export default function JobsPage() {
 
   useEffect(() => {
     fetchJobs();
-  }, [platform, category, status, minScore, onlyApproved]);
+  }, [platform, category, status, period, minScore, onlyApproved]);
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -201,12 +203,13 @@ export default function JobsPage() {
     setPlatform('all');
     setCategory('all');
     setStatus('all');
+    setPeriod('all');
     setMinScore(0);
     setOnlyApproved(false);
   };
 
   const hasActiveFilters =
-    search || platform !== 'all' || category !== 'all' || status !== 'all' || minScore > 0 || onlyApproved;
+    search || platform !== 'all' || category !== 'all' || status !== 'all' || period !== 'all' || minScore > 0 || onlyApproved;
 
   // Pagination slice
   const totalItems = jobs.length;
@@ -285,7 +288,7 @@ export default function JobsPage() {
         </form>
 
         {/* Filters Row */}
-        <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-5 gap-3 items-center">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 items-center">
           {/* Plataforma */}
           <div className="flex flex-col gap-1">
             <label className="font-mono text-[11px] uppercase tracking-wider text-zinc-500 dark:text-zinc-400 font-medium">
@@ -370,6 +373,24 @@ export default function JobsPage() {
             </select>
           </div>
 
+          {/* Período / Recência */}
+          <div className="flex flex-col gap-1">
+            <label className="font-mono text-[11px] uppercase tracking-wider text-zinc-500 dark:text-zinc-400 font-medium">
+              Período
+            </label>
+            <select
+              value={period}
+              onChange={(e) => setPeriod(e.target.value)}
+              className="w-full h-9 px-2.5 bg-zinc-50 dark:bg-zinc-800/80 rounded-lg border border-zinc-200 dark:border-zinc-700/60 text-xs text-zinc-900 dark:text-zinc-100 focus:outline-none focus:border-zinc-400 dark:focus:border-zinc-600 transition-colors cursor-pointer"
+            >
+              <option value="all">Todas as datas</option>
+              <option value="24h">Últimas 24 horas</option>
+              <option value="48h">Últimas 48 horas</option>
+              <option value="7d">Esta semana (7 dias)</option>
+              <option value="30d">Este mês (30 dias)</option>
+            </select>
+          </div>
+
           {/* Score Mínimo IA */}
           <div className="flex flex-col gap-1">
             <label className="font-mono text-[11px] uppercase tracking-wider text-zinc-500 dark:text-zinc-400 font-medium">
@@ -388,7 +409,7 @@ export default function JobsPage() {
           </div>
 
           {/* Checkbox Apenas Jr */}
-          <div className="col-span-2 sm:col-span-2 lg:col-span-1 flex items-center justify-start lg:justify-end pt-2 lg:pt-4">
+          <div className="col-span-2 sm:col-span-1 flex items-center justify-start sm:justify-end pt-2 sm:pt-4">
             <label className="inline-flex items-center gap-2 cursor-pointer select-none text-xs text-zinc-700 dark:text-zinc-300 font-medium">
               <input
                 type="checkbox"
@@ -451,6 +472,7 @@ export default function JobsPage() {
           selectedIds={selectedIds}
           onToggleSelect={handleToggleSelect}
           onDeleteJob={handleDeleteJob}
+          onStatusChange={handleStatusChange}
         />
       ) : (
         <div className="p-12 text-center text-zinc-500 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/40 space-y-3">
