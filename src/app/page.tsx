@@ -2,9 +2,10 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { ProcessedJob } from '@/types/job';
 import { DashboardStats } from '@/db/repository';
+import { ProcessedJob } from '@/types/job';
 import { JobModal } from '@/components/JobModal';
+import { JobListHoverEffect } from '@/components/ui/card-hover-effect';
 import {
   Layers,
   ArrowRight,
@@ -448,94 +449,10 @@ export default function DashboardPage() {
             <span className="text-xs font-mono">Carregando vagas recomendadas...</span>
           </div>
         ) : recentJobs.length > 0 ? (
-          <div className="flex flex-col gap-2">
-            {recentJobs.map((job) => {
-              const publishedStr = new Date(job.publishedAt).toLocaleDateString('pt-BR', {
-                day: '2-digit',
-                month: 'short',
-              });
-              const score = job.overallScore ?? job.scoreIa ?? 0;
-              const statusMap: Record<string, { label: string; dotColor: string }> = {
-                pending: { label: 'Inbox', dotColor: 'bg-zinc-400' },
-                applied: { label: 'Aplicado', dotColor: 'bg-emerald-500' },
-                interview: { label: 'Entrevista', dotColor: 'bg-amber-500' },
-                offer: { label: 'Oferta', dotColor: 'bg-teal-500' },
-                rejected: { label: 'Descartado', dotColor: 'bg-rose-500' },
-              };
-              const st = statusMap[job.applicationStatus || 'pending'] || statusMap.pending;
-
-              return (
-                <div
-                  key={job.id}
-                  onClick={() => setSelectedJob(job)}
-                  className="group cursor-pointer bg-white dark:bg-zinc-900/70 hover:bg-zinc-50 dark:hover:bg-zinc-800/80 transition-all rounded-xl p-4 border border-zinc-200 dark:border-zinc-800/80 shadow-sm flex flex-col gap-2.5"
-                >
-                  <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
-                    {/* Left details */}
-                    <div className="flex flex-col gap-1.5 min-w-0">
-                      <div className="flex items-center flex-wrap gap-2">
-                        <span className="text-sm md:text-base font-medium text-zinc-900 dark:text-zinc-100 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors truncate">
-                          {job.title}
-                        </span>
-                        {/* Clean platform tag in neutral tone */}
-                        <span className="font-mono text-[11px] px-2 py-0.5 rounded bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 border border-zinc-200 dark:border-zinc-700/60 uppercase">
-                          {job.platform}
-                        </span>
-                        {/* Category tag */}
-                        {job.category && (
-                          <span className="font-mono text-[11px] px-2 py-0.5 rounded bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 border border-zinc-200 dark:border-zinc-700/60">
-                            {job.category}
-                          </span>
-                        )}
-                        {/* Minimalist status with subtle dot */}
-                        <span className="font-mono text-[11px] flex items-center gap-1.5 text-zinc-500 dark:text-zinc-400 pl-1">
-                          <span className={`w-1.5 h-1.5 rounded-full ${st.dotColor}`} />
-                          <span>{st.label}</span>
-                        </span>
-                      </div>
-
-                      <div className="flex items-center gap-2 font-mono text-xs text-zinc-500 dark:text-zinc-400">
-                        <span className="text-zinc-700 dark:text-zinc-300 font-medium">
-                          {job.company}
-                        </span>
-                        <span>•</span>
-                        <span>{job.location || 'Remoto'}</span>
-                        <span>•</span>
-                        <span>{publishedStr}</span>
-                      </div>
-                    </div>
-
-                    {/* Right: Clean score and chevron */}
-                    <div className="flex items-center gap-4 shrink-0 pt-2 lg:pt-0 border-t lg:border-t-0 border-zinc-100 dark:border-zinc-800/60 justify-between lg:justify-end">
-                      <div className="flex flex-col items-end">
-                        <div className="flex items-baseline gap-1.5 font-mono text-xs">
-                          <span className="text-zinc-400 dark:text-zinc-500">SCORE:</span>
-                          <span className="text-sm font-semibold text-emerald-600 dark:text-emerald-400">
-                            {score}%
-                          </span>
-                        </div>
-                        {job.stackScore !== undefined && (
-                          <span className="font-mono text-[11px] text-zinc-400 dark:text-zinc-500">
-                            Stack: {job.stackScore}%
-                          </span>
-                        )}
-                      </div>
-                      <ChevronRight className="w-4 h-4 text-zinc-400 group-hover:text-zinc-900 dark:group-hover:text-zinc-100 group-hover:translate-x-0.5 transition-all" />
-                    </div>
-                  </div>
-
-                  {/* AI Reasoning snippet */}
-                  {job.aiReasoning && (
-                    <div className="pt-1 border-t border-zinc-100 dark:border-zinc-800/40">
-                      <p className="font-mono text-[11px] text-zinc-500 dark:text-zinc-400 line-clamp-1">
-                        {job.aiReasoning}
-                      </p>
-                    </div>
-                  )}
-                </div>
-              );
-            })}
-          </div>
+          <JobListHoverEffect
+            jobs={recentJobs}
+            onSelect={(j: ProcessedJob) => setSelectedJob(j)}
+          />
         ) : (
           <div className="p-8 text-center text-zinc-500 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/40">
             <p className="text-xs font-mono">Nenhuma vaga compatível encontrada recentemente.</p>

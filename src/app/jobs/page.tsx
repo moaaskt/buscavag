@@ -2,8 +2,8 @@
 
 import React, { useState, useEffect } from 'react';
 import { ProcessedJob } from '@/types/job';
-import { JobCard } from '@/components/JobCard';
 import { JobModal } from '@/components/JobModal';
+import { JobListHoverEffect } from '@/components/ui/card-hover-effect';
 import {
   Search,
   RefreshCw,
@@ -316,15 +316,10 @@ export default function JobsPage() {
           <p className="text-xs font-mono">Carregando oportunidades...</p>
         </div>
       ) : paginatedJobs.length > 0 ? (
-        <div className="flex flex-col gap-2.5">
-          {paginatedJobs.map((job) => (
-            <JobCard
-              key={job.id}
-              job={job}
-              onSelect={(j: ProcessedJob) => setSelectedJob(j)}
-            />
-          ))}
-        </div>
+        <JobListHoverEffect
+          jobs={paginatedJobs}
+          onSelect={(j: ProcessedJob) => setSelectedJob(j)}
+        />
       ) : (
         <div className="p-12 text-center text-zinc-500 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/40 space-y-3">
           <p className="text-sm font-medium text-zinc-700 dark:text-zinc-300 font-mono">
