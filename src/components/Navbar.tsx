@@ -18,6 +18,7 @@ import { FlashIcon } from '@/components/ui/flash-icon';
 import { cn } from '@/lib/utils';
 import { CanvasText } from '@/components/ui/canvas-text';
 import { confirmPurge } from '@/lib/alerts';
+import { ScraperTerminalModal } from '@/components/ScraperTerminalModal';
 import {
   ResizableNavbarContainer,
   NavBody,
@@ -40,6 +41,7 @@ export function Navbar({
   const [isDarkMode, setIsDarkMode] = useState(true);
   const [isSyncing, setIsSyncing] = useState(false);
   const [isPurging, setIsPurging] = useState(false);
+  const [isTerminalOpen, setIsTerminalOpen] = useState(false);
 
   const navItems = [
     {
@@ -63,6 +65,7 @@ export function Navbar({
   ];
 
   const handleSync = async () => {
+    setIsTerminalOpen(true);
     if (isSyncing) return;
     setIsSyncing(true);
     try {
@@ -336,6 +339,12 @@ export function Navbar({
 
       {/* Floating Dock para Mobile (Responsivo) */}
       <FloatingDockMobile items={mobileDockItems} />
+
+      {/* Terminal Hacker / Modal de Logs em Tempo Real */}
+      <ScraperTerminalModal
+        isOpen={isTerminalOpen}
+        onClose={() => setIsTerminalOpen(false)}
+      />
     </>
   );
 }

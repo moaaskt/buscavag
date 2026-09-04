@@ -18,10 +18,10 @@ O Milestone 7 introduz uma camada completa de **observabilidade em tempo real**,
 
 ### 2. Console / Terminal em Tempo Real no Frontend (UI/UX)
 
-- [ ] **TRM-01**: Terminal Modal / Drawer de Sincronização — Ao acionar a sincronização na Navbar, abrir um modal/drawer estilo Terminal Hacker (fundo zinc-950, fonte mono, syntax highlighting por nível INFO/WARN/ERROR).
-- [ ] **TRM-02**: Consumo SSE com Auto-scroll — Conectar o modal ao endpoint SSE, exibindo as linhas de log em tempo real com auto-scroll suave e opção de pausar scroll.
-- [ ] **TRM-03**: Barra de Progresso e Status por Fonte — Exibir stepper/indicador de progresso das 26+ fontes com tags visuais de status (Aguardando, Rodando, Concluído, Falha).
-- [ ] **TRM-04**: Resumo Estatístico Final — Exibir banner de encerramento com o total de vagas coletadas, avaliadas pela IA, descartadas e eventuais erros ocorridos.
+- [x] **TRM-01**: Terminal Modal / Drawer de Sincronização — Ao acionar a sincronização na Navbar, abrir um modal/drawer estilo Terminal Hacker (fundo zinc-950, fonte mono, syntax highlighting por nível INFO/WARN/ERROR).
+- [x] **TRM-02**: Consumo SSE com Auto-scroll — Conectar o modal ao endpoint SSE, exibindo as linhas de log em tempo real com auto-scroll suave e opção de pausar scroll.
+- [x] **TRM-03**: Barra de Progresso e Status por Fonte — Exibir stepper/indicador de progresso das 26+ fontes com tags visuais de status (Aguardando, Rodando, Concluído, Falha).
+- [x] **TRM-04**: Resumo Estatístico Final — Exibir banner de encerramento com o total de vagas coletadas, avaliadas pela IA, descartadas e eventuais erros ocorridos.
 
 ### 3. Painel de Histórico de Logs & Gestão de Erros
 
