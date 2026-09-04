@@ -2,7 +2,7 @@
 
 ## Current State
 
-- **Shipped Milestone**: v5.0 — Gestão Avançada, Bulk Actions e Sincronização Real-time (2026-09-04)
+- **Shipped Milestone**: v6.0 — Sanitização e Triagem Inteligente de Vagas (2026-09-04)
 
 <details>
 <summary>Previous Milestones</summary>
@@ -11,23 +11,19 @@
 - v2.0 — Full Platform & Intelligence Evolution
 - v3.0 — Expansão Massiva de Fontes e Especialização IoT
 - v4.0 — Redesign Completo do Dashboard & Design System (Shadcn + Framer Motion)
+- v5.0 — Gestão Avançada, Bulk Actions e Sincronização Real-time
 
 </details>
 
-## What's in v5.0
+## What's in v6.0
 
-- **Bulk Actions**: Seleção em lote via checkboxes nos cards + FloatingActionBar para exclusão e mudança de status em massa
-- **Quick Status**: Dropdown direto no JobCard para alterar status sem abrir modal
-- **Period Filter**: Filtro de recência (24h / 48h / 7d / 30d) com lógica SQL no repositório
-- **Scraper Real-time**: Botão Sincronizar na Navbar dispara `POST /api/scraper/trigger`, exibe SyncToast animado e refetch automático da página `/jobs`
-- **SweetAlert2**: Confirmações de exclusão com tema dark customizado (zinc-950 + rose)
+- **Blacklist Centralizada de Cargos**: Configuração em `src/config/jobFilters.ts` para descarte imediato no pipeline de termos operacionais (pedreiro, motorista, etc.).
+- **Tech-Whitelist Obrigatória**: Vagas só entram no pipeline de avaliação se o título contiver termos de tecnologia.
+- **Hermes IA Zero-Score Lock**: Trava automática que força `score=0` e reprovação quando `stackScore=0` e nenhum termo tech existe no título.
+- **Auto Status 'rejected'**: Vagas não aprovadas como Júnior Full Stack são automaticamente inseridas com `applicationStatus = 'rejected'`, preservando o Inbox limpo.
+- **Banco de Dados Purge API & SQL**: `JobRepository.purgeNonTech()` e rota `POST /api/jobs/purge-non-tech`.
+- **UI de Purga na Navbar**: Botão rápido "Purgar Não-Tech" Desktop & Mobile com modal SweetAlert2 e toast de confirmação.
 
-## Next Milestone Goals — v6.0
+## Next Milestone Goals
 
-**Sanitização e Triagem Inteligente de Vagas**
-- Blacklist de cargos não-tech no pipeline de ingestão (`src/index.ts`)
-- Tech-whitelist obrigatória no título para persistência
-- Trava na Hermes: `stackScore=0` + sem whitelist → `score=0, rejected`
-- Status automático `'rejected'` para vagas não aprovadas (em vez de `'pending'`)
-- Rota `POST /api/jobs/purge-non-tech` para limpar o banco existente
-- UI na Navbar: botão "Purgar Não-Tech" com SweetAlert2 + toast de resultado
+- Definições de novos requisitos e roadmap para o próximo marco (use `/gsd-new-milestone`).
