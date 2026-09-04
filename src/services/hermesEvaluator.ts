@@ -1,4 +1,4 @@
-import OpenAI from 'openai';
+import { GoogleGenAI } from '@google/genai';
 import { RawJob } from '../types/job.js';
 
 export interface EvaluationResult {
@@ -15,16 +15,14 @@ export interface EvaluationResult {
 }
 
 export class HermesEvaluator {
-  private client: OpenAI | null = null;
+  private client: GoogleGenAI | null = null;
 
   constructor() {
-    const apiKey = process.env.HERMES_API_KEY || process.env.OPENAI_API_KEY;
-    const baseURL = process.env.HERMES_API_URL || process.env.OPENAI_BASE_URL;
+    const apiKey = process.env.GEMINI_API_KEY || process.env.HERMES_API_KEY;
 
     if (apiKey) {
-      this.client = new OpenAI({
+      this.client = new GoogleGenAI({
         apiKey,
-        baseURL: baseURL || undefined,
       });
     }
   }
@@ -84,14 +82,16 @@ Responda APENAS em formato JSON no seguinte modelo:
 }
 `;
 
-      const response = await this.client.chat.completions.create({
-        model: process.env.HERMES_MODEL || 'gpt-3.5-turbo',
-        messages: [{ role: 'user', content: prompt }],
-        response_format: { type: 'json_object' },
-        temperature: 0.2,
+      const response = await this.client.models.generateContent({
+        model: process.env.HERMES_MODEL || 'gemini-flash-latest',
+        contents: prompt,
+        config: {
+          responseMimeType: 'application/json',
+          temperature: 0.2,
+        },
       });
 
-      const content = response.choices[0]?.message?.content;
+      const content = response.text;
       if (content) {
         const parsed = JSON.parse(content);
         const overallScore = Math.min(100, Math.max(0, Number(parsed.overallScore ?? parsed.score) || 0));

@@ -1,5 +1,7 @@
 import { chromium, Browser, BrowserContext, Page } from 'playwright';
 import { RawJob } from '../types/job.js';
+import axios, { AxiosRequestConfig } from 'axios';
+import https from 'https';
 
 export interface JobScraper {
   name: string;
@@ -11,6 +13,26 @@ export const USER_AGENTS = [
   'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36',
   'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
 ];
+
+const insecureAgent = new https.Agent({
+  rejectUnauthorized: false,
+});
+
+export async function fetchHtml(url: string, config?: AxiosRequestConfig): Promise<string> {
+  const randomUserAgent = USER_AGENTS[Math.floor(Math.random() * USER_AGENTS.length)];
+  const response = await axios.get(url, {
+    httpsAgent: insecureAgent,
+    headers: {
+      'User-Agent': randomUserAgent,
+      'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
+      'Accept-Language': 'pt-BR,pt;q=0.9,en-US;q=0.8,en;q=0.7',
+      ...(config?.headers || {}),
+    },
+    timeout: 15000,
+    ...config,
+  });
+  return response.data;
+}
 
 export async function createStealthContext(): Promise<{ browser: Browser; context: BrowserContext; page: Page }> {
   const randomUserAgent = USER_AGENTS[Math.floor(Math.random() * USER_AGENTS.length)];

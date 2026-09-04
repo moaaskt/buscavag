@@ -7,16 +7,16 @@ import { isOlderThanDays } from './utils/date.js';
 
 dotenv.config();
 
-async function runPipeline() {
+export async function runPipeline() {
   console.log(`\n======================================================`);
   console.log(`  BUSCAVAG - PIPELINE AUTÔNOMO DE MONITORAMENTO DE VAGAS`);
   console.log(`  Executado em: ${new Date().toLocaleString('pt-BR')}`);
   console.log(`======================================================\n`);
 
-  const orchestrator = new ScraperOrchestrator();
+  const notifier = new TelegramNotifier();
+  const orchestrator = new ScraperOrchestrator(notifier);
   const repo = new JobRepository();
   const evaluator = new HermesEvaluator();
-  const notifier = new TelegramNotifier();
 
   // 1. Coleta de vagas de todas as fontes
   console.log('[1/4] Coletando vagas dos conectores...');
@@ -84,7 +84,14 @@ async function runPipeline() {
   console.log(`======================================================\n`);
 }
 
-runPipeline().catch((err) => {
-  console.error('[ERRO CRÍTICO NO PIPELINE]:', err);
-  process.exit(1);
-});
+// Execução direta quando rodado como script principal
+const isDirectRun = process.argv[1]?.includes('index');
+if (isDirectRun) {
+  const notifier = new TelegramNotifier();
+  runPipeline().catch(async (err) => {
+    console.error('[ERRO CRÍTICO NO PIPELINE]:', err);
+    const errorMsg = (err as Error).message || String(err);
+    await notifier.sendAlert(`🚨 [ERRO CRÍTICO] O pipeline principal falhou: ${errorMsg}`);
+    process.exit(1);
+  });
+}
