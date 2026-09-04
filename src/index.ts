@@ -4,6 +4,7 @@ import { JobRepository } from './db/repository.js';
 import { HermesEvaluator } from './services/hermesEvaluator.js';
 import { TelegramNotifier } from './services/telegramNotifier.js';
 import { isOlderThanDays } from './utils/date.js';
+import { matchesBlacklist, matchesWhitelist } from './config/jobFilters.js';
 
 dotenv.config();
 
@@ -23,14 +24,32 @@ export async function runPipeline() {
   const rawJobs = await orchestrator.runAll();
   console.log(`-> Total de vagas coletadas: ${rawJobs.length}`);
 
-  // 2. Filtragem de duplicadas e limiar de data (5 dias)
-  console.log('\n[2/4] Filtrando vagas duplicadas e verificando limiar de 5 dias...');
+  // 2. Filtragem de duplicadas, limiar de data (5 dias) e filtros não-tech
+  console.log('\n[2/4] Filtrando vagas duplicadas, limiar de 5 dias e filtros não-tech...');
   let newJobsCount = 0;
   let evaluatedCount = 0;
   let approvedCount = 0;
+  let blacklistFilteredCount = 0;
+  let whitelistFilteredCount = 0;
 
   for (const job of rawJobs) {
     if (isOlderThanDays(job.publishedAt, 5)) {
+      continue;
+    }
+
+    // Filtro 1: Blacklist de títulos operacionais/não-tech
+    const blacklistCheck = matchesBlacklist(job.title);
+    if (blacklistCheck.matched) {
+      blacklistFilteredCount++;
+      console.log(`   [FILTRO BLACKLIST] Vaga descartada: "${job.title}" | Termo: "${blacklistCheck.term}" | ${job.company}`);
+      continue;
+    }
+
+    // Filtro 2: Whitelist obrigatória de termos tech
+    const whitelistCheck = matchesWhitelist(job.title);
+    if (!whitelistCheck.matched) {
+      whitelistFilteredCount++;
+      console.log(`   [FILTRO WHITELIST] Vaga descartada (sem termo tech no título): "${job.title}" | ${job.company}`);
       continue;
     }
 
@@ -55,7 +74,10 @@ export async function runPipeline() {
   }
 
   console.log(`\nEstatísticas do ciclo:`);
-  console.log(`- Vagas novas processadas: ${newJobsCount}`);
+  console.log(`- Vagas totais coletadas: ${rawJobs.length}`);
+  console.log(`- Descartadas por blacklist de cargo: ${blacklistFilteredCount}`);
+  console.log(`- Descartadas por falta de termo tech: ${whitelistFilteredCount}`);
+  console.log(`- Vagas novas avaliadas pela IA: ${evaluatedCount}`);
   console.log(`- Vagas aprovadas como Jr Fullstack: ${approvedCount}`);
 
   // 4. Envio de Notificações pendentes via Telegram

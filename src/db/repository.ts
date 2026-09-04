@@ -54,7 +54,6 @@ export class JobRepository {
     let gaps: string[] = [];
     let resumeTips = '';
     let aiReasoning = reasoning;
-    const applicationStatus = 'pending';
 
     if (typeof evalResultOrIsJunior === 'object' && evalResultOrIsJunior !== null) {
       isJunior = evalResultOrIsJunior.isJuniorFullStack;
@@ -71,6 +70,8 @@ export class JobRepository {
       overallScore = scoreIa;
       aiReasoning = reasoning;
     }
+
+    const applicationStatus = isJunior ? 'pending' : 'rejected';
 
     const stmt = db.prepare(`
       INSERT INTO jobs (
@@ -115,7 +116,7 @@ export class JobRepository {
       category,
       gaps,
       resumeTips,
-      applicationStatus: 'pending',
+      applicationStatus,
       aiReasoning,
       notified: false,
       createdAt,

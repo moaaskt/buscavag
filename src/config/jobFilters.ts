@@ -64,25 +64,39 @@ export const TECH_WHITELIST: string[] = [
 ];
 
 /**
+ * Verifica se um título contém algum termo da blacklist.
+ */
+export function matchesBlacklist(title: string): { matched: boolean; term?: string } {
+  if (!title) return { matched: false };
+  const normalizedTitle = title.toLowerCase();
+  for (const term of TITLE_BLACKLIST) {
+    if (normalizedTitle.includes(term.toLowerCase())) {
+      return { matched: true, term };
+    }
+  }
+  return { matched: false };
+}
+
+/**
+ * Verifica se um título contém algum termo da whitelist técnica.
+ */
+export function matchesWhitelist(title: string): { matched: boolean; term?: string } {
+  if (!title) return { matched: false };
+  const normalizedTitle = title.toLowerCase();
+  for (const term of TECH_WHITELIST) {
+    if (normalizedTitle.includes(term.toLowerCase())) {
+      return { matched: true, term };
+    }
+  }
+  return { matched: false };
+}
+
+/**
  * Verifica se um título de vaga é considerado técnico de acordo com a blacklist e whitelist.
  */
 export function isTechJob(title: string): boolean {
-  if (!title) return false;
-  const normalizedTitle = title.toLowerCase();
-
-  // Se bater na blacklist, não é tech
-  for (const term of TITLE_BLACKLIST) {
-    if (normalizedTitle.includes(term.toLowerCase())) {
-      return false;
-    }
+  if (matchesBlacklist(title).matched) {
+    return false;
   }
-
-  // Precisa conter pelo menos um termo da whitelist
-  for (const term of TECH_WHITELIST) {
-    if (normalizedTitle.includes(term.toLowerCase())) {
-      return true;
-    }
-  }
-
-  return false;
+  return matchesWhitelist(title).matched;
 }
