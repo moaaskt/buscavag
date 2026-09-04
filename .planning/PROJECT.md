@@ -22,6 +22,12 @@
 - **Scraper Real-time**: Botão Sincronizar na Navbar dispara `POST /api/scraper/trigger`, exibe SyncToast animado e refetch automático da página `/jobs`
 - **SweetAlert2**: Confirmações de exclusão com tema dark customizado (zinc-950 + rose)
 
-## Next Milestone Goals
+## Next Milestone Goals — v6.0
 
-_A definir. Use `/gsd-new-milestone` para iniciar o planejamento do v6.0._
+**Sanitização e Triagem Inteligente de Vagas**
+- Blacklist de cargos não-tech no pipeline de ingestão (`src/index.ts`)
+- Tech-whitelist obrigatória no título para persistência
+- Trava na Hermes: `stackScore=0` + sem whitelist → `score=0, rejected`
+- Status automático `'rejected'` para vagas não aprovadas (em vez de `'pending'`)
+- Rota `POST /api/jobs/purge-non-tech` para limpar o banco existente
+- UI na Navbar: botão "Purgar Não-Tech" com SweetAlert2 + toast de resultado
