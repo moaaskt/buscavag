@@ -159,8 +159,10 @@ export function ScraperTerminalModal({ isOpen, onClose, runId }: ScraperTerminal
 
   const sourceList = Object.values(sources);
   const completedSourcesCount = sourceList.filter((s) => s.status === 'completed' || s.status === 'failed').length;
-  const totalTrackedSources = Math.max(sourceList.length, 24);
-  const progressPercent = Math.min(100, Math.round((completedSourcesCount / totalTrackedSources) * 100));
+  const totalTrackedSources = Math.max(sourceList.length, 35);
+  const progressPercent = !isRunning && summary
+    ? 100
+    : Math.min(isRunning ? 99 : 100, Math.round((completedSourcesCount / totalTrackedSources) * 100));
   const latestLog = logs.length > 0 ? logs[logs.length - 1] : null;
 
   return (
