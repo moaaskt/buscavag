@@ -17,19 +17,27 @@ export class PandapeScraper implements JobScraper {
         const html = await fetchHtml(url);
         const $ = cheerio.load(html);
 
-        $('[class*="vacancy"], [class*="vaga"], [class*="job"], article, .card').each((_, el) => {
-          const titleEl = $(el).find('h2 a, h3 a, [class*="title"] a, a[href*="/vaga/"], a[href*="/detail/"]');
-          const locationEl = $(el).find('[class*="location"], [class*="city"], [class*="local"]');
-          const dateEl = $(el).find('time, [class*="date"], .data');
+        $('a[href*="/Detail/"], a[href*="/detail/"], [class*="card-vacancy"]').each((_, el) => {
+          const isAnchor = $(el).is('a');
+          const anchorEl = isAnchor ? $(el) : $(el).find('a[href*="/Detail/"], a[href*="/detail/"]').first();
+          
+          let href = anchorEl.attr('href') || $(el).attr('href') || '';
+          if (!href || href === '#' || href.startsWith('javascript')) return;
 
-          const title = titleEl.text().trim();
-          let href = titleEl.attr('href') || $(el).find('a').attr('href') || '';
-          if (!title || !href || href === '#' || href.startsWith('javascript')) return;
+          const title = anchorEl.find('h3, h2, [class*="title"]').text().trim() || anchorEl.attr('title') || $(el).find('h3, h2').text().trim();
+          if (!title) return;
 
-          const location = locationEl.text().trim() || 'Brasil';
-          const dateStr = dateEl.text().trim();
+          // Localização
+          let location = $(el).find('.vacancy-detail .align-middle').first().text().replace(/\s+/g, ' ').trim();
+          if (!location || location.length > 50) {
+            const matchLoc = $(el).text().match(/([A-Za-zÀ-ÖØ-öø-ÿ\s]+ - [A-Z]{2})/);
+            location = matchLoc ? matchLoc[1].trim() : 'Brasil';
+          }
 
-          const publishedAt = parseRelativeDate(dateStr);
+          // Data
+          const dateText = $(el).find('.vacancy-date, time, [class*="date"]').text().trim();
+          const publishedAt = dateText ? parseRelativeDate(dateText) : new Date();
+
           if (isOlderThanDays(publishedAt, 5)) return;
 
           const fullUrl = href.startsWith('http') ? href : `https://gtorh.pandape.infojobs.com.br${href.startsWith('/') ? '' : '/'}${href}`;
@@ -41,7 +49,7 @@ export class PandapeScraper implements JobScraper {
             url: fullUrl,
             description: `${title} - GTO RH PandaPé (${location})`,
             publishedAt,
-            location,
+            location: location || 'Brasil',
           });
         });
       } catch (err) {

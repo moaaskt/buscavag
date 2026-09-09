@@ -11,6 +11,27 @@
 
 services:
   # --------------------------------------------------------------------------
+  # Microserviço Python Scrapling Engine (Evasão Anti-Bot & Scrapers Resilientes)
+  # --------------------------------------------------------------------------
+  scrapling-engine:
+    build:
+      context: ./src/services/scrapling-engine
+      dockerfile: Dockerfile
+    container_name: buscavag-scrapling-engine
+    ports:
+      - "8000:8000"
+    environment:
+      - HOST=0.0.0.0
+      - PORT=8000
+      - LOG_LEVEL=info
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    restart: unless-stopped
+
+  # --------------------------------------------------------------------------
   # Frontend Dashboard (Next.js)
   # --------------------------------------------------------------------------
   web:
@@ -25,9 +46,11 @@ services:
     environment:
       - DATABASE_PATH=/app/data/buscavag.db
       - NODE_ENV=production
+      - SCRAPLING_ENGINE_URL=http://scrapling-engine:8000
     restart: unless-stopped
     depends_on:
       - scraper
+      - scrapling-engine
 
   # --------------------------------------------------------------------------
   # Backend Scrapers + Cron (Node.js + Playwright)
@@ -46,9 +69,13 @@ services:
       - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN}
       - TELEGRAM_CHAT_ID=${TELEGRAM_CHAT_ID}
       - GEMINI_API_KEY=${GEMINI_API_KEY}
+      - SCRAPLING_ENGINE_URL=http://scrapling-engine:8000
     restart: unless-stopped
+    depends_on:
+      - scrapling-engine
 
 # Volume nomeado para persistência do banco SQLite
 volumes:
   buscavag-data:
     driver: local
+
