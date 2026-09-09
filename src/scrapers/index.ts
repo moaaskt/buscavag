@@ -1,3 +1,44 @@
+export type { JobScraper } from './base.js';
+export { GupyScraper } from './gupy.js';
+export { LinkedInScraper } from './linkedin.js';
+export { IndeedScraper } from './indeed.js';
+export { GoogleJobsScraper } from './googleJobs.js';
+export { TelegramScraper } from './telegram.js';
+export { ProgramathorScraper } from './programathor.js';
+export { RemotarScraper } from './remotar.js';
+export { CathoScraper } from './catho.js';
+export { GlassdoorScraper } from './glassdoor.js';
+// Regionais SC
+export { SaoJoseScraper } from './saoJose.js';
+export { VagasScScraper } from './vagasSc.js';
+export { VagasFloripaScraper } from './vagasFloripa.js';
+export { EmpregaPalhocaScraper } from './empregaPalhoca.js';
+// Nacionais
+export { InfojobsScraper } from './infojobs.js';
+export { ChaworkScraper } from './chawork.js';
+export { TrabalhaBrasilScraper } from './trabalhaBrasil.js';
+export { BneScraper } from './bne.js';
+export { BebeeScraper } from './bebee.js';
+export { EmpregosScraper } from './empregos.js';
+export { RecrutaSimplesScraper } from './recrutaSimples.js';
+// ATSs
+export { RecruteiEmpregosScraper } from './recruteiEmpregos.js';
+export { QuickinScraper } from './quickin.js';
+export { RecruteiJobsScraper } from './recruteiJobs.js';
+export { PandapeScraper } from './pandape.js';
+// Freelance & Projetos
+export { Freelas99Scraper } from './99freelas.js';
+export { WorkanaScraper } from './workana.js';
+// Novas Fontes Tech
+export { GeekHunterScraper } from './geekhunter.js';
+export { NerdinScraper } from './nerdin.js';
+export { ReveloScraper } from './revelo.js';
+export { NoventaENoveJobsScraper } from './noventaENoveJobs.js';
+export { SolidesScraper } from './solides.js';
+export { RunTalentScraper } from './runTalent.js';
+export { EmpregareScraper } from './empregare.js';
+export { TramposScraper } from './trampos.js';
+
 import { JobScraper } from './base.js';
 import { GupyScraper } from './gupy.js';
 import { LinkedInScraper } from './linkedin.js';
@@ -8,12 +49,10 @@ import { ProgramathorScraper } from './programathor.js';
 import { RemotarScraper } from './remotar.js';
 import { CathoScraper } from './catho.js';
 import { GlassdoorScraper } from './glassdoor.js';
-// Regionais SC
 import { SaoJoseScraper } from './saoJose.js';
 import { VagasScScraper } from './vagasSc.js';
 import { VagasFloripaScraper } from './vagasFloripa.js';
 import { EmpregaPalhocaScraper } from './empregaPalhoca.js';
-// Nacionais
 import { InfojobsScraper } from './infojobs.js';
 import { ChaworkScraper } from './chawork.js';
 import { TrabalhaBrasilScraper } from './trabalhaBrasil.js';
@@ -21,15 +60,12 @@ import { BneScraper } from './bne.js';
 import { BebeeScraper } from './bebee.js';
 import { EmpregosScraper } from './empregos.js';
 import { RecrutaSimplesScraper } from './recrutaSimples.js';
-// ATSs
 import { RecruteiEmpregosScraper } from './recruteiEmpregos.js';
 import { QuickinScraper } from './quickin.js';
 import { RecruteiJobsScraper } from './recruteiJobs.js';
 import { PandapeScraper } from './pandape.js';
-// Freelance & Projetos
 import { Freelas99Scraper } from './99freelas.js';
 import { WorkanaScraper } from './workana.js';
-// Novas Fontes Tech
 import { GeekHunterScraper } from './geekhunter.js';
 import { NerdinScraper } from './nerdin.js';
 import { ReveloScraper } from './revelo.js';

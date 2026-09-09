@@ -8,7 +8,16 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 from app.schemas import ScrapeRequest, ScrapeResponse, JobResponseItem, HealthResponse
-from app.scrapers import scrape_catho, scrape_google_jobs, scrape_remotar
+from app.scrapers import (
+    scrape_catho,
+    scrape_google_jobs,
+    scrape_remotar,
+    scrape_trampos,
+    scrape_infojobs,
+    scrape_trabalha_brasil,
+    scrape_geekhunter,
+    scrape_glassdoor,
+)
 
 # Configuração de logging
 logging.basicConfig(
@@ -79,6 +88,41 @@ async def scrape_jobs(payload: ScrapeRequest):
             )
         elif source_name == "remotar":
             jobs = await scrape_remotar(
+                query=payload.query,
+                location=payload.location,
+                limit=payload.limit or 20,
+                options=payload.options
+            )
+        elif source_name in ["trampos", "trampos.co", "trampos_co"]:
+            jobs = await scrape_trampos(
+                query=payload.query,
+                location=payload.location,
+                limit=payload.limit or 20,
+                options=payload.options
+            )
+        elif source_name in ["infojobs", "info_jobs"]:
+            jobs = await scrape_infojobs(
+                query=payload.query,
+                location=payload.location,
+                limit=payload.limit or 20,
+                options=payload.options
+            )
+        elif source_name in ["trabalha_brasil", "trabalhabrasil", "bne"]:
+            jobs = await scrape_trabalha_brasil(
+                query=payload.query,
+                location=payload.location,
+                limit=payload.limit or 20,
+                options=payload.options
+            )
+        elif source_name in ["geekhunter", "geek_hunter"]:
+            jobs = await scrape_geekhunter(
+                query=payload.query,
+                location=payload.location,
+                limit=payload.limit or 20,
+                options=payload.options
+            )
+        elif source_name == "glassdoor":
+            jobs = await scrape_glassdoor(
                 query=payload.query,
                 location=payload.location,
                 limit=payload.limit or 20,
