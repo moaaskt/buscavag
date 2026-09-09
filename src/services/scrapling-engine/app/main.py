@@ -8,6 +8,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 from app.schemas import ScrapeRequest, ScrapeResponse, JobResponseItem, HealthResponse
+from app.scrapers import scrape_catho, scrape_google_jobs, scrape_remotar
 
 # Configuração de logging
 logging.basicConfig(
@@ -62,9 +63,28 @@ async def scrape_jobs(payload: ScrapeRequest):
     try:
         jobs: List[JobResponseItem] = []
 
-        # Roteamento básico / mockup de validação para a fundação (Fase 32)
-        # Coletores reais específicos serão integrados nas Fases 34 e 35
-        if source_name in ["mock", "test", "ping"]:
+        if source_name == "catho":
+            jobs = await scrape_catho(
+                query=payload.query,
+                location=payload.location,
+                limit=payload.limit or 20,
+                options=payload.options
+            )
+        elif source_name in ["google_jobs", "googlejobs", "google"]:
+            jobs = await scrape_google_jobs(
+                query=payload.query,
+                location=payload.location,
+                limit=payload.limit or 20,
+                options=payload.options
+            )
+        elif source_name == "remotar":
+            jobs = await scrape_remotar(
+                query=payload.query,
+                location=payload.location,
+                limit=payload.limit or 20,
+                options=payload.options
+            )
+        elif source_name in ["mock", "test", "ping"]:
             jobs = [
                 JobResponseItem(
                     id=f"test-{i}",
@@ -80,8 +100,7 @@ async def scrape_jobs(payload: ScrapeRequest):
                 for i in range(min(payload.limit or 5, 5))
             ]
         else:
-            # Placeholder amigável para coletores registrados que serão expandidos
-            logger.info(f"Fonte '{source_name}' registrada no catálogo Scrapling Engine.")
+            logger.info(f"Fonte '{source_name}' desconhecida ou ainda não migrada para Scrapling Engine.")
             jobs = []
 
         elapsed_ms = (time.time() - start_time) * 1000
