@@ -13,7 +13,8 @@
     "prod": "node dist/index.js",
     "test": "tsx src/test-phase1.ts",
     "test:phase7": "tsx src/test-phase7.ts",
-    "test:phase8": "tsx src/test-phase8.ts"
+    "test:phase8": "tsx src/test-phase8.ts",
+    "audit:scrapers": "tsx scripts/audit-scrapers.ts"
   },
   "keywords": [],
   "author": "",

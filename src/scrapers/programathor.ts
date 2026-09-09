@@ -18,14 +18,19 @@ export class ProgramathorScraper implements JobScraper {
 
   private async scrapeViaHttp(): Promise<RawJob[]> {
     const jobs: RawJob[] = [];
-    const slugs = ['jobs-full-stack', 'jobs-javascript', 'jobs-react', 'jobs-node', 'jobs-typescript'];
+    const urls = [
+      'https://programathor.com.br/jobs',
+      'https://programathor.com.br/jobs?q=full+stack',
+      'https://programathor.com.br/jobs?q=react',
+      'https://programathor.com.br/jobs?q=node',
+    ];
+    const seenUrls = new Set<string>();
 
-    for (const slug of slugs) {
+    for (const url of urls) {
       try {
-        const url = `https://programathor.com.br/${slug}`;
         const response = await axios.get(url, {
           headers: {
-            'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
             'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
             'Accept-Language': 'pt-BR,pt;q=0.9,en-US;q=0.8',
           },
@@ -33,46 +38,49 @@ export class ProgramathorScraper implements JobScraper {
         });
 
         const html: string = response.data;
-        // Regex para extrair cards de vagas do HTML do Programathor
-        const cardRegex = /<div[^>]*class="[^"]*cell-list[^"]*"[^>]*>([\s\S]*?)<\/div>\s*<\/div>/gi;
-        const titleRegex = /<a[^>]*href="(\/jobs\/[^"]+)"[^>]*>([\s\S]*?)<\/a>/i;
-        const companyRegex = /<span[^>]*class="[^"]*company-name[^"]*"[^>]*>([\s\S]*?)<\/span>/i;
-        const locationRegex = /<span[^>]*class="[^"]*location[^"]*"[^>]*>([\s\S]*?)<\/span>/i;
-        const dateRegex = /<span[^>]*class="[^"]*date[^"]*"[^>]*>([\s\S]*?)<\/span>/i;
-
+        // Cards do Programathor possuem links para /jobs/ID-slug
+        const linkRegex = /<a[^>]+href="(\/jobs\/\d+-[^"]+)"[^>]*>([\s\S]*?)<\/a>/gi;
         let match;
-        while ((match = cardRegex.exec(html)) !== null) {
-          const block = match[1];
-          const titleMatch = titleRegex.exec(block);
-          const companyMatch = companyRegex.exec(block);
-          const locationMatch = locationRegex.exec(block);
-          const dateMatch = dateRegex.exec(block);
 
-          if (!titleMatch) continue;
+        while ((match = linkRegex.exec(html)) !== null) {
+          const href = match[1];
+          const inner = match[2];
+          if (seenUrls.has(href)) continue;
 
-          const title = this.stripTags(titleMatch[2]).trim();
-          const href = titleMatch[1];
-          const company = companyMatch ? this.stripTags(companyMatch[1]).trim() : 'Programathor';
-          const location = locationMatch ? this.stripTags(locationMatch[1]).trim() : 'Brasil';
-          const dateStr = dateMatch ? this.stripTags(dateMatch[1]).trim() : '';
+          // Extrair título
+          const titleMatch = inner.match(/<h2[^>]*>([\s\S]*?)<\/h2>/i) || inner.match(/<h3[^>]*>([\s\S]*?)<\/h3>/i);
+          let title = titleMatch ? this.stripTags(titleMatch[1]) : this.stripTags(inner).split('\n')[0];
+          title = title.replace(/^📍[^\n]+\s*/i, '').trim();
+          if (!title || title.length < 3) continue;
 
-          if (!title) continue;
+          // Empresa e Localização no texto do card
+          const cleanText = this.stripTags(inner).replace(/\s+/g, ' ');
+          const companyMatch = inner.match(/<span[^>]*class="[^"]*company[^"]*"[^>]*>([\s\S]*?)<\/span>/i);
+          const company = companyMatch ? this.stripTags(companyMatch[1]).trim() : 'Programathor Partner';
 
-          const publishedAt = parseRelativeDate(dateStr);
-          if (isOlderThanDays(publishedAt, 5)) continue;
+          let location = 'Brasil';
+          if (cleanText.includes('Remoto')) {
+            location = 'Remoto';
+          } else if (cleanText.includes('Presencial') || cleanText.includes('Híbrido')) {
+            const locMatch = cleanText.match(/([A-Za-zÀ-ÖØ-öø-ÿ\s]+(?:\/[A-Z]{2})?\s*\((?:Presencial|Híbrido)\))/);
+            if (locMatch) location = locMatch[1];
+          }
+
+          seenUrls.add(href);
+          const fullUrl = `https://programathor.com.br${href}`;
 
           jobs.push({
             title,
             company,
             platform: PlatformSource.PROGRAMATHOR,
-            url: `https://programathor.com.br${href}`,
-            description: `${title} - ${company}`,
-            publishedAt,
+            url: fullUrl,
+            description: `${title} - ${company} (${location})`,
+            publishedAt: new Date(),
             location,
           });
         }
       } catch (err) {
-        console.warn(`[ProgramathorScraper] HTTP erro para "${slug}":`, (err as Error).message);
+        console.warn(`[ProgramathorScraper] HTTP erro para "${url}":`, (err as Error).message);
       }
     }
 
@@ -82,47 +90,42 @@ export class ProgramathorScraper implements JobScraper {
 
   private async scrapeViaPlaywright(): Promise<RawJob[]> {
     const jobs: RawJob[] = [];
-    const searchUrl = 'https://programathor.com.br/jobs-full-stack';
+    const searchUrl = 'https://programathor.com.br/jobs';
     const { browser, context, page } = await createStealthContext();
 
     try {
       await page.goto(searchUrl, { waitUntil: 'domcontentloaded', timeout: 30000 });
-      await page.waitForTimeout(3000);
+      await page.waitForTimeout(4000);
 
-      const cards = await page.$$('.cell-list, .job-card, [class*="card"]');
+      const jobLinks = await page.$$eval('a[href*="/jobs/"]', (els) => {
+        return els.map(e => {
+          const href = (e as HTMLAnchorElement).href;
+          const text = (e as HTMLElement).innerText.replace(/^📍[^\n]+\s*/i, '').trim();
+          const lines = text.split('\n').map(s => s.trim()).filter(Boolean);
+          return {
+            href,
+            title: lines[0] || '',
+            company: lines[1] || 'Programathor',
+            rawText: text,
+          };
+        }).filter(x => x.title && x.href.includes('/jobs/') && !x.href.endsWith('/jobs'));
+      });
 
-      for (const card of cards) {
-        try {
-          const titleEl = await card.$('a[href*="/jobs/"], h3, .job-title');
-          const companyEl = await card.$('.company-name, .company, [class*="company"]');
-          const locationEl = await card.$('.location, [class*="location"]');
-          const dateEl = await card.$('.date, time, [class*="date"]');
+      for (const item of jobLinks) {
+        let location = 'Brasil';
+        if (item.rawText.includes('Remoto')) location = 'Remoto';
+        else if (item.rawText.includes('Presencial')) location = 'Presencial';
+        else if (item.rawText.includes('Híbrido')) location = 'Híbrido';
 
-          const title = titleEl ? (await titleEl.innerText()).trim() : '';
-          const company = companyEl ? (await companyEl.innerText()).trim() : '';
-          const location = locationEl ? (await locationEl.innerText()).trim() : '';
-          const dateStr = dateEl ? (await dateEl.innerText()).trim() : '';
-          const href = titleEl ? await titleEl.getAttribute('href') : '';
-
-          if (!title || !href) continue;
-
-          const publishedAt = parseRelativeDate(dateStr);
-          if (isOlderThanDays(publishedAt, 5)) continue;
-
-          const fullUrl = href.startsWith('http') ? href : `https://programathor.com.br${href}`;
-
-          jobs.push({
-            title,
-            company: company || 'Programathor',
-            platform: PlatformSource.PROGRAMATHOR,
-            url: fullUrl,
-            description: `${title} - ${company || 'Programathor'}`,
-            publishedAt,
-            location: location || 'Brasil',
-          });
-        } catch {
-          // Ignorar erro individual por card
-        }
+        jobs.push({
+          title: item.title,
+          company: item.company,
+          platform: PlatformSource.PROGRAMATHOR,
+          url: item.href,
+          description: `${item.title} - ${item.company} (${location})`,
+          publishedAt: new Date(),
+          location,
+        });
       }
     } catch (err) {
       console.warn('[ProgramathorScraper] Playwright erro:', (err as Error).message);

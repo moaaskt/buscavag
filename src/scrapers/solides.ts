@@ -7,103 +7,61 @@ export class SolidesScraper implements JobScraper {
   name = 'Sólides';
 
   async scrape(): Promise<RawJob[]> {
-    try {
-      return await this.scrapeViaHttp();
-    } catch (err) {
-      console.warn('[SolidesScraper] HTTP falhou, tentando Playwright:', (err as Error).message);
-      return await this.scrapeViaPlaywright();
-    }
-  }
-
-  private async scrapeViaHttp(): Promise<RawJob[]> {
     const jobs: RawJob[] = [];
-    const searchSlugs = ['desenvolvedor', 'programador', 'junior', 'fullstack', 'react', 'ti'];
-
-    for (const slug of searchSlugs) {
-      try {
-        const url = `https://vagas.solides.com.br/?search=${encodeURIComponent(slug)}`;
-        const html = await fetchHtml(url);
-        const $ = cheerio.load(html);
-
-        $('.card-vacancy, .vacancy-card, .job-card, [data-testid="job-card"], article').each((_, el) => {
-          const titleEl = $(el).find('h2 a, h3 a, .title a, a[href*="/vaga/"], a[href*="/oportunidade/"]');
-          const companyEl = $(el).find('.company, .company-name, .empresa');
-          const locationEl = $(el).find('.location, .cidade, .city, .local');
-          const dateEl = $(el).find('time, .date, .data');
-
-          const title = titleEl.text().trim();
-          let href = titleEl.attr('href') || $(el).find('a').attr('href') || '';
-          if (!title || !href) return;
-
-          const company = companyEl.text().trim() || 'Empresa Sólides';
-          const location = locationEl.text().trim() || 'Brasil';
-          const dateStr = dateEl.text().trim();
-
-          const publishedAt = parseRelativeDate(dateStr);
-          if (isOlderThanDays(publishedAt, 7)) return;
-
-          const fullUrl = href.startsWith('http') ? href : `https://vagas.solides.com.br${href.startsWith('/') ? '' : '/'}${href}`;
-
-          jobs.push({
-            title,
-            company,
-            platform: PlatformSource.SOLIDES,
-            url: fullUrl,
-            description: `${title} - ${company} (${location})`,
-            publishedAt,
-            location,
-          });
-        });
-      } catch (err) {
-        console.warn(`[SolidesScraper] Aviso para "${slug}":`, (err as Error).message);
-      }
-    }
-
-    if (jobs.length > 0) return jobs;
-    throw new Error('Nenhuma vaga capturada via HTTP na Sólides');
-  }
-
-  private async scrapeViaPlaywright(): Promise<RawJob[]> {
-    const jobs: RawJob[] = [];
-    const searchUrl = 'https://vagas.solides.com.br/?search=desenvolvedor';
+    const searchTerms = ['desenvolvedor', 'programador'];
     const { browser, context, page } = await createStealthContext();
+    const seenUrls = new Set<string>();
 
     try {
-      await page.goto(searchUrl, { waitUntil: 'domcontentloaded', timeout: 30000 });
-      await page.waitForTimeout(3000);
-
-      const cards = await page.$$('.card-vacancy, .vacancy-card, .job-card, [data-testid="job-card"], article');
-
-      for (const card of cards) {
+      for (const term of searchTerms) {
+        const searchUrl = `https://vagas.solides.com.br/vagas/${encodeURIComponent(term)}`;
         try {
-          const titleEl = await card.$('h2 a, h3 a, .title a, a[href*="/vaga/"]');
-          const companyEl = await card.$('.company, .company-name, .empresa');
-          const locationEl = await card.$('.location, .cidade, .city');
-          const dateEl = await card.$('time, .date');
+          await page.goto(searchUrl, { waitUntil: 'domcontentloaded', timeout: 30000 });
+          await page.waitForTimeout(5000);
 
-          const title = titleEl ? (await titleEl.innerText()).trim() : '';
-          const href = titleEl ? await titleEl.getAttribute('href') : '';
-          const company = companyEl ? (await companyEl.innerText()).trim() : 'Empresa Sólides';
-          const location = locationEl ? (await locationEl.innerText()).trim() : 'Brasil';
-          const dateStr = dateEl ? (await dateEl.innerText()).trim() : '';
+          const extracted = await page.evaluate(() => {
+            const items: { title: string; company: string; location: string; url: string }[] = [];
+            const links = Array.from(document.querySelectorAll('a[href*=".vagas.solides.com.br"]'));
 
-          if (!title || !href) continue;
+            links.forEach((a) => {
+              const href = (a as HTMLAnchorElement).href;
+              const parent = a.closest('.flex.flex-col') || a.parentElement;
+              const text = parent ? (parent as HTMLElement).innerText : (a as HTMLElement).innerText;
+              const lines = text.split('\n').map(s => s.trim()).filter(Boolean);
 
-          const publishedAt = parseRelativeDate(dateStr);
-          if (isOlderThanDays(publishedAt, 7)) continue;
+              if (lines.length >= 2) {
+                const title = lines[0];
+                const company = lines[1];
+                let location = 'Brasil';
+                const locLine = lines.find(l => l.includes(' - ') || l.includes('Remoto') || l.includes('Home Office'));
+                if (locLine) location = locLine;
 
-          const fullUrl = href.startsWith('http') ? href : `https://vagas.solides.com.br${href.startsWith('/') ? '' : '/'}${href}`;
+                if (title && title.length > 3 && !['Vagas', 'Blog', 'Cursos', 'Para Empresas', 'Trabalhe com a Sólides', 'Entrar', 'Cadastrar-se'].includes(title)) {
+                  items.push({ title, company, location, url: href });
+                }
+              }
+            });
 
-          jobs.push({
-            title,
-            company,
-            platform: PlatformSource.SOLIDES,
-            url: fullUrl,
-            description: `${title} - ${company} (${location})`,
-            publishedAt,
-            location,
+            return items;
           });
-        } catch {}
+
+          for (const item of extracted) {
+            if (seenUrls.has(item.url)) continue;
+            seenUrls.add(item.url);
+
+            jobs.push({
+              title: item.title,
+              company: item.company || 'Empresa Sólides',
+              platform: PlatformSource.SOLIDES,
+              url: item.url,
+              description: `${item.title} - ${item.company} (${item.location})`,
+              publishedAt: new Date(),
+              location: item.location || 'Brasil',
+            });
+          }
+        } catch (termErr) {
+          console.warn(`[SolidesScraper] Erro ao buscar termo "${term}":`, (termErr as Error).message);
+        }
       }
     } catch (err) {
       console.warn('[SolidesScraper] Playwright erro:', (err as Error).message);

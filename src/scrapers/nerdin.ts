@@ -18,34 +18,45 @@ export class NerdinScraper implements JobScraper {
   private async scrapeViaHttp(): Promise<RawJob[]> {
     const jobs: RawJob[] = [];
     const searchUrls = [
-      'https://nerdin.com.br/vagas',
-      'https://nerdin.com.br/vagas?tipo=programador',
-      'https://nerdin.com.br/vagas?cidade=Florian%C3%B3polis',
+      'https://nerdin.com.br/vagas.php',
+      'https://nerdin.com.br/vagas-home-office.php',
+      'https://nerdin.com.br/vagas-desenvolvedor-sistemas.php',
+      'https://nerdin.com.br/vagas-estagio-junior.php',
     ];
+    const seenUrls = new Set<string>();
 
     for (const url of searchUrls) {
       try {
         const html = await fetchHtml(url);
         const $ = cheerio.load(html);
 
-        $('.vaga-item, .card-vaga, .item-vaga, article, .box-vaga').each((_, el) => {
-          const titleEl = $(el).find('h2 a, h3 a, .titulo-vaga a, a[href*="/vaga/"], a[href*="/oportunidade/"]');
-          const companyEl = $(el).find('.empresa, .company, .nome-empresa');
-          const locationEl = $(el).find('.cidade, .local, .localizacao, .badge-local');
-          const dateEl = $(el).find('time, .data, .date, .publicado');
+        $('.vaga-card').each((_, el) => {
+          const linkEl = $(el).find('a[href*="vaga_emprego/"], a[href*="vaga-"]').first();
+          let href = linkEl.attr('href') || '';
+          if (!href || href === '#' || seenUrls.has(href)) return;
 
-          const title = titleEl.text().trim();
-          let href = titleEl.attr('href') || $(el).find('a').attr('href') || '';
-          if (!title || !href) return;
+          const rawTitle = $(el).find('h1, h2, h3, h4, h5, [class*="title"]').text().trim();
+          const lines = $(el).text().split('\n').map(s => s.trim()).filter(Boolean);
+          
+          let title = rawTitle || lines[0] || '';
+          title = title.replace(/\s*Nova\s*$/i, '').replace(/\s+/g, ' ').trim();
+          if (!title || title.length < 3 || title.toLowerCase() === 'quero essa vaga') return;
 
-          const company = companyEl.text().trim() || 'Empresa Nerdin';
-          const location = locationEl.text().trim() || 'Florianópolis / SC';
-          const dateStr = dateEl.text().trim();
+          const cardText = $(el).text().replace(/\s+/g, ' ');
+          const company = lines[3] && !lines[3].includes('•') && !lines[3].includes('R$') && !lines[3].includes('Home') ? lines[3] : 'Empresa Nerdin';
 
-          const publishedAt = parseRelativeDate(dateStr);
-          if (isOlderThanDays(publishedAt, 7)) return;
+          let location = 'Florianópolis / SC';
+          if (cardText.includes('Home Office') || cardText.includes('Remoto')) {
+            location = 'Remoto / Home Office';
+          } else {
+            const matchLoc = cardText.match(/([A-Za-zÀ-ÖØ-öø-ÿ\s]+ • [A-Z]{2})/);
+            if (matchLoc) {
+              location = matchLoc[1].replace('•', '-');
+            }
+          }
 
-          const fullUrl = href.startsWith('http') ? href : `https://nerdin.com.br${href.startsWith('/') ? '' : '/'}${href}`;
+          seenUrls.add(href);
+          const fullUrl = href.startsWith('http') ? href : `https://nerdin.com.br/${href.replace(/^\.?\//, '')}`;
 
           jobs.push({
             title,
@@ -53,7 +64,7 @@ export class NerdinScraper implements JobScraper {
             platform: PlatformSource.NERDIN,
             url: fullUrl,
             description: `${title} - ${company} (${location})`,
-            publishedAt,
+            publishedAt: new Date(),
             location,
           });
         });
