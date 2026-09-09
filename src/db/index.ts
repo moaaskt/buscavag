@@ -77,6 +77,8 @@ export function initDatabase() {
       file_path TEXT NOT NULL,
       file_size INTEGER NOT NULL,
       file_type TEXT NOT NULL,
+      ai_analysis TEXT,
+      analyzed_at TEXT,
       uploaded_at TEXT NOT NULL,
       FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
     );
@@ -94,8 +96,8 @@ export function initDatabase() {
 
   // Migração automática para bancos já existentes
   try {
-    const existingColumns = (db.pragma('table_info(jobs)') as Array<{ name: string }>).map((col) => col.name);
-    const columnsToAdd: Array<{ name: string; type: string }> = [
+    const existingJobCols = (db.pragma('table_info(jobs)') as Array<{ name: string }>).map((col) => col.name);
+    const jobColumnsToAdd: Array<{ name: string; type: string }> = [
       { name: 'overall_score', type: 'REAL DEFAULT 0' },
       { name: 'stack_score', type: 'REAL DEFAULT 0' },
       { name: 'seniority_score', type: 'REAL DEFAULT 0' },
@@ -106,13 +108,25 @@ export function initDatabase() {
       { name: 'application_status', type: "TEXT DEFAULT 'pending'" },
     ];
 
-    for (const col of columnsToAdd) {
-      if (!existingColumns.includes(col.name)) {
+    for (const col of jobColumnsToAdd) {
+      if (!existingJobCols.includes(col.name)) {
         db.exec(`ALTER TABLE jobs ADD COLUMN ${col.name} ${col.type};`);
       }
     }
+
+    const existingResumeCols = (db.pragma('table_info(candidate_resumes)') as Array<{ name: string }>).map((col) => col.name);
+    const resumeColumnsToAdd: Array<{ name: string; type: string }> = [
+      { name: 'ai_analysis', type: 'TEXT' },
+      { name: 'analyzed_at', type: 'TEXT' },
+    ];
+
+    for (const col of resumeColumnsToAdd) {
+      if (!existingResumeCols.includes(col.name)) {
+        db.exec(`ALTER TABLE candidate_resumes ADD COLUMN ${col.name} ${col.type};`);
+      }
+    }
   } catch (err) {
-    console.warn('[DB Migration] Aviso ao verificar colunas da tabela jobs:', (err as Error).message);
+    console.warn('[DB Migration] Aviso ao verificar colunas:', (err as Error).message);
   }
 
   // Criação segura de índices após migrações

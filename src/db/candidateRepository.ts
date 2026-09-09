@@ -21,6 +21,17 @@ export interface CandidateProfile {
   updated_at: string;
 }
 
+export interface CVAnalysisResult {
+  detected_role: string;
+  detected_seniority: string;
+  hard_skills: string[];
+  soft_skills: string[];
+  summary: string;
+  strengths: string[];
+  improvement_tips: string[];
+  source?: string;
+}
+
 export interface CandidateResume {
   id: string;
   user_id: string;
@@ -28,6 +39,8 @@ export interface CandidateResume {
   file_path: string;
   file_size: number;
   file_type: string;
+  ai_analysis?: CVAnalysisResult | null;
+  analyzed_at?: string | null;
   uploaded_at: string;
 }
 
@@ -183,13 +196,69 @@ export class CandidateRepository {
     return {
       ...resume,
       uploaded_at: now,
+      ai_analysis: null,
+      analyzed_at: null,
     };
   }
 
   getResume(userId: string): CandidateResume | null {
     const stmt = db.prepare('SELECT * FROM candidate_resumes WHERE user_id = ? ORDER BY uploaded_at DESC LIMIT 1');
-    const row = stmt.get(userId) as CandidateResume | undefined;
-    return row || null;
+    const row = stmt.get(userId) as any;
+    if (!row) return null;
+
+    let analysis: CVAnalysisResult | null = null;
+    if (row.ai_analysis) {
+      try {
+        analysis = typeof row.ai_analysis === 'string' ? JSON.parse(row.ai_analysis) : row.ai_analysis;
+      } catch {
+        analysis = null;
+      }
+    }
+
+    return {
+      id: row.id,
+      user_id: row.user_id,
+      filename: row.filename,
+      file_path: row.file_path,
+      file_size: row.file_size,
+      file_type: row.file_type,
+      ai_analysis: analysis,
+      analyzed_at: row.analyzed_at || null,
+      uploaded_at: row.uploaded_at,
+    };
+  }
+
+  updateResumeAnalysis(userId: string, analysis: CVAnalysisResult): boolean {
+    const now = new Date().toISOString();
+    const jsonStr = JSON.stringify(analysis);
+    const stmt = db.prepare(`
+      UPDATE candidate_resumes 
+      SET ai_analysis = ?, analyzed_at = ? 
+      WHERE user_id = ?
+    `);
+    const info = stmt.run(jsonStr, now, userId);
+    return info.changes > 0;
+  }
+
+  syncSkillsToProfile(userId: string, newSkills: string[], detectedRole?: string, detectedSeniority?: string): CandidateProfile {
+    const currentProfile = this.getProfile(userId);
+    const existingSkills = currentProfile?.skills || [];
+    
+    // Mescla skills sem duplicar
+    const mergedSkills = Array.from(new Set([...existingSkills, ...newSkills]));
+    
+    const updateData: Partial<CandidateProfile> = {
+      skills: mergedSkills,
+    };
+
+    if (detectedRole && (!currentProfile?.target_role || currentProfile.target_role.trim() === '')) {
+      updateData.target_role = detectedRole;
+    }
+    if (detectedSeniority && (!currentProfile?.seniority || currentProfile.seniority === 'Júnior')) {
+      updateData.seniority = detectedSeniority;
+    }
+
+    return this.upsertProfile(userId, updateData);
   }
 
   deleteResume(userId: string): boolean {

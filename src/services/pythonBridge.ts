@@ -29,6 +29,37 @@ export interface PythonScrapeResponse {
   executionTimeMs?: number;
 }
 
+export interface PythonCVAnalysisData {
+  detected_role: string;
+  detected_seniority: string;
+  hard_skills: string[];
+  soft_skills: string[];
+  summary: string;
+  strengths: string[];
+  improvement_tips: string[];
+  source?: string;
+}
+
+export interface PythonCVAnalyzeResponse {
+  success: boolean;
+  analysis?: PythonCVAnalysisData;
+  rawTextPreview?: string;
+  wordCount?: number;
+  error?: string;
+  executionTimeMs?: number;
+}
+
+export interface PythonCVParseResponse {
+  success: boolean;
+  text: string;
+  wordCount: number;
+  charCount: number;
+  detectedSections: string[];
+  preview: string;
+  error?: string;
+  executionTimeMs?: number;
+}
+
 export class PythonBridgeClient {
   private client: AxiosInstance;
   private baseUrl: string;
@@ -50,7 +81,7 @@ export class PythonBridgeClient {
   async isAvailable(): Promise<boolean> {
     try {
       const response = await this.client.get('/health', { timeout: 3000 });
-      return response.status === 200 && response.data?.status === 'healthy';
+      return response.status === 200 && (response.data?.status === 'healthy' || response.data?.status === 'ok');
     } catch {
       return false;
     }
@@ -87,6 +118,44 @@ export class PythonBridgeClient {
     } catch (err) {
       const msg = (err as Error).message || String(err);
       throw new Error(`[PythonBridgeClient] Erro ao consultar ${source}: ${msg}`);
+    }
+  }
+
+  /**
+   * Extrai texto limpo de um arquivo de currículo (PDF/DOCX) via motor Python.
+   */
+  async parseCV(filePath: string, filename?: string): Promise<PythonCVParseResponse> {
+    try {
+      const response = await this.client.post<PythonCVParseResponse>('/cv/parse', {
+        filePath,
+        filename,
+      });
+      return response.data;
+    } catch (err) {
+      const msg = (err as Error).message || String(err);
+      throw new Error(`[PythonBridgeClient] Erro ao extrair texto do CV: ${msg}`);
+    }
+  }
+
+  /**
+   * Envia um currículo para análise completa por IA no motor Python.
+   */
+  async analyzeCV(filePath?: string, cvText?: string, filename?: string): Promise<PythonCVAnalysisData> {
+    try {
+      const response = await this.client.post<PythonCVAnalyzeResponse>('/cv/analyze', {
+        filePath,
+        cvText,
+        filename,
+      });
+
+      if (!response.data.success || !response.data.analysis) {
+        throw new Error(response.data.error || 'Falha ao processar análise do currículo no motor Python');
+      }
+
+      return response.data.analysis;
+    } catch (err) {
+      const msg = (err as Error).message || String(err);
+      throw new Error(`[PythonBridgeClient] Erro na análise de IA: ${msg}`);
     }
   }
 }
