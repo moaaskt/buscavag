@@ -43,11 +43,13 @@ import { RawJob } from '../types/job.js';
 import { TelegramNotifier } from '../services/telegramNotifier.js';
 import { runWithConcurrencyLimit, withTimeout } from '../utils/concurrency.js';
 import { ScraperLogger } from '../services/scraperLogger.js';
+import { PythonBridgeClient } from '../services/pythonBridge.js';
 
 export interface OrchestratorOptions {
   concurrency?: number;
   timeoutPerScraperMs?: number;
   logger?: ScraperLogger;
+  pythonBridge?: PythonBridgeClient;
 }
 
 export interface ScraperExecutionMetric {
@@ -56,6 +58,7 @@ export interface ScraperExecutionMetric {
   jobsFound: number;
   success: boolean;
   error?: string;
+  engine?: 'node' | 'python';
 }
 
 export class ScraperOrchestrator {
@@ -64,9 +67,12 @@ export class ScraperOrchestrator {
   private concurrency: number;
   private timeoutPerScraperMs: number;
   private logger: ScraperLogger;
+  private pythonBridge: PythonBridgeClient;
 
   constructor(notifier?: TelegramNotifier, options?: OrchestratorOptions) {
+    this.pythonBridge = options?.pythonBridge || new PythonBridgeClient();
     this.scrapers = [
+
       new GupyScraper(),
       new LinkedInScraper(),
       new IndeedScraper(),
@@ -116,9 +122,24 @@ export class ScraperOrchestrator {
   }
 
   async runAll(): Promise<RawJob[]> {
+    // Checagem de disponibilidade do microserviço Python Scrapling Engine
+    const isPythonAvailable = await this.pythonBridge.isAvailable();
+    if (isPythonAvailable) {
+      this.logger.info('🐍 Microserviço Scrapling Engine (Python) está ONLINE e operacional.', {
+        step: 'PROGRESS',
+        data: { pythonEngine: 'healthy' },
+      });
+    } else {
+      this.logger.warn('⚠️ Microserviço Scrapling Engine (Python) OFFLINE. Usando fallback TypeScript nativo para fontes elegíveis.', {
+        step: 'PROGRESS',
+        data: { pythonEngine: 'unreachable' },
+      });
+    }
+
+
     this.logger.info(`Iniciando execução paralela de ${this.scrapers.length} scrapers (Concorrência: ${this.concurrency}, Timeout: ${this.timeoutPerScraperMs / 1000}s)...`, {
       step: 'START',
-      data: { totalScrapers: this.scrapers.length, concurrency: this.concurrency },
+      data: { totalScrapers: this.scrapers.length, concurrency: this.concurrency, pythonEngineOnline: isPythonAvailable },
     });
 
     const startTime = Date.now();
@@ -129,22 +150,34 @@ export class ScraperOrchestrator {
       const scraperLogger = this.logger.forScraper(scraper.name);
       const scraperStart = Date.now();
       
-      scraperLogger.info(`Buscando vagas em ${scraper.name}...`, {
+      const shouldUsePython = Boolean(scraper.requiresPython && isPythonAvailable);
+      const engineName = shouldUsePython ? 'python' : 'node';
+
+      scraperLogger.info(`Buscando vagas em ${scraper.name} (Motor: ${engineName.toUpperCase()})...`, {
         step: 'START',
-        data: { scraper: scraper.name },
+        data: { scraper: scraper.name, engine: engineName },
       });
 
       try {
+        let scrapePromise: Promise<RawJob[]>;
+
+        if (shouldUsePython) {
+          const pythonSource = scraper.pythonSourceName || scraper.name.toLowerCase();
+          scrapePromise = this.pythonBridge.scrape(pythonSource);
+        } else {
+          scrapePromise = scraper.scrape();
+        }
+
         const jobs = await withTimeout(
-          scraper.scrape(),
+          scrapePromise,
           this.timeoutPerScraperMs,
           `Tempo limite excedido (${this.timeoutPerScraperMs / 1000}s)`
         );
 
         const durationMs = Date.now() - scraperStart;
-        scraperLogger.info(`Finalizado em ${(durationMs / 1000).toFixed(1)}s com ${jobs.length} vagas encontradas.`, {
+        scraperLogger.info(`Finalizado em ${(durationMs / 1000).toFixed(1)}s com ${jobs.length} vagas encontradas via ${engineName.toUpperCase()}.`, {
           step: 'FINISH',
-          data: { scraper: scraper.name, durationMs, jobsFound: jobs.length },
+          data: { scraper: scraper.name, durationMs, jobsFound: jobs.length, engine: engineName },
         });
 
         metrics.push({
@@ -152,6 +185,7 @@ export class ScraperOrchestrator {
           durationMs,
           jobsFound: jobs.length,
           success: true,
+          engine: engineName,
         });
 
         return jobs;
@@ -160,8 +194,8 @@ export class ScraperOrchestrator {
         const errorMsg = (err as Error).message || String(err);
         
         // Log estruturado com level ERROR e stack trace
-        scraperLogger.error(`Falha no scraper ${scraper.name} após ${(durationMs / 1000).toFixed(1)}s: ${errorMsg}`, err, {
-          data: { scraper: scraper.name, durationMs },
+        scraperLogger.error(`Falha no scraper ${scraper.name} (${engineName.toUpperCase()}) após ${(durationMs / 1000).toFixed(1)}s: ${errorMsg}`, err, {
+          data: { scraper: scraper.name, durationMs, engine: engineName },
         });
 
         metrics.push({
@@ -170,10 +204,11 @@ export class ScraperOrchestrator {
           jobsFound: 0,
           success: false,
           error: errorMsg,
+          engine: engineName,
         });
 
         // Enviar alerta não bloqueante no Telegram
-        const alertText = `⚠️ [ALERTA] O scraper ${scraper.name} falhou: ${errorMsg}`;
+        const alertText = `⚠️ [ALERTA] O scraper ${scraper.name} (${engineName}) falhou: ${errorMsg}`;
         this.notifier.sendAlert(alertText).catch((telegramErr) => {
           console.warn(`[ScraperOrchestrator] Erro ao enviar alerta Telegram:`, (telegramErr as Error).message);
         });
@@ -181,6 +216,7 @@ export class ScraperOrchestrator {
         return [] as RawJob[];
       }
     });
+
 
     for (const jobBatch of results) {
       allJobs.push(...jobBatch);
