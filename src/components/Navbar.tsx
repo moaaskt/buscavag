@@ -130,6 +130,12 @@ export function Navbar({
       active: pathname.startsWith('/candidate'),
     },
     {
+      name: 'Planos & Preços',
+      link: '/pricing',
+      icon: Crown,
+      active: pathname.startsWith('/pricing'),
+    },
+    {
       name: 'Logs & Auditoria',
       link: '/logs',
       icon: RotateCw,
@@ -239,6 +245,12 @@ export function Navbar({
       href: '/candidate',
       icon: <Sparkles className="h-full w-full" />,
       active: pathname.startsWith('/candidate'),
+    },
+    {
+      title: 'Planos',
+      href: '/pricing',
+      icon: <Crown className="h-full w-full" />,
+      active: pathname.startsWith('/pricing'),
     },
     {
       title: 'Logs',

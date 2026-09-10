@@ -78,6 +78,8 @@ interface ResumeData {
   analyzedAt?: string | null;
 }
 
+import { UpgradeModal } from '@/components/UpgradeModal';
+
 interface RecommendedJobItem {
   job: {
     id: string;
@@ -102,6 +104,7 @@ interface RecommendedJobItem {
     isStrongMatch: boolean;
   };
   isSaved: boolean;
+  isLocked?: boolean;
 }
 
 interface MatchStatsData {
@@ -169,6 +172,9 @@ export default function CandidateDashboardPage() {
   // Saved Jobs State
   const [savedJobs, setSavedJobs] = useState<SavedJob[]>([]);
   const [loadingJobs, setLoadingJobs] = useState(false);
+
+  // SaaS Paywall State (Phase 39)
+  const [isUpgradeModalOpen, setIsUpgradeModalOpen] = useState(false);
 
   // Carregar dados iniciais da sessão
   useEffect(() => {
@@ -476,6 +482,10 @@ export default function CandidateDashboardPage() {
         body: JSON.stringify({ jobId, status: currentStatus }),
       });
       const data = await res.json();
+      if (res.status === 403 || data.limitReached) {
+        setIsUpgradeModalOpen(true);
+        return;
+      }
       if (data.success) {
         // Atualiza estado local nos recomendados
         setRecommendedJobs((prev) =>
@@ -551,10 +561,10 @@ export default function CandidateDashboardPage() {
                     {user?.tier === 'premium' ? (
                       <>
                         <Crown className="w-3 h-3 text-amber-400" />
-                        <span>Premium</span>
+                        <span>Premium Pro</span>
                       </>
                     ) : (
-                      <span>Free</span>
+                      <span>Plano Free</span>
                     )}
                   </span>
                 </div>
@@ -563,10 +573,19 @@ export default function CandidateDashboardPage() {
             </div>
 
             <div className="flex items-center gap-3">
-              {user?.tier === 'free' && (
-                <div className="hidden sm:flex items-center gap-2 rounded-lg border border-amber-500/20 bg-amber-500/5 px-3 py-1.5 text-xs text-amber-300">
-                  <Sparkles className="w-4 h-4 text-amber-400 shrink-0" />
-                  <span>Match com IA ilimitado ativo</span>
+              {user?.tier === 'free' ? (
+                <button
+                  type="button"
+                  onClick={() => setIsUpgradeModalOpen(true)}
+                  className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-amber-500 via-amber-400 to-yellow-500 hover:from-amber-400 hover:to-yellow-400 text-zinc-950 font-bold px-4 py-2 text-xs shadow-lg shadow-amber-950/40 transition-all active:scale-95"
+                >
+                  <Crown className="w-4 h-4 fill-zinc-950 text-zinc-950" />
+                  <span>Fazer Upgrade Pro</span>
+                </button>
+              ) : (
+                <div className="hidden sm:flex items-center gap-2 rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-1.5 text-xs text-amber-300 font-medium">
+                  <Crown className="w-4 h-4 text-amber-400 shrink-0" />
+                  <span>Assinatura Pro Ativa</span>
                 </div>
               )}
               <button
@@ -651,6 +670,32 @@ export default function CandidateDashboardPage() {
         {/* Tab: Vagas Recomendadas (Match IA) - FASE 38 */}
         {activeTab === 'recommended' && (
           <div className="space-y-6">
+            {/* Free Tier Pro Banner */}
+            {user?.tier === 'free' && (
+              <div className="relative overflow-hidden rounded-2xl border border-amber-500/30 bg-gradient-to-r from-amber-500/10 via-yellow-500/5 to-emerald-500/10 p-5 backdrop-blur-xl flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div className="flex items-start sm:items-center gap-3.5">
+                  <div className="h-10 w-10 rounded-xl bg-amber-500/20 border border-amber-500/30 flex items-center justify-center text-amber-400 shrink-0">
+                    <Crown className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-bold text-amber-200">
+                      Você está no Plano Free (5 Melhores Vagas Desbloqueadas)
+                    </h4>
+                    <p className="text-xs text-zinc-400 mt-0.5">
+                      Desbloqueie todas as recomendações de IA, limite ampliado de vagas salvas e alertas no Telegram com o <strong>Plano Pro</strong>.
+                    </p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setIsUpgradeModalOpen(true)}
+                  className="rounded-xl bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-400 hover:to-yellow-400 text-zinc-950 font-bold px-4 py-2.5 text-xs shadow-lg shadow-amber-950/30 transition-all active:scale-95 shrink-0"
+                >
+                  Fazer Upgrade Pro
+                </button>
+              </div>
+            )}
+
             {/* Resumo Estatístico de Match */}
             {matchStats && matchStats.totalAnalyzed > 0 && (
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -795,6 +840,75 @@ export default function CandidateDashboardPage() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                 {recommendedJobs.map((item) => {
                   const scoreClass = getScoreColor(item.match.overallScore);
+
+                  if (item.isLocked) {
+                    return (
+                      <div
+                        key={item.job.id}
+                        className="relative overflow-hidden rounded-2xl border border-amber-500/30 bg-zinc-900/40 p-6 backdrop-blur-xl flex flex-col justify-between group shadow-lg"
+                      >
+                        {/* Header Bloqueado */}
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="flex items-center gap-2">
+                            <span className="rounded border border-zinc-800 bg-zinc-950 px-2 py-0.5 text-[10px] font-mono text-zinc-400 uppercase">
+                              {item.job.platform}
+                            </span>
+                            <span className="inline-flex items-center gap-1 rounded border border-amber-500/40 bg-amber-500/10 px-2 py-0.5 text-[10px] font-semibold text-amber-300 font-mono">
+                              <Crown className="w-2.5 h-2.5 text-amber-400" />
+                              <span>Exclusivo Pro</span>
+                            </span>
+                          </div>
+
+                          <div
+                            className={cn(
+                              'flex items-center gap-1 rounded-xl border px-3 py-1 font-mono text-xs font-bold shadow-md',
+                              scoreClass
+                            )}
+                          >
+                            <span>{item.match.overallScore}%</span>
+                            <span className="text-[10px] font-normal uppercase">Match</span>
+                          </div>
+                        </div>
+
+                        {/* Detalhes com Efeito de Blur */}
+                        <div className="mt-3">
+                          <h3 className="text-base font-bold text-zinc-200">
+                            {item.job.title}
+                          </h3>
+                          <p className="text-xs text-zinc-500 mt-0.5 font-mono select-none blur-[3px]">
+                            {item.job.company} • Remoto / Brasil
+                          </p>
+
+                          <div className="mt-4 rounded-xl border border-amber-500/20 bg-amber-500/5 p-4 text-center">
+                            <Crown className="w-6 h-6 text-amber-400 mx-auto mb-2" />
+                            <h4 className="text-xs font-bold text-amber-200 uppercase tracking-wide">
+                              Oportunidade Bloqueada no Plano Free
+                            </h4>
+                            <p className="text-[11px] text-zinc-400 mt-1 max-w-xs mx-auto">
+                              Esta oportunidade possui <strong>{item.match.overallScore}% de aderência</strong> ao seu perfil. Desbloqueie com o plano Pro para ver a empresa e link direto.
+                            </p>
+                          </div>
+                        </div>
+
+                        {/* CTA do Card Bloqueado */}
+                        <div className="mt-5 pt-3 border-t border-zinc-800/80 flex items-center justify-between gap-2">
+                          <span className="text-[11px] text-zinc-500 font-mono">
+                            Vaga #{item.match.jobId.slice(0, 8)}
+                          </span>
+
+                          <button
+                            type="button"
+                            onClick={() => setIsUpgradeModalOpen(true)}
+                            className="inline-flex items-center gap-1.5 rounded-lg bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-400 hover:to-yellow-400 text-zinc-950 font-bold px-4 py-1.5 text-xs transition-all shadow-md active:scale-95"
+                          >
+                            <Crown className="w-3.5 h-3.5 fill-zinc-950" />
+                            <span>Desbloquear Vaga (Pro)</span>
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  }
+
                   return (
                     <div
                       key={item.job.id}
@@ -1517,6 +1631,16 @@ export default function CandidateDashboardPage() {
           </div>
         )}
       </main>
+
+      <UpgradeModal
+        isOpen={isUpgradeModalOpen}
+        onClose={() => setIsUpgradeModalOpen(false)}
+        onSuccess={() => {
+          fetchSession();
+          fetchRecommendedJobs();
+          fetchSavedJobs();
+        }}
+      />
     </div>
   );
 }

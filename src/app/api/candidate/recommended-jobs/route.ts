@@ -21,6 +21,9 @@ export async function GET(req: NextRequest) {
     const offset = (page - 1) * limit;
 
     const repo = new CandidateRepository();
+    const user = repo.getUserById(session.userId);
+    const tier = user?.tier || session.tier || 'free';
+
     const result = repo.getRecommendedJobs(session.userId, {
       minScore,
       search,
@@ -30,12 +33,38 @@ export async function GET(req: NextRequest) {
       offset,
     });
 
+    const isFree = tier === 'free';
+    const processedItems = result.items.map((item, index) => {
+      const isLocked = isFree && (offset + index >= 5);
+      if (isLocked) {
+        return {
+          ...item,
+          isLocked: true,
+          job: {
+            ...item.job,
+            url: '#upgrade-required',
+            description: item.job.description ? item.job.description.slice(0, 120) + '...' : '',
+          },
+          match: {
+            ...item.match,
+            matchReasoning: 'Oportunidade exclusiva com alta aderência técnica. Desbloqueie com o Plano Premium Pro.',
+          },
+        };
+      }
+      return {
+        ...item,
+        isLocked: false,
+      };
+    });
+
     return NextResponse.json({
       success: true,
-      count: result.items.length,
+      count: processedItems.length,
       totalCount: result.totalCount,
+      tier,
+      unlockedCount: isFree ? Math.min(5, processedItems.length) : processedItems.length,
       candidate: result.candidate,
-      data: result.items,
+      data: processedItems,
     });
   } catch (error: any) {
     console.error('Error in GET /api/candidate/recommended-jobs:', error);
