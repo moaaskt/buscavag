@@ -10,6 +10,7 @@ export interface UserSession {
   email: string;
   name: string;
   tier: 'free' | 'premium';
+  role: 'GUEST' | 'CANDIDATE' | 'ADMIN';
 }
 
 /**
@@ -77,6 +78,7 @@ export function verifySessionToken(token: string): UserSession | null {
       email: payload.email,
       name: payload.name,
       tier: payload.tier || 'free',
+      role: payload.role || 'CANDIDATE',
     };
   } catch {
     return null;
