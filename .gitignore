@@ -4,3 +4,13 @@ buscavag.db
 node_modules/
 .next/
 dist/
+node_modules
+.vscode/
+.venv/
+**/__pycache__/
+*.pyc
+# Python
+.venv/
+venv/
+__pycache__/
+*.pyc

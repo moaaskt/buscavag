@@ -47,12 +47,57 @@ export function initDatabase() {
       details TEXT,
       created_at TEXT NOT NULL
     );
+
+    CREATE TABLE IF NOT EXISTS users (
+      id TEXT PRIMARY KEY,
+      email TEXT UNIQUE NOT NULL,
+      password_hash TEXT NOT NULL,
+      name TEXT NOT NULL,
+      tier TEXT DEFAULT 'free',
+      created_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL
+    );
+
+    CREATE TABLE IF NOT EXISTS candidate_profiles (
+      user_id TEXT PRIMARY KEY,
+      target_role TEXT,
+      seniority TEXT,
+      expected_salary TEXT,
+      preferred_work_models TEXT,
+      skills TEXT,
+      bio TEXT,
+      updated_at TEXT NOT NULL,
+      FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+    );
+
+    CREATE TABLE IF NOT EXISTS candidate_resumes (
+      id TEXT PRIMARY KEY,
+      user_id TEXT NOT NULL,
+      filename TEXT NOT NULL,
+      file_path TEXT NOT NULL,
+      file_size INTEGER NOT NULL,
+      file_type TEXT NOT NULL,
+      ai_analysis TEXT,
+      analyzed_at TEXT,
+      uploaded_at TEXT NOT NULL,
+      FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+    );
+
+    CREATE TABLE IF NOT EXISTS user_saved_jobs (
+      user_id TEXT NOT NULL,
+      job_id TEXT NOT NULL,
+      status TEXT DEFAULT 'saved',
+      created_at TEXT NOT NULL,
+      PRIMARY KEY (user_id, job_id),
+      FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+      FOREIGN KEY (job_id) REFERENCES jobs(id) ON DELETE CASCADE
+    );
   `);
 
   // Migração automática para bancos já existentes
   try {
-    const existingColumns = (db.pragma('table_info(jobs)') as Array<{ name: string }>).map((col) => col.name);
-    const columnsToAdd: Array<{ name: string; type: string }> = [
+    const existingJobCols = (db.pragma('table_info(jobs)') as Array<{ name: string }>).map((col) => col.name);
+    const jobColumnsToAdd: Array<{ name: string; type: string }> = [
       { name: 'overall_score', type: 'REAL DEFAULT 0' },
       { name: 'stack_score', type: 'REAL DEFAULT 0' },
       { name: 'seniority_score', type: 'REAL DEFAULT 0' },
@@ -63,13 +108,25 @@ export function initDatabase() {
       { name: 'application_status', type: "TEXT DEFAULT 'pending'" },
     ];
 
-    for (const col of columnsToAdd) {
-      if (!existingColumns.includes(col.name)) {
+    for (const col of jobColumnsToAdd) {
+      if (!existingJobCols.includes(col.name)) {
         db.exec(`ALTER TABLE jobs ADD COLUMN ${col.name} ${col.type};`);
       }
     }
+
+    const existingResumeCols = (db.pragma('table_info(candidate_resumes)') as Array<{ name: string }>).map((col) => col.name);
+    const resumeColumnsToAdd: Array<{ name: string; type: string }> = [
+      { name: 'ai_analysis', type: 'TEXT' },
+      { name: 'analyzed_at', type: 'TEXT' },
+    ];
+
+    for (const col of resumeColumnsToAdd) {
+      if (!existingResumeCols.includes(col.name)) {
+        db.exec(`ALTER TABLE candidate_resumes ADD COLUMN ${col.name} ${col.type};`);
+      }
+    }
   } catch (err) {
-    console.warn('[DB Migration] Aviso ao verificar colunas da tabela jobs:', (err as Error).message);
+    console.warn('[DB Migration] Aviso ao verificar colunas:', (err as Error).message);
   }
 
   // Criação segura de índices após migrações
@@ -82,6 +139,9 @@ export function initDatabase() {
       CREATE INDEX IF NOT EXISTS idx_logs_level ON scraper_logs(level);
       CREATE INDEX IF NOT EXISTS idx_logs_scraper_name ON scraper_logs(scraper_name);
       CREATE INDEX IF NOT EXISTS idx_logs_created_at ON scraper_logs(created_at);
+      CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
+      CREATE INDEX IF NOT EXISTS idx_resumes_user_id ON candidate_resumes(user_id);
+      CREATE INDEX IF NOT EXISTS idx_saved_jobs_user ON user_saved_jobs(user_id);
     `);
   } catch (err) {
     console.warn('[DB Migration] Aviso ao criar índices:', (err as Error).message);

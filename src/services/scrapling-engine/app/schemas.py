@@ -34,3 +34,43 @@ class HealthResponse(BaseModel):
     version: str
     engine: str
     timestamp: str
+
+# --- Schemas para Extração e Análise de Currículo (Fase 37) ---
+
+class CVParseRequest(BaseModel):
+    filePath: Optional[str] = Field(None, description="Caminho do arquivo local (PDF ou DOCX)")
+    contentBase64: Optional[str] = Field(None, description="Conteúdo em base64 do arquivo")
+    filename: Optional[str] = Field(None, description="Nome original do arquivo com extensão")
+
+class CVParseResponse(BaseModel):
+    success: bool
+    text: str = ""
+    wordCount: int = 0
+    charCount: int = 0
+    detectedSections: List[str] = Field(default_factory=list)
+    preview: str = ""
+    error: Optional[str] = None
+    executionTimeMs: Optional[float] = None
+
+class CVAnalyzeRequest(BaseModel):
+    filePath: Optional[str] = Field(None, description="Caminho do arquivo do currículo")
+    cvText: Optional[str] = Field(None, description="Texto extraído do currículo para análise direta")
+    filename: Optional[str] = Field(None, description="Nome do arquivo")
+
+class CVAnalysisData(BaseModel):
+    detected_role: str
+    detected_seniority: str
+    hard_skills: List[str] = Field(default_factory=list)
+    soft_skills: List[str] = Field(default_factory=list)
+    summary: str
+    strengths: List[str] = Field(default_factory=list)
+    improvement_tips: List[str] = Field(default_factory=list)
+    source: Optional[str] = "ai"
+
+class CVAnalyzeResponse(BaseModel):
+    success: bool
+    analysis: Optional[CVAnalysisData] = None
+    rawTextPreview: Optional[str] = None
+    wordCount: Optional[int] = 0
+    error: Optional[str] = None
+    executionTimeMs: Optional[float] = None

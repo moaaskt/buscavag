@@ -12,6 +12,9 @@ import {
   LayoutDashboard,
   User,
   Trash2,
+  Sparkles,
+  LogIn,
+  Crown
 } from 'lucide-react';
 import { LoaderThree } from '@/components/ui/loader';
 import { FlashIcon } from '@/components/ui/flash-icon';
@@ -32,10 +35,17 @@ interface NavbarProps {
   userRole?: string;
 }
 
+interface AuthUserState {
+  authenticated: boolean;
+  name?: string;
+  email?: string;
+  tier?: 'free' | 'premium';
+}
+
 export function Navbar({
   scrapersActiveCount = 35,
-  userName = 'Moacir Neto',
-  userRole = 'Full Stack Jr & IoT',
+  userName: defaultUserName = 'Candidato',
+  userRole: defaultUserRole = 'Full Stack & AI',
 }: NavbarProps) {
 
   const pathname = usePathname();
@@ -43,8 +53,28 @@ export function Navbar({
   const [isSyncing, setIsSyncing] = useState(false);
   const [isPurging, setIsPurging] = useState(false);
   const [isTerminalOpen, setIsTerminalOpen] = useState(false);
+  const [authState, setAuthState] = useState<AuthUserState>({ authenticated: false });
 
-  // Carrega e sincroniza o estado do tema com o localStorage no mount
+  // Carrega e sincroniza o estado do tema e da autenticação
+  const checkAuth = async () => {
+    try {
+      const res = await fetch('/api/auth/me');
+      const data = await res.json();
+      if (data.authenticated && data.user) {
+        setAuthState({
+          authenticated: true,
+          name: data.user.name,
+          email: data.user.email,
+          tier: data.user.tier,
+        });
+      } else {
+        setAuthState({ authenticated: false });
+      }
+    } catch {
+      setAuthState({ authenticated: false });
+    }
+  };
+
   useEffect(() => {
     try {
       const storedTheme = localStorage.getItem('buscavag_theme');
@@ -61,6 +91,17 @@ export function Navbar({
     } catch {
       setIsDarkMode(true);
     }
+
+    checkAuth();
+
+    const handleAuthChange = () => {
+      checkAuth();
+    };
+
+    window.addEventListener('buscavag:auth-changed', handleAuthChange);
+    return () => {
+      window.removeEventListener('buscavag:auth-changed', handleAuthChange);
+    };
   }, []);
 
   const navItems = [
@@ -77,10 +118,22 @@ export function Navbar({
       active: pathname.startsWith('/jobs'),
     },
     {
-      name: 'Kanban de Candidaturas',
+      name: 'Kanban',
       link: '/board',
       icon: KanbanSquare,
       active: pathname.startsWith('/board'),
+    },
+    {
+      name: 'Painel do Candidato',
+      link: '/candidate',
+      icon: Sparkles,
+      active: pathname.startsWith('/candidate'),
+    },
+    {
+      name: 'Planos & Preços',
+      link: '/pricing',
+      icon: Crown,
+      active: pathname.startsWith('/pricing'),
     },
     {
       name: 'Logs & Auditoria',
@@ -98,14 +151,12 @@ export function Navbar({
       const res = await fetch('/api/scraper/run', { method: 'POST' });
       const json = await res.json();
 
-      // Notify the toast
       window.dispatchEvent(
         new CustomEvent('buscavag:sync-done', {
           detail: { success: json.success, message: json.message || json.error },
         })
       );
 
-      // If on /jobs page, trigger a silent refetch after a short delay
       if (json.success) {
         setTimeout(() => {
           window.dispatchEvent(new CustomEvent('buscavag:refetch-jobs'));
@@ -190,6 +241,18 @@ export function Navbar({
       active: pathname.startsWith('/board'),
     },
     {
+      title: 'Candidato',
+      href: '/candidate',
+      icon: <Sparkles className="h-full w-full" />,
+      active: pathname.startsWith('/candidate'),
+    },
+    {
+      title: 'Planos',
+      href: '/pricing',
+      icon: <Crown className="h-full w-full" />,
+      active: pathname.startsWith('/pricing'),
+    },
+    {
       title: 'Logs',
       href: '/logs',
       icon: <RotateCw className="h-full w-full" />,
@@ -248,12 +311,15 @@ export function Navbar({
         <div className="flex items-center gap-2">
           <div className="flex items-center gap-1.5 rounded-full border border-zinc-200 dark:border-zinc-800 bg-zinc-100/80 dark:bg-zinc-900/80 px-2 py-0.5 text-[10px] font-mono text-zinc-500">
             <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-            <span>{scrapersActiveCount} scrapers</span>
+            <span>{scrapersActiveCount} fontes</span>
           </div>
 
-          <div className="flex h-6 w-6 items-center justify-center rounded-full border border-zinc-300 dark:border-zinc-700 bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 text-xs">
+          <Link
+            href={authState.authenticated ? "/candidate" : "/login"}
+            className="flex h-6 w-6 items-center justify-center rounded-full border border-zinc-300 dark:border-zinc-700 bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 text-xs"
+          >
             <User className="h-3 w-3 text-zinc-500" />
-          </div>
+          </Link>
         </div>
       </header>
 
@@ -322,7 +388,7 @@ export function Navbar({
               </span>
             </button>
 
-            {/* Botão Sincronizar com LoaderThree */}
+            {/* Botão Sincronizar */}
             <button
               onClick={handleSync}
               disabled={isSyncing}
@@ -354,20 +420,39 @@ export function Navbar({
               {isDarkMode ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
             </button>
 
-            {/* Perfil */}
-            <div className="flex items-center gap-2 pl-1 border-l border-zinc-200 dark:border-zinc-800">
-              <div className="hidden text-right lg:block">
-                <div className="text-xs font-medium text-zinc-800 dark:text-zinc-200 leading-none">
-                  {userName}
+            {/* Perfil do Usuário / Botão de Acesso */}
+            {authState.authenticated ? (
+              <Link
+                href="/candidate"
+                className="flex items-center gap-2 pl-1 border-l border-zinc-200 dark:border-zinc-800 hover:opacity-80 transition-opacity"
+              >
+                <div className="hidden text-right lg:block">
+                  <div className="text-xs font-medium text-zinc-800 dark:text-zinc-200 leading-none">
+                    {authState.name || defaultUserName}
+                  </div>
+                  <div className="text-[10px] text-zinc-500 font-mono mt-0.5 flex items-center justify-end gap-1">
+                    {authState.tier === 'premium' ? (
+                      <span className="text-amber-400 font-semibold flex items-center gap-0.5">
+                        <Crown className="w-2.5 h-2.5" /> Premium
+                      </span>
+                    ) : (
+                      <span>Plano Free</span>
+                    )}
+                  </div>
                 </div>
-                <div className="text-[10px] text-zinc-500 font-mono mt-0.5">
-                  {userRole}
+                <div className="flex h-7 w-7 items-center justify-center rounded-full border border-emerald-500/40 bg-emerald-500/10 text-emerald-400 font-medium text-xs shadow-sm">
+                  <User className="h-3.5 w-3.5" />
                 </div>
-              </div>
-              <div className="flex h-7 w-7 items-center justify-center rounded-full border border-zinc-300 dark:border-zinc-700 bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 font-medium text-xs shadow-sm">
-                <User className="h-3.5 w-3.5 text-zinc-500 dark:text-zinc-400" />
-              </div>
-            </div>
+              </Link>
+            ) : (
+              <Link
+                href="/login"
+                className="flex items-center gap-1.5 rounded-lg border border-emerald-500/40 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 px-3 py-1.5 text-xs font-medium transition-colors shadow-sm"
+              >
+                <LogIn className="w-3.5 h-3.5" />
+                <span>Entrar</span>
+              </Link>
+            )}
           </div>
         </NavBody>
       </ResizableNavbarContainer>

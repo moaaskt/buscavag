@@ -3,10 +3,32 @@ import { RawJob } from '../types/job.js';
 import axios, { AxiosRequestConfig } from 'axios';
 import https from 'https';
 
+import { PythonBridgeClient } from '../services/pythonBridge.js';
+
 export interface JobScraper {
   name: string;
+  requiresPython?: boolean;
+  pythonSourceName?: string;
   scrape(): Promise<RawJob[]>;
 }
+
+export abstract class PythonBridgeScraper implements JobScraper {
+  abstract name: string;
+  requiresPython = true;
+  pythonSourceName?: string;
+
+  protected bridge: PythonBridgeClient;
+
+  constructor(bridge?: PythonBridgeClient) {
+    this.bridge = bridge || new PythonBridgeClient();
+  }
+
+  async scrape(): Promise<RawJob[]> {
+    const sourceKey = this.pythonSourceName || this.name.toLowerCase();
+    return this.bridge.scrape(sourceKey);
+  }
+}
+
 
 export const USER_AGENTS = [
   'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
