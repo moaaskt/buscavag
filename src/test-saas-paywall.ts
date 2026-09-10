@@ -136,6 +136,7 @@ async function runTests() {
     email: userRowPremium.email,
     name: userRowPremium.name,
     tier: userRowPremium.tier,
+    role: userRowPremium.role as 'GUEST' | 'CANDIDATE' | 'ADMIN',
   });
   const decodedPro = verifySessionToken(proToken);
   if (decodedPro?.tier !== 'premium') {

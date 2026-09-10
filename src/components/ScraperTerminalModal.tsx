@@ -69,7 +69,7 @@ export function ScraperTerminalModal({ isOpen, onClose, runId }: ScraperTerminal
     setIsRunning(true);
     setSummary(null);
 
-    const es = new EventSource('/api/scraper/stream');
+    const es = new EventSource('/api/admin/scraper/stream');
     eventSourceRef.current = es;
 
     es.onmessage = (event) => {
@@ -462,11 +462,11 @@ export function ScraperTerminalModal({ isOpen, onClose, runId }: ScraperTerminal
                 <span>Logs ao vivo via Server-Sent Events (SSE)</span>
               </div>
               <Link
-                href="/logs"
+                href="/admin/logs"
                 onClick={onClose}
                 className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-zinc-800 hover:bg-zinc-700 text-zinc-200 hover:text-emerald-400 border border-zinc-700 transition-colors"
               >
-                <span>Ver Histórico em /logs</span>
+                <span>Ver Histórico em /admin/logs</span>
                 <ExternalLink className="w-3 h-3" />
               </Link>
             </div>

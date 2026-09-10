@@ -26,6 +26,7 @@ async function runTests() {
     email: 'candidato.teste@exemplo.com',
     name: 'Candidato de Teste',
     tier: 'free',
+    role: 'CANDIDATE',
   };
 
   const token = createSessionToken(testSession);

@@ -50,8 +50,8 @@ export default function LogsPage() {
       params.set('limit', '100');
 
       const [logsRes, runsRes] = await Promise.all([
-        fetch(`/api/scraper/logs?${params.toString()}`),
-        fetch('/api/scraper/logs?runs=true'),
+        fetch(`/api/admin/scraper/logs?${params.toString()}`),
+        fetch('/api/admin/scraper/logs?runs=true'),
       ]);
 
       const logsData = await logsRes.json();

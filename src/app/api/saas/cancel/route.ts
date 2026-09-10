@@ -24,6 +24,7 @@ export async function POST(req: NextRequest) {
       email: user.email,
       name: user.name,
       tier: 'free' as const,
+      role: user.role as 'GUEST' | 'CANDIDATE' | 'ADMIN',
     };
     const newToken = createSessionToken(updatedSession);
 
