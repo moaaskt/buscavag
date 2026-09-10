@@ -110,7 +110,7 @@ export function Navbar({
       active: pathname.startsWith('/jobs'),
     },
     {
-      name: 'Meu Kanban',
+      name: 'Kanban de Candidaturas',
       link: '/board',
       icon: KanbanSquare,
       active: pathname.startsWith('/board'),
