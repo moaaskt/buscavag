@@ -8,7 +8,7 @@ export async function GET(req: NextRequest) {
   try {
     const session = await getSessionUser(req);
     if (!session) {
-      return NextResponse.json({ error: 'Não autenticado' }, { status: 401 });
+      return NextResponse.json({ success: false, error: 'Não autenticado' }, { status: 401 });
     }
 
     const { searchParams } = new URL(req.url);

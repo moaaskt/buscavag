@@ -36,7 +36,9 @@ import {
   Search,
   RefreshCw,
   Star,
-  CheckCheck
+  CheckCheck,
+  LogIn,
+  UserPlus
 } from 'lucide-react';
 import { Navbar } from '@/components/Navbar';
 import { cn } from '@/lib/utils';
@@ -188,7 +190,8 @@ export default function CandidateDashboardPage() {
       const data = await res.json();
 
       if (!data.authenticated || !data.user) {
-        router.push('/login');
+        setUser(null);
+        setLoading(false);
         return;
       }
 
@@ -219,7 +222,7 @@ export default function CandidateDashboardPage() {
       }
     } catch (err) {
       console.error('Failed to load session:', err);
-      router.push('/login');
+      setUser(null);
     } finally {
       setLoading(false);
     }
@@ -520,11 +523,43 @@ export default function CandidateDashboardPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-zinc-950 text-zinc-100 flex flex-col">
-        <div className="flex-1 flex items-center justify-center">
-          <div className="flex items-center gap-3 text-emerald-400 font-mono text-sm">
-            <Loader2 className="w-5 h-5 animate-spin" />
-            <span>Carregando painel do candidato...</span>
+      <div className="min-h-[70vh] flex items-center justify-center">
+        <div className="flex items-center gap-3 text-emerald-400 font-mono text-sm">
+          <Loader2 className="w-5 h-5 animate-spin" />
+          <span>Carregando painel do candidato...</span>
+        </div>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return (
+      <div className="min-h-[70vh] flex items-center justify-center p-4">
+        <div className="max-w-md w-full rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/60 p-8 text-center backdrop-blur-xl shadow-2xl">
+          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl border border-emerald-500/30 bg-emerald-500/10 text-emerald-500 dark:text-emerald-400 mb-6 shadow-inner">
+            <Sparkles className="h-8 w-8" />
+          </div>
+          <h2 className="text-2xl font-bold text-zinc-900 dark:text-zinc-100 mb-2">
+            Acesse o Painel do Candidato
+          </h2>
+          <p className="text-sm text-zinc-600 dark:text-zinc-400 mb-8 leading-relaxed">
+            Faça login ou crie sua conta para gerenciar seu perfil profissional, fazer upload do seu currículo e desbloquear o cálculo de aderência com IA em mais de 34 fontes.
+          </p>
+          <div className="flex flex-col gap-3">
+            <Link
+              href="/login"
+              className="w-full py-3 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-sm transition-all shadow-lg shadow-emerald-600/20 flex items-center justify-center gap-2"
+            >
+              <LogIn className="w-4 h-4" />
+              <span>Entrar na Minha Conta</span>
+            </Link>
+            <Link
+              href="/register"
+              className="w-full py-3 px-4 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800/80 hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-700 dark:text-zinc-200 font-medium text-sm transition-colors flex items-center justify-center gap-2"
+            >
+              <UserPlus className="w-4 h-4" />
+              <span>Criar Conta Gratuita</span>
+            </Link>
           </div>
         </div>
       </div>

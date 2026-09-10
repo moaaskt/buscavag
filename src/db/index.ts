@@ -54,6 +54,7 @@ export function initDatabase() {
       password_hash TEXT NOT NULL,
       name TEXT NOT NULL,
       tier TEXT DEFAULT 'free',
+      role TEXT DEFAULT 'CANDIDATE',
       created_at TEXT NOT NULL,
       updated_at TEXT NOT NULL
     );
@@ -112,6 +113,11 @@ export function initDatabase() {
       if (!existingJobCols.includes(col.name)) {
         db.exec(`ALTER TABLE jobs ADD COLUMN ${col.name} ${col.type};`);
       }
+    }
+
+    const existingUserCols = (db.pragma('table_info(users)') as Array<{ name: string }>).map((col) => col.name);
+    if (!existingUserCols.includes('role')) {
+      db.exec(`ALTER TABLE users ADD COLUMN role TEXT DEFAULT 'CANDIDATE';`);
     }
 
     const existingResumeCols = (db.pragma('table_info(candidate_resumes)') as Array<{ name: string }>).map((col) => col.name);

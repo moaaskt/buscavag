@@ -7,6 +7,7 @@ export interface User {
   password_hash: string;
   name: string;
   tier: 'free' | 'premium';
+  role: 'GUEST' | 'CANDIDATE' | 'ADMIN';
   created_at: string;
   updated_at: string;
 }
@@ -70,16 +71,17 @@ export class CandidateRepository {
 
   // --- Usuários ---
 
-  createUser(user: { id: string; email: string; password_hash: string; name: string; tier?: 'free' | 'premium' }): User {
+  createUser(user: { id: string; email: string; password_hash: string; name: string; tier?: 'free' | 'premium'; role?: 'GUEST' | 'CANDIDATE' | 'ADMIN' }): User {
     const now = new Date().toISOString();
     const tier = user.tier || 'free';
+    const role = user.role || 'CANDIDATE';
 
     const stmt = db.prepare(`
-      INSERT INTO users (id, email, password_hash, name, tier, created_at, updated_at)
-      VALUES (?, ?, ?, ?, ?, ?, ?)
+      INSERT INTO users (id, email, password_hash, name, tier, role, created_at, updated_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
     `);
 
-    stmt.run(user.id, user.email.toLowerCase().trim(), user.password_hash, user.name.trim(), tier, now, now);
+    stmt.run(user.id, user.email.toLowerCase().trim(), user.password_hash, user.name.trim(), tier, role, now, now);
 
     // Inicializa perfil vazio
     const profileStmt = db.prepare(`
@@ -94,6 +96,7 @@ export class CandidateRepository {
       password_hash: user.password_hash,
       name: user.name.trim(),
       tier,
+      role,
       created_at: now,
       updated_at: now,
     };
