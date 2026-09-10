@@ -521,7 +521,6 @@ export default function CandidateDashboardPage() {
   if (loading) {
     return (
       <div className="min-h-screen bg-zinc-950 text-zinc-100 flex flex-col">
-        <Navbar />
         <div className="flex-1 flex items-center justify-center">
           <div className="flex items-center gap-3 text-emerald-400 font-mono text-sm">
             <Loader2 className="w-5 h-5 animate-spin" />
@@ -534,8 +533,6 @@ export default function CandidateDashboardPage() {
 
   return (
     <div className="min-h-screen bg-zinc-950 text-zinc-100 flex flex-col selection:bg-emerald-500 selection:text-black">
-      <Navbar />
-
       <main className="flex-1 max-w-6xl w-full mx-auto px-4 py-8">
         {/* User Hero Banner */}
         <div className="relative overflow-hidden rounded-2xl border border-zinc-800/80 bg-zinc-900/50 p-6 md:p-8 backdrop-blur-xl mb-8">

@@ -1,5 +1,5 @@
-import { db, initDatabase } from './index.js';
-import { CandidateMatcher, type CandidateContext } from '../services/candidateMatcher.js';
+import { db, initDatabase } from './index';
+import { CandidateMatcher, type CandidateContext } from '../services/candidateMatcher';
 
 export interface User {
   id: string;

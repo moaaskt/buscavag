@@ -96,8 +96,6 @@ export default function PricingPage() {
 
   return (
     <div className="min-h-screen bg-zinc-950 text-zinc-100 flex flex-col selection:bg-emerald-500 selection:text-black">
-      <Navbar />
-
       <main className="flex-1 max-w-6xl w-full mx-auto px-4 py-12 md:py-16">
         {/* Header */}
         <div className="text-center max-w-3xl mx-auto mb-12">
