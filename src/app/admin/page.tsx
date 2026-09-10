@@ -2,7 +2,6 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Navbar } from '@/components/Navbar';
 import { ScraperTerminalModal } from '@/components/ScraperTerminalModal';
 import { DashboardStats } from '@/db/repository';
 import {
@@ -81,8 +80,6 @@ export default function AdminDashboardPage() {
 
   return (
     <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950 font-sans text-zinc-900 dark:text-zinc-100 flex flex-col">
-      <Navbar userName="Admin" userRole="Operador do Sistema" />
-      
       <main className="flex-1 w-full max-w-[1400px] mx-auto px-4 md:px-6 py-6 md:py-8">
         <div className="mb-8">
           <div className="flex items-center gap-3">
