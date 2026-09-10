@@ -46,6 +46,21 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    const user = repo.getUserById(session.userId);
+    const tier = user?.tier || session.tier || 'free';
+    
+    // Bloqueia re-análise se for usuário FREE e já tiver analisado uma vez
+    if (tier === 'free' && resume.ai_analysis) {
+      return NextResponse.json(
+        { 
+          success: false,
+          error: 'Limite do plano Free atingido.', 
+          message: 'Usuários do plano Free possuem limite de 1 análise por IA. Faça o upgrade para o plano Premium Pro para análises ilimitadas!'
+        },
+        { status: 403 }
+      );
+    }
+
     const bridge = new PythonBridgeClient();
     const isEngineAvailable = await bridge.isAvailable();
 

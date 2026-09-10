@@ -419,7 +419,7 @@ export default function CandidateDashboardPage() {
     }
   };
 
-  const handleSyncSkills = async (skillsToSync: string[], detectedRole?: string, detectedSeniority?: string) => {
+  const handleSyncSkills = async (skillsToSync: string[], detectedRole?: string, detectedSeniority?: string, summary?: string) => {
     if (!skillsToSync || skillsToSync.length === 0) return;
 
     setSyncingSkills(true);
@@ -433,6 +433,7 @@ export default function CandidateDashboardPage() {
           skills: skillsToSync,
           detectedRole,
           detectedSeniority,
+          summary,
         }),
       });
       const data = await res.json();
@@ -1286,24 +1287,35 @@ export default function CandidateDashboardPage() {
                 </div>
 
                 {resume && (
-                  <button
-                    type="button"
-                    onClick={handleAnalyzeResume}
-                    disabled={analyzingResume}
-                    className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-zinc-950 font-semibold px-4 py-2.5 text-xs shadow-lg shadow-emerald-950/50 transition-all active:scale-95 disabled:opacity-50"
-                  >
-                    {analyzingResume ? (
-                      <>
-                        <Loader2 className="w-4 h-4 animate-spin" />
-                        <span>Analisando com IA...</span>
-                      </>
-                    ) : (
-                      <>
-                        <Sparkles className="w-4 h-4 fill-zinc-950" />
-                        <span>{resume.ai_analysis ? 'Reanalisar com IA' : 'Analisar Currículo com IA'}</span>
-                      </>
-                    )}
-                  </button>
+                  user?.tier === 'free' && resume.ai_analysis ? (
+                    <button
+                      type="button"
+                      onClick={() => router.push('/pricing')}
+                      className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-400 hover:to-yellow-400 text-amber-950 font-semibold px-4 py-2.5 text-xs shadow-lg shadow-amber-900/20 transition-all active:scale-95"
+                    >
+                      <Crown className="w-4 h-4 fill-amber-950" />
+                      <span>Upgrade Pro para Reanalisar</span>
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={handleAnalyzeResume}
+                      disabled={analyzingResume}
+                      className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-zinc-950 font-semibold px-4 py-2.5 text-xs shadow-lg shadow-emerald-950/50 transition-all active:scale-95 disabled:opacity-50"
+                    >
+                      {analyzingResume ? (
+                        <>
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                          <span>Analisando com IA...</span>
+                        </>
+                      ) : (
+                        <>
+                          <Sparkles className="w-4 h-4 fill-zinc-950" />
+                          <span>{resume.ai_analysis ? 'Reanalisar com IA' : 'Analisar Currículo com IA'}</span>
+                        </>
+                      )}
+                    </button>
+                  )
                 )}
               </div>
 
@@ -1486,7 +1498,8 @@ export default function CandidateDashboardPage() {
                         handleSyncSkills(
                           resume.ai_analysis?.hard_skills || [],
                           resume.ai_analysis?.detected_role,
-                          resume.ai_analysis?.detected_seniority
+                          resume.ai_analysis?.detected_seniority,
+                          resume.ai_analysis?.summary
                         )
                       }
                       disabled={syncingSkills}

@@ -58,7 +58,7 @@ export default function KanbanBoardPage() {
   const fetchBoardJobs = async () => {
     setLoading(true);
     try {
-      const res = await fetch('/api/jobs?minScore=40');
+      const res = await fetch('/api/candidate/board');
       const json = await res.json();
       if (json.success) {
         setJobs(json.data);
@@ -84,10 +84,10 @@ export default function KanbanBoardPage() {
     }
 
     try {
-      await fetch(`/api/jobs/${id}/status`, {
+      await fetch('/api/candidate/board/status', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status: newStatus }),
+        body: JSON.stringify({ jobId: id, status: newStatus }),
       });
     } catch (err) {
       console.error('Erro ao persistir status:', err);

@@ -13,7 +13,8 @@ import {
   LogIn,
   Crown,
   UserPlus,
-  FileText
+  FileText,
+  KanbanSquare
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { CanvasText } from '@/components/ui/canvas-text';
@@ -34,6 +35,7 @@ interface AuthUserState {
   name?: string;
   email?: string;
   tier?: 'free' | 'premium';
+  role?: string;
 }
 
 export function Navbar({
@@ -55,6 +57,7 @@ export function Navbar({
           name: data.user.name,
           email: data.user.email,
           tier: data.user.tier,
+          role: data.user.role,
         });
       } else {
         setAuthState({ authenticated: false });
@@ -107,6 +110,12 @@ export function Navbar({
       active: pathname.startsWith('/jobs'),
     },
     {
+      name: 'Kanban de Candidaturas',
+      link: '/board',
+      icon: KanbanSquare,
+      active: pathname.startsWith('/board'),
+    },
+    {
       name: 'Vagas Recomendadas (Match IA)',
       link: '/candidate?tab=recommended',
       icon: Sparkles,
@@ -124,6 +133,12 @@ export function Navbar({
       icon: Crown,
       active: pathname.startsWith('/pricing'),
     },
+    ...(authState.role === 'ADMIN' ? [{
+      name: 'Painel Admin',
+      link: '/admin',
+      icon: LayoutDashboard, // ou algum ícone de escudo
+      active: pathname.startsWith('/admin'),
+    }] : []),
   ];
 
   const toggleTheme = () => {
@@ -148,6 +163,12 @@ export function Navbar({
       active: pathname.startsWith('/jobs'),
     },
     {
+      title: 'Kanban',
+      href: '/board',
+      icon: <KanbanSquare className="h-full w-full" />,
+      active: pathname.startsWith('/board'),
+    },
+    {
       title: 'Match IA',
       href: '/candidate',
       icon: <Sparkles className="h-full w-full" />,
@@ -159,6 +180,12 @@ export function Navbar({
       icon: <Crown className="h-full w-full" />,
       active: pathname.startsWith('/pricing'),
     },
+    ...(authState.role === 'ADMIN' ? [{
+      title: 'Admin',
+      href: '/admin',
+      icon: <LayoutDashboard className="h-full w-full" />,
+      active: pathname.startsWith('/admin'),
+    }] : []),
     {
       title: isDarkMode ? 'Modo Claro' : 'Modo Escuro',
       href: '#',
