@@ -34,6 +34,7 @@ interface AuthUserState {
   name?: string;
   email?: string;
   tier?: 'free' | 'premium';
+  role?: string;
 }
 
 export function Navbar({
@@ -55,6 +56,7 @@ export function Navbar({
           name: data.user.name,
           email: data.user.email,
           tier: data.user.tier,
+          role: data.user.role,
         });
       } else {
         setAuthState({ authenticated: false });
@@ -124,6 +126,12 @@ export function Navbar({
       icon: Crown,
       active: pathname.startsWith('/pricing'),
     },
+    ...(authState.role === 'ADMIN' ? [{
+      name: 'Painel Admin',
+      link: '/admin',
+      icon: LayoutDashboard, // ou algum ícone de escudo
+      active: pathname.startsWith('/admin'),
+    }] : []),
   ];
 
   const toggleTheme = () => {
@@ -159,6 +167,12 @@ export function Navbar({
       icon: <Crown className="h-full w-full" />,
       active: pathname.startsWith('/pricing'),
     },
+    ...(authState.role === 'ADMIN' ? [{
+      title: 'Admin',
+      href: '/admin',
+      icon: <LayoutDashboard className="h-full w-full" />,
+      active: pathname.startsWith('/admin'),
+    }] : []),
     {
       title: isDarkMode ? 'Modo Claro' : 'Modo Escuro',
       href: '#',

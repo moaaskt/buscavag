@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
-import { verifySessionToken, SESSION_COOKIE_NAME } from '@/lib/auth';
+import { decodeSessionTokenEdge } from '@/lib/edge-auth';
+
+const SESSION_COOKIE_NAME = 'buscavag_session';
 
 export async function middleware(request: NextRequest) {
   const path = request.nextUrl.pathname;
@@ -16,7 +18,7 @@ export async function middleware(request: NextRequest) {
       return NextResponse.redirect(new URL('/login', request.url));
     }
 
-    const session = verifySessionToken(token);
+    const session = decodeSessionTokenEdge(token);
     
     // Only users with ADMIN role can access these routes
     if (!session || session.role !== 'ADMIN') {
