@@ -13,6 +13,7 @@ export interface JobFilterOptions {
   onlyApproved?: boolean;
   period?: string;
   location?: string;
+  userId?: string;
 }
 
 
@@ -172,8 +173,17 @@ export class JobRepository {
   }
 
   public getAllJobs(filters?: JobFilterOptions): ProcessedJob[] {
-    let sql = 'SELECT * FROM jobs WHERE 1=1';
+    let sql = 'SELECT jobs.*';
     const params: any[] = [];
+
+    if (filters?.userId) {
+      sql += ', s.status as user_status FROM jobs LEFT JOIN user_saved_jobs s ON jobs.id = s.job_id AND s.user_id = ?';
+      params.push(filters.userId);
+    } else {
+      sql += ' FROM jobs';
+    }
+
+    sql += ' WHERE 1=1';
 
     if (filters?.onlyApproved) {
       sql += ' AND is_junior_fullstack = 1';
@@ -190,7 +200,15 @@ export class JobRepository {
     }
 
     if (filters?.status && filters.status !== 'all') {
-      sql += ' AND application_status = ?';
+      if (filters.userId) {
+        if (filters.status === 'pending') {
+          sql += ' AND (s.status IS NULL OR s.status = ?)';
+        } else {
+          sql += ' AND s.status = ?';
+        }
+      } else {
+        sql += ' AND jobs.application_status = ?';
+      }
       params.push(filters.status);
     }
 
@@ -312,7 +330,7 @@ export class JobRepository {
       category: row.category || undefined,
       gaps,
       resumeTips: row.resume_tips || undefined,
-      applicationStatus: row.application_status || 'pending',
+      applicationStatus: row.user_status || ('user_status' in row ? 'pending' : (row.application_status || 'pending')),
       aiReasoning: row.ai_reasoning,
       notified: Boolean(row.notified),
       createdAt: new Date(row.created_at),
