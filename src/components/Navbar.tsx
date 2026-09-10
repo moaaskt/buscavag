@@ -5,23 +5,18 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
   Compass,
-  RotateCw,
   Sun,
   Moon,
-  KanbanSquare,
   LayoutDashboard,
   User,
-  Trash2,
   Sparkles,
   LogIn,
-  Crown
+  Crown,
+  UserPlus,
+  FileText
 } from 'lucide-react';
-import { LoaderThree } from '@/components/ui/loader';
-import { FlashIcon } from '@/components/ui/flash-icon';
 import { cn } from '@/lib/utils';
 import { CanvasText } from '@/components/ui/canvas-text';
-import { confirmPurge } from '@/lib/alerts';
-import { ScraperTerminalModal } from '@/components/ScraperTerminalModal';
 import {
   ResizableNavbarContainer,
   NavBody,
@@ -30,7 +25,6 @@ import {
 import { FloatingDockMobile, FloatingDockItem } from '@/components/ui/floating-dock';
 
 interface NavbarProps {
-  scrapersActiveCount?: number;
   userName?: string;
   userRole?: string;
 }
@@ -43,16 +37,11 @@ interface AuthUserState {
 }
 
 export function Navbar({
-  scrapersActiveCount = 35,
   userName: defaultUserName = 'Candidato',
-  userRole: defaultUserRole = 'Full Stack & AI',
+  userRole: defaultUserRole = 'Candidato',
 }: NavbarProps) {
-
   const pathname = usePathname();
   const [isDarkMode, setIsDarkMode] = useState(true);
-  const [isSyncing, setIsSyncing] = useState(false);
-  const [isPurging, setIsPurging] = useState(false);
-  const [isTerminalOpen, setIsTerminalOpen] = useState(false);
   const [authState, setAuthState] = useState<AuthUserState>({ authenticated: false });
 
   // Carrega e sincroniza o estado do tema e da autenticação
@@ -118,16 +107,16 @@ export function Navbar({
       active: pathname.startsWith('/jobs'),
     },
     {
-      name: 'Kanban',
-      link: '/board',
-      icon: KanbanSquare,
-      active: pathname.startsWith('/board'),
+      name: 'Vagas Recomendadas (Match IA)',
+      link: '/candidate?tab=recommended',
+      icon: Sparkles,
+      active: pathname.startsWith('/candidate') && (!pathname.includes('tab=profile')),
     },
     {
-      name: 'Painel do Candidato',
-      link: '/candidate',
-      icon: Sparkles,
-      active: pathname.startsWith('/candidate'),
+      name: 'Meu Perfil & CV',
+      link: '/candidate?tab=profile',
+      icon: FileText,
+      active: pathname.startsWith('/candidate') && pathname.includes('tab=profile'),
     },
     {
       name: 'Planos & Preços',
@@ -135,83 +124,7 @@ export function Navbar({
       icon: Crown,
       active: pathname.startsWith('/pricing'),
     },
-    {
-      name: 'Logs & Auditoria',
-      link: '/logs',
-      icon: RotateCw,
-      active: pathname.startsWith('/logs'),
-    },
   ];
-
-  const handleSync = async () => {
-    setIsTerminalOpen(true);
-    if (isSyncing) return;
-    setIsSyncing(true);
-    try {
-      const res = await fetch('/api/scraper/run', { method: 'POST' });
-      const json = await res.json();
-
-      window.dispatchEvent(
-        new CustomEvent('buscavag:sync-done', {
-          detail: { success: json.success, message: json.message || json.error },
-        })
-      );
-
-      if (json.success) {
-        setTimeout(() => {
-          window.dispatchEvent(new CustomEvent('buscavag:refetch-jobs'));
-        }, 2500);
-      }
-    } catch (e) {
-      console.error('[Navbar sync error]:', e);
-      window.dispatchEvent(
-        new CustomEvent('buscavag:sync-done', {
-          detail: { success: false, message: 'Erro de conexão ao iniciar scraper.' },
-        })
-      );
-    } finally {
-      setIsSyncing(false);
-    }
-  };
-
-  const handlePurge = async () => {
-    if (isPurging) return;
-    const confirmed = await confirmPurge();
-    if (!confirmed) return;
-
-    setIsPurging(true);
-    try {
-      const res = await fetch('/api/jobs/purge-non-tech', { method: 'POST' });
-      const json = await res.json();
-
-      window.dispatchEvent(
-        new CustomEvent('buscavag:purge-done', {
-          detail: {
-            success: json.success,
-            title: json.success ? 'Purga concluída!' : 'Falha na purga',
-            message: json.message || (json.success ? `${json.deletedCount} vagas não-tech removidas.` : json.error),
-          },
-        })
-      );
-
-      if (json.success) {
-        window.dispatchEvent(new CustomEvent('buscavag:refetch-jobs'));
-      }
-    } catch (e) {
-      console.error('[Navbar purge error]:', e);
-      window.dispatchEvent(
-        new CustomEvent('buscavag:purge-done', {
-          detail: {
-            success: false,
-            title: 'Falha na purga',
-            message: 'Erro de comunicação ao purgar vagas não-tech.',
-          },
-        })
-      );
-    } finally {
-      setIsPurging(false);
-    }
-  };
 
   const toggleTheme = () => {
     const isDark = document.documentElement.classList.toggle('dark');
@@ -235,13 +148,7 @@ export function Navbar({
       active: pathname.startsWith('/jobs'),
     },
     {
-      title: 'Kanban',
-      href: '/board',
-      icon: <KanbanSquare className="h-full w-full" />,
-      active: pathname.startsWith('/board'),
-    },
-    {
-      title: 'Candidato',
+      title: 'Match IA',
       href: '/candidate',
       icon: <Sparkles className="h-full w-full" />,
       active: pathname.startsWith('/candidate'),
@@ -251,24 +158,6 @@ export function Navbar({
       href: '/pricing',
       icon: <Crown className="h-full w-full" />,
       active: pathname.startsWith('/pricing'),
-    },
-    {
-      title: 'Logs',
-      href: '/logs',
-      icon: <RotateCw className="h-full w-full" />,
-      active: pathname.startsWith('/logs'),
-    },
-    {
-      title: isPurging ? 'Purgando...' : 'Purgar Não-Tech',
-      href: '#',
-      onClick: handlePurge,
-      icon: <Trash2 className={cn("h-full w-full", isPurging ? "text-rose-400 animate-spin" : "text-zinc-400 hover:text-rose-400")} />,
-    },
-    {
-      title: isSyncing ? 'Executando Scraper...' : 'Sincronizar',
-      href: '#',
-      onClick: handleSync,
-      icon: <FlashIcon loading={isSyncing} className={cn("h-full w-full", isSyncing ? "text-emerald-500 animate-pulse" : "")} />,
     },
     {
       title: isDarkMode ? 'Modo Claro' : 'Modo Escuro',
@@ -309,17 +198,32 @@ export function Navbar({
         </Link>
 
         <div className="flex items-center gap-2">
-          <div className="flex items-center gap-1.5 rounded-full border border-zinc-200 dark:border-zinc-800 bg-zinc-100/80 dark:bg-zinc-900/80 px-2 py-0.5 text-[10px] font-mono text-zinc-500">
-            <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-            <span>{scrapersActiveCount} fontes</span>
-          </div>
-
-          <Link
-            href={authState.authenticated ? "/candidate" : "/login"}
-            className="flex h-6 w-6 items-center justify-center rounded-full border border-zinc-300 dark:border-zinc-700 bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 text-xs"
-          >
-            <User className="h-3 w-3 text-zinc-500" />
-          </Link>
+          {authState.authenticated ? (
+            <Link
+              href="/candidate"
+              className="flex h-7 items-center gap-1.5 px-2 rounded-full border border-emerald-500/30 bg-emerald-500/10 text-emerald-400 text-xs font-medium"
+            >
+              <User className="h-3.5 w-3.5" />
+              <span className="truncate max-w-[80px]">{authState.name?.split(' ')[0] || 'Perfil'}</span>
+            </Link>
+          ) : (
+            <div className="flex items-center gap-1.5">
+              <Link
+                href="/login"
+                className="flex items-center gap-1 rounded-md border border-zinc-200 dark:border-zinc-800 bg-zinc-100 dark:bg-zinc-900 px-2 py-1 text-xs text-zinc-700 dark:text-zinc-300 font-medium"
+              >
+                <LogIn className="h-3 w-3" />
+                <span>Entrar</span>
+              </Link>
+              <Link
+                href="/register"
+                className="flex items-center gap-1 rounded-md bg-emerald-600 hover:bg-emerald-500 text-white px-2 py-1 text-xs font-medium transition-colors"
+              >
+                <UserPlus className="h-3 w-3" />
+                <span>Cadastrar</span>
+              </Link>
+            </div>
+          )}
         </div>
       </header>
 
@@ -354,61 +258,6 @@ export function Navbar({
 
           {/* Right Actions */}
           <div className="flex items-center gap-2.5 shrink-0">
-            {/* Indicador do Scraper Engine */}
-            <div className="hidden xl:flex items-center gap-2 rounded-full border border-zinc-200 dark:border-zinc-800/80 bg-zinc-50 dark:bg-zinc-900/60 px-2.5 py-1 text-[11px] text-zinc-600 dark:text-zinc-400 font-mono">
-              <span className="relative flex h-2 w-2">
-                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75"></span>
-                <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500"></span>
-              </span>
-              <span>
-                Scrapers:{' '}
-                <strong className="text-zinc-800 dark:text-zinc-200 font-semibold">
-                  {scrapersActiveCount} fontes
-                </strong>
-              </span>
-            </div>
-
-            {/* Botão Purgar Não-Tech */}
-            <button
-              onClick={handlePurge}
-              disabled={isPurging}
-              type="button"
-              className={`flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-xs font-medium transition-all active:scale-95 shadow-sm disabled:cursor-not-allowed ${
-                isPurging
-                  ? 'border-rose-700/60 bg-rose-950/40 text-rose-400 opacity-90'
-                  : 'border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900 text-zinc-700 dark:text-zinc-300 hover:bg-rose-500/10 hover:border-rose-500/40 hover:text-rose-400'
-              }`}
-              title="Purgar vagas não-tech do banco de dados"
-            >
-              <Trash2
-                className={cn('w-3.5 h-3.5', isPurging ? 'text-rose-400 animate-spin' : 'text-zinc-400')}
-              />
-              <span className="hidden lg:inline">
-                {isPurging ? 'Purgando...' : 'Purgar Não-Tech'}
-              </span>
-            </button>
-
-            {/* Botão Sincronizar */}
-            <button
-              onClick={handleSync}
-              disabled={isSyncing}
-              type="button"
-              className={`flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-xs font-medium transition-all active:scale-95 shadow-sm disabled:cursor-not-allowed ${
-                isSyncing
-                  ? 'border-emerald-700/60 bg-emerald-950/40 text-emerald-400 opacity-90'
-                  : 'border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 hover:text-zinc-900 dark:hover:text-zinc-100'
-              }`}
-              title={isSyncing ? 'Scraper em execução...' : 'Sincronizar dados agora'}
-            >
-              <FlashIcon
-                loading={isSyncing}
-                className={cn('w-4 h-4', isSyncing ? 'text-emerald-400 animate-pulse' : 'text-zinc-400')}
-              />
-              <span className="hidden sm:inline">
-                {isSyncing ? 'Executando Scraper...' : 'Sincronizar'}
-              </span>
-            </button>
-
             {/* Alternador de Tema */}
             <button
               onClick={toggleTheme}
@@ -424,7 +273,7 @@ export function Navbar({
             {authState.authenticated ? (
               <Link
                 href="/candidate"
-                className="flex items-center gap-2 pl-1 border-l border-zinc-200 dark:border-zinc-800 hover:opacity-80 transition-opacity"
+                className="flex items-center gap-2 pl-2 border-l border-zinc-200 dark:border-zinc-800 hover:opacity-85 transition-opacity"
               >
                 <div className="hidden text-right lg:block">
                   <div className="text-xs font-medium text-zinc-800 dark:text-zinc-200 leading-none">
@@ -436,7 +285,7 @@ export function Navbar({
                         <Crown className="w-2.5 h-2.5" /> Premium
                       </span>
                     ) : (
-                      <span>Plano Free</span>
+                      <span className="text-zinc-400">Plano Free</span>
                     )}
                   </div>
                 </div>
@@ -445,13 +294,22 @@ export function Navbar({
                 </div>
               </Link>
             ) : (
-              <Link
-                href="/login"
-                className="flex items-center gap-1.5 rounded-lg border border-emerald-500/40 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 px-3 py-1.5 text-xs font-medium transition-colors shadow-sm"
-              >
-                <LogIn className="w-3.5 h-3.5" />
-                <span>Entrar</span>
-              </Link>
+              <div className="flex items-center gap-2 pl-1">
+                <Link
+                  href="/login"
+                  className="flex items-center gap-1.5 rounded-lg border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900 hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-700 dark:text-zinc-300 px-3 py-1.5 text-xs font-medium transition-colors shadow-sm"
+                >
+                  <LogIn className="w-3.5 h-3.5 text-zinc-400" />
+                  <span>Entrar</span>
+                </Link>
+                <Link
+                  href="/register"
+                  className="flex items-center gap-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white px-3 py-1.5 text-xs font-medium transition-colors shadow-sm shadow-emerald-600/20"
+                >
+                  <UserPlus className="w-3.5 h-3.5" />
+                  <span>Cadastre-se</span>
+                </Link>
+              </div>
             )}
           </div>
         </NavBody>
@@ -459,12 +317,6 @@ export function Navbar({
 
       {/* Floating Dock para Mobile (Responsivo) */}
       <FloatingDockMobile items={mobileDockItems} />
-
-      {/* Terminal Hacker / Modal de Logs em Tempo Real */}
-      <ScraperTerminalModal
-        isOpen={isTerminalOpen}
-        onClose={() => setIsTerminalOpen(false)}
-      />
     </>
   );
 }

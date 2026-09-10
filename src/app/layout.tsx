@@ -48,8 +48,8 @@ export default function RootLayout({
 
             <footer className="border-t border-zinc-200/40 dark:border-zinc-800/40 py-6 text-center text-xs text-zinc-500 backdrop-blur-sm">
               <div className="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-2 font-mono">
-                <p>© {new Date().getFullYear()} Buscavag Engine. Todos os direitos reservados.</p>
-                <p>Desenvolvido para Moacir Neto • Full Stack Jr & IoT</p>
+                <p>© {new Date().getFullYear()} Buscavag • Inteligência em Vagas Tech & IA</p>
+                <p className="text-zinc-400 dark:text-zinc-600">Match Semântico & Monitoramento em Tempo Real</p>
               </div>
             </footer>
           </AuroraBackground>
