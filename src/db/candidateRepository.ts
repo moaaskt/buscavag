@@ -1,4 +1,5 @@
 import { db, initDatabase } from './index.js';
+import { CandidateMatcher, type CandidateContext } from '../services/candidateMatcher.js';
 
 export interface User {
   id: string;
@@ -336,5 +337,169 @@ export class CandidateRepository {
         overall_score: r.j_overall_score || 0,
       },
     }));
+  }
+
+  // --- Match Perfeito & Recomendações de Vagas (Fase 38) ---
+
+  getCandidateContext(userId: string): CandidateContext | null {
+    const user = this.getUserById(userId);
+    if (!user) return null;
+
+    const profile = this.getProfile(userId);
+    const resume = this.getResume(userId);
+
+    const profileSkills = profile?.skills || [];
+    const resumeSkills = resume?.ai_analysis?.hard_skills || [];
+    const combinedSkills = Array.from(new Set([...profileSkills, ...resumeSkills]));
+
+    const targetRole = profile?.target_role || resume?.ai_analysis?.detected_role || 'Desenvolvedor Full Stack';
+    const seniority = profile?.seniority || resume?.ai_analysis?.detected_seniority || 'Júnior';
+    const preferredWorkModels = profile?.preferred_work_models && profile.preferred_work_models.length > 0
+      ? profile.preferred_work_models
+      : ['Remoto'];
+
+    return {
+      userId,
+      targetRole,
+      seniority,
+      expectedSalary: profile?.expected_salary || null,
+      preferredWorkModels,
+      skills: combinedSkills,
+      bio: profile?.bio || resume?.ai_analysis?.summary || null,
+    };
+  }
+
+  getRecommendedJobs(
+    userId: string,
+    options?: {
+      minScore?: number;
+      search?: string;
+      workModel?: string;
+      platform?: string;
+      limit?: number;
+      offset?: number;
+    }
+  ): {
+    totalCount: number;
+    candidate: CandidateContext | null;
+    items: Array<{
+      job: any;
+      match: {
+        jobId: string;
+        overallScore: number;
+        stackScore: number;
+        roleScore: number;
+        seniorityScore: number;
+        locationScore: number;
+        matchedSkills: string[];
+        missingSkills: string[];
+        matchReasoning: string;
+        isStrongMatch: boolean;
+      };
+      isSaved: boolean;
+    }>;
+  } {
+    const candidate = this.getCandidateContext(userId);
+    if (!candidate) {
+      return { totalCount: 0, candidate: null, items: [] };
+    }
+
+    // Busca vagas ativas recentes no SQLite
+    const stmt = db.prepare(`
+      SELECT 
+        id, title, company, platform, description, published_at, location, 
+        overall_score, score_ia, application_status
+      FROM jobs
+      ORDER BY published_at DESC, created_at DESC
+      LIMIT 1000
+    `);
+
+    const rawJobs = stmt.all() as any[];
+
+    const matcher = new CandidateMatcher();
+
+    // Vagas já salvas pelo usuário
+    const savedJobs = this.getSavedJobs(userId);
+    const savedJobIds = new Set(savedJobs.map((s) => s.job_id));
+
+    // Ranqueia vagas
+    const ranked = matcher.rankJobs(rawJobs, candidate, {
+      minScore: options?.minScore || 0,
+      search: options?.search,
+      workModel: options?.workModel,
+      platform: options?.platform,
+      limit: options?.limit || 50,
+      offset: options?.offset || 0,
+    });
+
+    const items = ranked.map((r: any) => ({
+      job: r.job,
+      match: r.match,
+      isSaved: savedJobIds.has(r.job.id),
+    }));
+
+    return {
+      totalCount: items.length,
+      candidate,
+      items,
+    };
+  }
+
+  getMatchStats(userId: string): {
+    totalAnalyzed: number;
+    avgScore: number;
+    highMatchCount: number; // >= 75
+    moderateMatchCount: number; // 50 - 74
+    topMatchedSkills: Array<{ skill: string; count: number }>;
+  } {
+    const candidate = this.getCandidateContext(userId);
+    if (!candidate || candidate.skills.length === 0) {
+      return {
+        totalAnalyzed: 0,
+        avgScore: 0,
+        highMatchCount: 0,
+        moderateMatchCount: 0,
+        topMatchedSkills: [],
+      };
+    }
+
+    const stmt = db.prepare(`
+      SELECT id, title, company, platform, description, location
+      FROM jobs
+      LIMIT 500
+    `);
+    const rawJobs = stmt.all() as any[];
+
+    const matcher = new CandidateMatcher();
+
+    let totalScore = 0;
+    let highCount = 0;
+    let moderateCount = 0;
+    const skillCounts: Record<string, number> = {};
+
+    for (const job of rawJobs) {
+      const match = matcher.calculateMatch(job, candidate);
+      totalScore += match.overallScore;
+      if (match.overallScore >= 75) highCount++;
+      else if (match.overallScore >= 50) moderateCount++;
+
+      for (const skill of match.matchedSkills) {
+        skillCounts[skill] = (skillCounts[skill] || 0) + 1;
+      }
+    }
+
+    const avgScore = rawJobs.length > 0 ? Math.round(totalScore / rawJobs.length) : 0;
+    const topMatchedSkills = Object.entries(skillCounts)
+      .map(([skill, count]) => ({ skill, count }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 8);
+
+    return {
+      totalAnalyzed: rawJobs.length,
+      avgScore,
+      highMatchCount: highCount,
+      moderateMatchCount: moderateCount,
+      topMatchedSkills,
+    };
   }
 }

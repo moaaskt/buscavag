@@ -29,7 +29,14 @@ import {
   Check,
   Award,
   Lightbulb,
-  Cpu
+  Cpu,
+  Target,
+  SlidersHorizontal,
+  Flame,
+  Search,
+  RefreshCw,
+  Star,
+  CheckCheck
 } from 'lucide-react';
 import { Navbar } from '@/components/Navbar';
 import { cn } from '@/lib/utils';
@@ -71,6 +78,40 @@ interface ResumeData {
   analyzedAt?: string | null;
 }
 
+interface RecommendedJobItem {
+  job: {
+    id: string;
+    title: string;
+    company: string;
+    location: string | null;
+    url: string;
+    platform: string;
+    published_at: string;
+    description: string;
+  };
+  match: {
+    jobId: string;
+    overallScore: number;
+    stackScore: number;
+    roleScore: number;
+    seniorityScore: number;
+    locationScore: number;
+    matchedSkills: string[];
+    missingSkills: string[];
+    matchReasoning: string;
+    isStrongMatch: boolean;
+  };
+  isSaved: boolean;
+}
+
+interface MatchStatsData {
+  totalAnalyzed: number;
+  avgScore: number;
+  highMatchCount: number;
+  moderateMatchCount: number;
+  topMatchedSkills: Array<{ skill: string; count: number }>;
+}
+
 interface SavedJob {
   user_id: string;
   job_id: string;
@@ -91,7 +132,7 @@ interface SavedJob {
 
 export default function CandidateDashboardPage() {
   const router = useRouter();
-  const [activeTab, setActiveTab] = useState<'profile' | 'resume' | 'saved'>('profile');
+  const [activeTab, setActiveTab] = useState<'profile' | 'resume' | 'recommended' | 'saved'>('recommended');
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState<UserData | null>(null);
 
@@ -116,6 +157,14 @@ export default function CandidateDashboardPage() {
   const [resumeFeedback, setResumeFeedback] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
   const [syncFeedback, setSyncFeedback] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Recommended Jobs State (Phase 38)
+  const [recommendedJobs, setRecommendedJobs] = useState<RecommendedJobItem[]>([]);
+  const [loadingRecommended, setLoadingRecommended] = useState(false);
+  const [minScoreFilter, setMinScoreFilter] = useState<number>(50);
+  const [searchRec, setSearchRec] = useState<string>('');
+  const [workModelRec, setWorkModelRec] = useState<string>('');
+  const [matchStats, setMatchStats] = useState<MatchStatsData | null>(null);
 
   // Saved Jobs State
   const [savedJobs, setSavedJobs] = useState<SavedJob[]>([]);
@@ -155,11 +204,51 @@ export default function CandidateDashboardPage() {
           analyzedAt: data.resume.analyzed_at || null,
         });
       }
+
+      // Se o usuário ainda não tiver preenchido nada, abre aba de perfil
+      if (!data.profile?.skills || data.profile.skills.length === 0) {
+        setActiveTab('profile');
+      } else {
+        setActiveTab('recommended');
+      }
     } catch (err) {
       console.error('Failed to load session:', err);
       router.push('/login');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchRecommendedJobs = async () => {
+    try {
+      setLoadingRecommended(true);
+      const params = new URLSearchParams();
+      if (minScoreFilter > 0) params.append('minScore', minScoreFilter.toString());
+      if (searchRec.trim()) params.append('search', searchRec.trim());
+      if (workModelRec) params.append('workModel', workModelRec);
+
+      const res = await fetch(`/api/candidate/recommended-jobs?${params.toString()}`);
+      const data = await res.json();
+
+      if (data.success) {
+        setRecommendedJobs(data.data || []);
+      }
+    } catch (err) {
+      console.error('Failed to fetch recommended jobs:', err);
+    } finally {
+      setLoadingRecommended(false);
+    }
+  };
+
+  const fetchMatchStats = async () => {
+    try {
+      const res = await fetch('/api/candidate/match-stats');
+      const data = await res.json();
+      if (data.success && data.data) {
+        setMatchStats(data.data);
+      }
+    } catch (err) {
+      console.error('Failed to fetch match stats:', err);
     }
   };
 
@@ -179,10 +268,13 @@ export default function CandidateDashboardPage() {
   };
 
   useEffect(() => {
-    if (activeTab === 'saved') {
+    if (activeTab === 'recommended') {
+      fetchRecommendedJobs();
+      fetchMatchStats();
+    } else if (activeTab === 'saved') {
       fetchSavedJobs();
     }
-  }, [activeTab]);
+  }, [activeTab, minScoreFilter, workModelRec]);
 
   const handleLogout = async () => {
     try {
@@ -375,8 +467,8 @@ export default function CandidateDashboardPage() {
     }
   };
 
-  // --- Funções de Vagas Salvas ---
-  const handleToggleJob = async (jobId: string, currentStatus: string) => {
+  // --- Funções de Vagas Salvas & Match ---
+  const handleToggleJob = async (jobId: string, currentStatus: string = 'saved') => {
     try {
       const res = await fetch('/api/candidate/saved-jobs', {
         method: 'POST',
@@ -384,8 +476,17 @@ export default function CandidateDashboardPage() {
         body: JSON.stringify({ jobId, status: currentStatus }),
       });
       const data = await res.json();
-      if (data.success && !data.isSaved) {
-        setSavedJobs((prev) => prev.filter((item) => item.job_id !== jobId));
+      if (data.success) {
+        // Atualiza estado local nos recomendados
+        setRecommendedJobs((prev) =>
+          prev.map((item) => (item.job.id === jobId ? { ...item, isSaved: data.isSaved } : item))
+        );
+        // Atualiza estado local nas salvas
+        if (!data.isSaved) {
+          setSavedJobs((prev) => prev.filter((item) => item.job_id !== jobId));
+        } else {
+          fetchSavedJobs();
+        }
       }
     } catch (err) {
       console.error('Error toggling job:', err);
@@ -398,6 +499,13 @@ export default function CandidateDashboardPage() {
     const sizes = ['Bytes', 'KB', 'MB'];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
     return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+  };
+
+  const getScoreColor = (score: number) => {
+    if (score >= 85) return 'text-emerald-400 border-emerald-500/40 bg-emerald-500/10 shadow-emerald-950/40';
+    if (score >= 70) return 'text-teal-300 border-teal-500/40 bg-teal-500/10 shadow-teal-950/40';
+    if (score >= 50) return 'text-amber-300 border-amber-500/40 bg-amber-500/10 shadow-amber-950/40';
+    return 'text-zinc-400 border-zinc-700 bg-zinc-800/60 shadow-none';
   };
 
   if (loading) {
@@ -458,7 +566,7 @@ export default function CandidateDashboardPage() {
               {user?.tier === 'free' && (
                 <div className="hidden sm:flex items-center gap-2 rounded-lg border border-amber-500/20 bg-amber-500/5 px-3 py-1.5 text-xs text-amber-300">
                   <Sparkles className="w-4 h-4 text-amber-400 shrink-0" />
-                  <span>Match com IA ilimitado disponível em breve</span>
+                  <span>Match com IA ilimitado ativo</span>
                 </div>
               )}
               <button
@@ -474,11 +582,29 @@ export default function CandidateDashboardPage() {
           {/* Navigation Tabs */}
           <div className="mt-8 flex border-b border-zinc-800 gap-2 overflow-x-auto pb-px">
             <button
+              onClick={() => setActiveTab('recommended')}
+              className={cn(
+                'flex items-center gap-2 px-4 py-2.5 text-sm font-medium transition-colors border-b-2 -mb-px shrink-0',
+                activeTab === 'recommended'
+                  ? 'border-emerald-500 text-emerald-400 bg-emerald-500/5 rounded-t-lg font-semibold'
+                  : 'border-transparent text-zinc-400 hover:text-zinc-200'
+              )}
+            >
+              <Target className="w-4 h-4" />
+              <span>Vagas Recomendadas (Match IA)</span>
+              {recommendedJobs.length > 0 && (
+                <span className="rounded-full bg-emerald-500/20 text-emerald-300 px-2 py-0.5 text-xs font-mono">
+                  {recommendedJobs.length}
+                </span>
+              )}
+            </button>
+
+            <button
               onClick={() => setActiveTab('profile')}
               className={cn(
                 'flex items-center gap-2 px-4 py-2.5 text-sm font-medium transition-colors border-b-2 -mb-px shrink-0',
                 activeTab === 'profile'
-                  ? 'border-emerald-500 text-emerald-400 bg-emerald-500/5 rounded-t-lg'
+                  ? 'border-emerald-500 text-emerald-400 bg-emerald-500/5 rounded-t-lg font-semibold'
                   : 'border-transparent text-zinc-400 hover:text-zinc-200'
               )}
             >
@@ -491,7 +617,7 @@ export default function CandidateDashboardPage() {
               className={cn(
                 'flex items-center gap-2 px-4 py-2.5 text-sm font-medium transition-colors border-b-2 -mb-px shrink-0',
                 activeTab === 'resume'
-                  ? 'border-emerald-500 text-emerald-400 bg-emerald-500/5 rounded-t-lg'
+                  ? 'border-emerald-500 text-emerald-400 bg-emerald-500/5 rounded-t-lg font-semibold'
                   : 'border-transparent text-zinc-400 hover:text-zinc-200'
               )}
             >
@@ -507,7 +633,7 @@ export default function CandidateDashboardPage() {
               className={cn(
                 'flex items-center gap-2 px-4 py-2.5 text-sm font-medium transition-colors border-b-2 -mb-px shrink-0',
                 activeTab === 'saved'
-                  ? 'border-emerald-500 text-emerald-400 bg-emerald-500/5 rounded-t-lg'
+                  ? 'border-emerald-500 text-emerald-400 bg-emerald-500/5 rounded-t-lg font-semibold'
                   : 'border-transparent text-zinc-400 hover:text-zinc-200'
               )}
             >
@@ -521,6 +647,289 @@ export default function CandidateDashboardPage() {
             </button>
           </div>
         </div>
+
+        {/* Tab: Vagas Recomendadas (Match IA) - FASE 38 */}
+        {activeTab === 'recommended' && (
+          <div className="space-y-6">
+            {/* Resumo Estatístico de Match */}
+            {matchStats && matchStats.totalAnalyzed > 0 && (
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div className="rounded-2xl border border-zinc-800/80 bg-zinc-900/50 p-5 backdrop-blur-xl">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-mono uppercase text-zinc-400">Aderência Média</span>
+                    <Sparkles className="w-4 h-4 text-emerald-400" />
+                  </div>
+                  <div className="mt-2 text-2xl font-bold text-zinc-100 font-mono">
+                    {matchStats.avgScore}%
+                  </div>
+                  <p className="text-[11px] text-zinc-500 mt-1">
+                    Calculado sobre {matchStats.totalAnalyzed} vagas recentes
+                  </p>
+                </div>
+
+                <div className="rounded-2xl border border-zinc-800/80 bg-zinc-900/50 p-5 backdrop-blur-xl">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-mono uppercase text-zinc-400">Super Match (&ge; 75%)</span>
+                    <Flame className="w-4 h-4 text-amber-400" />
+                  </div>
+                  <div className="mt-2 text-2xl font-bold text-amber-300 font-mono">
+                    {matchStats.highMatchCount} vagas
+                  </div>
+                  <p className="text-[11px] text-zinc-500 mt-1">
+                    Alta afinidade com sua stack e nível
+                  </p>
+                </div>
+
+                <div className="rounded-2xl border border-zinc-800/80 bg-zinc-900/50 p-5 backdrop-blur-xl">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-mono uppercase text-zinc-400">Top Competências</span>
+                    <Award className="w-4 h-4 text-teal-400" />
+                  </div>
+                  <div className="mt-2 flex flex-wrap gap-1.5">
+                    {matchStats.topMatchedSkills.slice(0, 3).map((s) => (
+                      <span key={s.skill} className="rounded-md border border-teal-500/30 bg-teal-500/10 px-2 py-0.5 text-[11px] font-mono text-teal-300">
+                        {s.skill} ({s.count})
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Barra de Filtros Inteligentes */}
+            <div className="rounded-2xl border border-zinc-800/80 bg-zinc-900/50 p-5 backdrop-blur-xl flex flex-col md:flex-row md:items-center justify-between gap-4">
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="text-xs font-mono text-zinc-400 mr-1 flex items-center gap-1">
+                  <SlidersHorizontal className="w-3.5 h-3.5" />
+                  <span>Match Mínimo:</span>
+                </span>
+                {[
+                  { label: 'Todos', val: 0 },
+                  { label: '&ge; 50% Bom', val: 50 },
+                  { label: '&ge; 70% Alto', val: 70 },
+                  { label: '&ge; 85% Super Match', val: 85 },
+                ].map((f) => (
+                  <button
+                    key={f.val}
+                    onClick={() => setMinScoreFilter(f.val)}
+                    className={cn(
+                      'rounded-lg border px-3 py-1.5 text-xs font-medium transition-all',
+                      minScoreFilter === f.val
+                        ? 'border-emerald-500/50 bg-emerald-500/10 text-emerald-300 font-semibold shadow-sm'
+                        : 'border-zinc-800 bg-zinc-950/60 text-zinc-400 hover:border-zinc-700 hover:text-zinc-200'
+                    )}
+                  >
+                    {f.label.replace('&ge;', '≥')}
+                  </button>
+                ))}
+              </div>
+
+              <div className="flex items-center gap-2">
+                <div className="relative flex-1 md:w-56">
+                  <Search className="absolute left-3 top-2.5 w-3.5 h-3.5 text-zinc-500" />
+                  <input
+                    type="text"
+                    value={searchRec}
+                    onChange={(e) => setSearchRec(e.target.value)}
+                    onKeyDown={(e) => e.key === 'Enter' && fetchRecommendedJobs()}
+                    placeholder="Filtrar por tecnologia..."
+                    className="w-full rounded-lg border border-zinc-800 bg-zinc-950/80 pl-8 pr-3 py-1.5 text-xs text-zinc-100 placeholder-zinc-500 focus:border-emerald-500 focus:outline-none"
+                  />
+                </div>
+
+                <select
+                  value={workModelRec}
+                  onChange={(e) => setWorkModelRec(e.target.value)}
+                  className="rounded-lg border border-zinc-800 bg-zinc-950/80 px-2.5 py-1.5 text-xs text-zinc-300 focus:border-emerald-500 focus:outline-none"
+                >
+                  <option value="">Modalidade</option>
+                  <option value="remoto">Remoto</option>
+                  <option value="presencial">Presencial</option>
+                </select>
+
+                <button
+                  type="button"
+                  onClick={fetchRecommendedJobs}
+                  disabled={loadingRecommended}
+                  className="rounded-lg border border-zinc-800 bg-zinc-950/80 p-2 text-zinc-400 hover:text-zinc-200 transition-colors"
+                  title="Atualizar Recomendações"
+                >
+                  <RefreshCw className={cn('w-3.5 h-3.5', loadingRecommended && 'animate-spin text-emerald-400')} />
+                </button>
+              </div>
+            </div>
+
+            {/* Lista de Vagas Recomendadas */}
+            {loadingRecommended ? (
+              <div className="py-20 text-center text-zinc-400 font-mono text-sm flex items-center justify-center gap-3">
+                <Loader2 className="w-6 h-6 animate-spin text-emerald-400" />
+                <span>Calculando algoritmo de match perfeito...</span>
+              </div>
+            ) : recommendedJobs.length === 0 ? (
+              <div className="py-16 text-center border border-zinc-800/80 rounded-2xl bg-zinc-900/40 p-8">
+                <Target className="w-12 h-12 text-zinc-600 mx-auto mb-3" />
+                <h3 className="text-base font-semibold text-zinc-200">Nenhuma vaga recomendada para este filtro</h3>
+                <p className="text-xs text-zinc-500 mt-1.5 max-w-md mx-auto">
+                  Tente diminuir o percentual mínimo de match ou adicione mais tecnologias ao seu Perfil Profissional para ampliar as oportunidades detectadas pela IA.
+                </p>
+                <div className="mt-5 flex justify-center gap-3">
+                  <button
+                    onClick={() => {
+                      setMinScoreFilter(0);
+                      setSearchRec('');
+                      setWorkModelRec('');
+                    }}
+                    className="rounded-lg border border-zinc-700 bg-zinc-800 hover:bg-zinc-700 px-4 py-2 text-xs font-medium text-zinc-200 transition-colors"
+                  >
+                    Limpar Filtros
+                  </button>
+                  <button
+                    onClick={() => setActiveTab('profile')}
+                    className="rounded-lg bg-emerald-600 hover:bg-emerald-500 text-zinc-950 font-semibold px-4 py-2 text-xs transition-colors"
+                  >
+                    Editar Perfil
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                {recommendedJobs.map((item) => {
+                  const scoreClass = getScoreColor(item.match.overallScore);
+                  return (
+                    <div
+                      key={item.job.id}
+                      className="rounded-2xl border border-zinc-800/80 bg-zinc-900/50 p-6 backdrop-blur-xl hover:border-zinc-700 transition-all flex flex-col justify-between group shadow-lg"
+                    >
+                      <div>
+                        {/* Top Header Card */}
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="flex items-center gap-2">
+                            <span className="rounded border border-zinc-800 bg-zinc-950 px-2 py-0.5 text-[10px] font-mono text-zinc-400 uppercase">
+                              {item.job.platform}
+                            </span>
+                            {item.match.isStrongMatch && (
+                              <span className="inline-flex items-center gap-1 rounded border border-emerald-500/30 bg-emerald-500/10 px-2 py-0.5 text-[10px] font-semibold text-emerald-400 font-mono">
+                                <Sparkles className="w-2.5 h-2.5" />
+                                <span>Alta Afinidade</span>
+                              </span>
+                            )}
+                          </div>
+
+                          {/* Match Ring Badge */}
+                          <div
+                            className={cn(
+                              'flex items-center gap-1 rounded-xl border px-3 py-1 font-mono text-xs font-bold shadow-md',
+                              scoreClass
+                            )}
+                          >
+                            <span>{item.match.overallScore}%</span>
+                            <span className="text-[10px] font-normal uppercase">Match</span>
+                          </div>
+                        </div>
+
+                        {/* Title & Company */}
+                        <h3 className="text-base font-bold text-zinc-100 mt-3 line-clamp-2 group-hover:text-emerald-300 transition-colors">
+                          {item.job.title}
+                        </h3>
+                        <p className="text-xs text-zinc-400 mt-0.5 font-medium">{item.job.company}</p>
+
+                        <div className="flex items-center gap-4 text-[11px] text-zinc-500 mt-2.5">
+                          {item.job.location && (
+                            <div className="flex items-center gap-1">
+                              <MapPin className="w-3.5 h-3.5 text-zinc-400 shrink-0" />
+                              <span className="truncate max-w-[140px]">{item.job.location}</span>
+                            </div>
+                          )}
+                          {item.job.published_at && (
+                            <div className="flex items-center gap-1 font-mono">
+                              <Clock className="w-3.5 h-3.5 text-zinc-400 shrink-0" />
+                              <span>{new Date(item.job.published_at).toLocaleDateString('pt-BR')}</span>
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Parecer Explicativo da IA */}
+                        <div className="mt-4 rounded-xl border border-zinc-800 bg-zinc-950/60 p-3 text-xs text-zinc-300 leading-relaxed">
+                          <div className="flex items-center gap-1.5 text-emerald-400 font-mono text-[10px] uppercase font-bold mb-1">
+                            <Lightbulb className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                            <span>Parecer de Match</span>
+                          </div>
+                          {item.match.matchReasoning}
+                        </div>
+
+                        {/* Habilidades Correspondentes (Matched Skills) */}
+                        {item.match.matchedSkills.length > 0 && (
+                          <div className="mt-3.5">
+                            <div className="text-[10px] font-mono text-zinc-400 uppercase tracking-wider mb-1.5 flex items-center gap-1">
+                              <Check className="w-3 h-3 text-emerald-400" />
+                              <span>Habilidades Atendidas ({item.match.matchedSkills.length}):</span>
+                            </div>
+                            <div className="flex flex-wrap gap-1.5">
+                              {item.match.matchedSkills.map((s) => (
+                                <span
+                                  key={s}
+                                  className="rounded border border-emerald-500/30 bg-emerald-500/10 px-2 py-0.5 text-[11px] font-mono text-emerald-300 font-medium"
+                                >
+                                  {s}
+                                </span>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Lacunas / Requisitos Adicionais (Missing Skills) */}
+                        {item.match.missingSkills.length > 0 && (
+                          <div className="mt-3">
+                            <div className="text-[10px] font-mono text-zinc-500 uppercase tracking-wider mb-1.5">
+                              Requisitos adicionais:
+                            </div>
+                            <div className="flex flex-wrap gap-1.5">
+                              {item.match.missingSkills.slice(0, 4).map((s) => (
+                                <span
+                                  key={s}
+                                  className="rounded border border-zinc-800 bg-zinc-950 px-2 py-0.5 text-[10px] font-mono text-zinc-400"
+                                >
+                                  {s}
+                                </span>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Card Footer Actions */}
+                      <div className="mt-5 pt-3 border-t border-zinc-800/80 flex items-center justify-between gap-2">
+                        <button
+                          type="button"
+                          onClick={() => handleToggleJob(item.job.id, 'saved')}
+                          className={cn(
+                            'inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-medium transition-all active:scale-95',
+                            item.isSaved
+                              ? 'border-emerald-500/50 bg-emerald-500/15 text-emerald-300'
+                              : 'border-zinc-800 bg-zinc-950 text-zinc-400 hover:border-zinc-700 hover:text-zinc-200'
+                          )}
+                        >
+                          <Bookmark className={cn('w-3.5 h-3.5', item.isSaved && 'fill-emerald-400 text-emerald-400')} />
+                          <span>{item.isSaved ? 'Salva' : 'Salvar Vaga'}</span>
+                        </button>
+
+                        <a
+                          href={item.job.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-zinc-950 font-semibold px-4 py-1.5 text-xs transition-colors shadow-md shadow-emerald-950/30"
+                        >
+                          <span>Acessar Vaga</span>
+                          <ExternalLink className="w-3.5 h-3.5" />
+                        </a>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Tab 1: Perfil Profissional */}
         {activeTab === 'profile' && (
@@ -1003,7 +1412,7 @@ export default function CandidateDashboardPage() {
           </div>
         )}
 
-        {/* Tab 3: Vagas Salvas */}
+        {/* Tab 4: Vagas Salvas */}
         {activeTab === 'saved' && (
           <div className="rounded-2xl border border-zinc-800/80 bg-zinc-900/50 p-6 md:p-8 backdrop-blur-xl">
             <div className="mb-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -1016,13 +1425,13 @@ export default function CandidateDashboardPage() {
                 </p>
               </div>
 
-              <Link
-                href="/jobs"
+              <button
+                onClick={() => setActiveTab('recommended')}
                 className="inline-flex items-center gap-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-zinc-950 font-semibold px-4 py-2 text-xs transition-colors self-start md:self-auto"
               >
-                <span>Explorar Mais Vagas</span>
-                <ExternalLink className="w-3.5 h-3.5" />
-              </Link>
+                <span>Ver Vagas Recomendadas</span>
+                <Target className="w-3.5 h-3.5" />
+              </button>
             </div>
 
             {loadingJobs ? (
@@ -1035,14 +1444,14 @@ export default function CandidateDashboardPage() {
                 <Bookmark className="w-12 h-12 text-zinc-600 mx-auto mb-3" />
                 <h3 className="text-base font-medium text-zinc-300">Nenhuma vaga salva ainda</h3>
                 <p className="text-xs text-zinc-500 mt-1 max-w-sm mx-auto">
-                  Acesse o Explorador de Vagas e clique no botão de salvar para acompanhar suas oportunidades aqui.
+                  Acesse as Vagas Recomendadas e clique em &quot;Salvar Vaga&quot; para acompanhar suas oportunidades aqui.
                 </p>
-                <Link
-                  href="/jobs"
+                <button
+                  onClick={() => setActiveTab('recommended')}
                   className="mt-4 inline-flex items-center gap-2 rounded-lg border border-zinc-700 bg-zinc-800 hover:bg-zinc-700 px-4 py-2 text-xs font-medium text-zinc-200 transition-colors"
                 >
-                  Ir para o Explorador
-                </Link>
+                  Ir para Vagas Recomendadas
+                </button>
               </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
