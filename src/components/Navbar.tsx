@@ -13,7 +13,8 @@ import {
   LogIn,
   Crown,
   UserPlus,
-  FileText
+  FileText,
+  KanbanSquare
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { CanvasText } from '@/components/ui/canvas-text';
@@ -109,6 +110,12 @@ export function Navbar({
       active: pathname.startsWith('/jobs'),
     },
     {
+      name: 'Meu Kanban',
+      link: '/board',
+      icon: KanbanSquare,
+      active: pathname.startsWith('/board'),
+    },
+    {
       name: 'Vagas Recomendadas (Match IA)',
       link: '/candidate?tab=recommended',
       icon: Sparkles,
@@ -154,6 +161,12 @@ export function Navbar({
       href: '/jobs',
       icon: <Compass className="h-full w-full" />,
       active: pathname.startsWith('/jobs'),
+    },
+    {
+      title: 'Kanban',
+      href: '/board',
+      icon: <KanbanSquare className="h-full w-full" />,
+      active: pathname.startsWith('/board'),
     },
     {
       title: 'Match IA',
