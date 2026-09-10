@@ -244,7 +244,7 @@ export class CandidateRepository {
     return info.changes > 0;
   }
 
-  syncSkillsToProfile(userId: string, newSkills: string[], detectedRole?: string, detectedSeniority?: string): CandidateProfile {
+  syncSkillsToProfile(userId: string, newSkills: string[], detectedRole?: string, detectedSeniority?: string, summary?: string): CandidateProfile {
     const currentProfile = this.getProfile(userId);
     const existingSkills = currentProfile?.skills || [];
     
@@ -260,6 +260,9 @@ export class CandidateRepository {
     }
     if (detectedSeniority && (!currentProfile?.seniority || currentProfile.seniority === 'Júnior')) {
       updateData.seniority = detectedSeniority;
+    }
+    if (summary && (!currentProfile?.bio || currentProfile.bio.trim() === '')) {
+      updateData.bio = summary;
     }
 
     return this.upsertProfile(userId, updateData);
@@ -340,6 +343,12 @@ export class CandidateRepository {
         overall_score: r.j_overall_score || 0,
       },
     }));
+  }
+
+  updateSavedJobStatus(userId: string, jobId: string, status: string): boolean {
+    const stmt = db.prepare('UPDATE user_saved_jobs SET status = ? WHERE user_id = ? AND job_id = ?');
+    const result = stmt.run(status, userId, jobId);
+    return result.changes > 0;
   }
 
   // --- Match Perfeito & Recomendações de Vagas (Fase 38) ---

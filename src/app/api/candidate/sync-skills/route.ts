@@ -7,6 +7,7 @@ const syncSchema = z.object({
   skills: z.array(z.string()).min(1, 'Pelo menos uma habilidade deve ser fornecida'),
   detectedRole: z.string().optional(),
   detectedSeniority: z.string().optional(),
+  summary: z.string().optional(),
 });
 
 export async function POST(req: NextRequest) {
@@ -28,7 +29,8 @@ export async function POST(req: NextRequest) {
       session.userId,
       parsed.data.skills,
       parsed.data.detectedRole,
-      parsed.data.detectedSeniority
+      parsed.data.detectedSeniority,
+      parsed.data.summary
     );
 
     return NextResponse.json({
