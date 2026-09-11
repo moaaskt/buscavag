@@ -10,7 +10,40 @@ export enum PlatformSource {
   REMOTAR = 'remotar',
   CATHO = 'catho',
   GLASSDOOR = 'glassdoor',
+  // Regional SC
+  SAO_JOSE = 'sao_jose',
+  VAGAS_SC = 'vagas_sc',
+  VAGAS_FLORIPA = 'vagas_floripa',
+  EMPREGA_PALHOCA = 'emprega_palhoca',
+  // Nacionais
+  INFOJOBS = 'infojobs',
+  CHAWORK = 'chawork',
+  TRABALHA_BRASIL = 'trabalha_brasil',
+  BNE = 'bne',
+  BEBEE = 'bebee',
+  EMPREGOS = 'empregos',
+  RECRUTA_SIMPLES = 'recruta_simples',
+  // ATSs
+  RECRUTEI_EMPREGOS = 'recrutei_empregos',
+  QUICKIN = 'quickin',
+  RECRUTEI_JOBS = 'recrutei_jobs',
+  PANDAPE = 'pandape',
+  // Freelance & Projetos
+  FREELAS99 = '99freelas',
+  WORKANA = 'workana',
+  // Novas Fontes Tech (Milestone 8)
+  GEEKHUNTER = 'geekhunter',
+  NERDIN = 'nerdin',
+  REVELO = 'revelo',
+  NOVENTA_NOVE_JOBS = '99jobs',
+  SOLIDES = 'solides',
+  RUNTALENT = 'runtalent',
+  EMPREGARE = 'empregare',
+  TRAMPOS = 'trampos',
 }
+
+
+
 
 export const RawJobSchema = z.object({
   title: z.string().min(1),
@@ -28,7 +61,15 @@ export const ProcessedJobSchema = RawJobSchema.extend({
   id: z.string(),
   isJuniorFullStack: z.boolean(),
   scoreIa: z.number().min(0).max(100).optional(),
+  overallScore: z.number().min(0).max(100).optional(),
+  stackScore: z.number().min(0).max(100).optional(),
+  seniorityScore: z.number().min(0).max(100).optional(),
+  locationScore: z.number().min(0).max(100).optional(),
+  category: z.string().optional(),
+  gaps: z.array(z.string()).optional(),
+  resumeTips: z.string().optional(),
   aiReasoning: z.string().optional(),
+  applicationStatus: z.enum(['pending', 'applied', 'interview', 'offer', 'rejected']).default('pending').optional(),
   notified: z.boolean().default(false),
   createdAt: z.date().default(() => new Date()),
 });

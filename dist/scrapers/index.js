@@ -3,6 +3,10 @@ import { LinkedInScraper } from './linkedin.js';
 import { IndeedScraper } from './indeed.js';
 import { GoogleJobsScraper } from './googleJobs.js';
 import { TelegramScraper } from './telegram.js';
+import { ProgramathorScraper } from './programathor.js';
+import { RemotarScraper } from './remotar.js';
+import { CathoScraper } from './catho.js';
+import { GlassdoorScraper } from './glassdoor.js';
 import { TelegramNotifier } from '../services/telegramNotifier.js';
 export class ScraperOrchestrator {
     scrapers;
@@ -14,6 +18,10 @@ export class ScraperOrchestrator {
             new IndeedScraper(),
             new GoogleJobsScraper(),
             new TelegramScraper(),
+            new ProgramathorScraper(),
+            new RemotarScraper(),
+            new CathoScraper(),
+            new GlassdoorScraper(),
         ];
         this.notifier = notifier || new TelegramNotifier();
     }
