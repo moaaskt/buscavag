@@ -43,6 +43,7 @@ export function Navbar({
   userRole: defaultUserRole = 'Candidato',
 }: NavbarProps) {
   const pathname = usePathname();
+  const isAuthRoute = pathname === '/login' || pathname === '/register' || pathname?.startsWith('/login') || pathname?.startsWith('/register');
   const [isDarkMode, setIsDarkMode] = useState(true);
   const [authState, setAuthState] = useState<AuthUserState>({ authenticated: false });
 
@@ -84,17 +85,21 @@ export function Navbar({
       setIsDarkMode(true);
     }
 
-    checkAuth();
+    if (!isAuthRoute) {
+      checkAuth();
+    }
 
     const handleAuthChange = () => {
-      checkAuth();
+      if (!isAuthRoute) {
+        checkAuth();
+      }
     };
 
     window.addEventListener('buscavag:auth-changed', handleAuthChange);
     return () => {
       window.removeEventListener('buscavag:auth-changed', handleAuthChange);
     };
-  }, []);
+  }, [isAuthRoute]);
 
   const navItems = [
     {
@@ -225,7 +230,17 @@ export function Navbar({
         </Link>
 
         <div className="flex items-center gap-2">
-          {authState.authenticated ? (
+          {isAuthRoute ? (
+            <button
+              onClick={toggleTheme}
+              type="button"
+              className="flex h-8 w-8 items-center justify-center rounded-lg border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900 text-zinc-500 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800 hover:text-zinc-900 dark:hover:text-zinc-200 transition-colors shadow-sm"
+              title={isDarkMode ? 'Mudar para tema claro' : 'Mudar para tema escuro'}
+              aria-label="Alternar tema"
+            >
+              {isDarkMode ? <Sun className="h-4 w-4 text-amber-400" /> : <Moon className="h-4 w-4" />}
+            </button>
+          ) : authState.authenticated ? (
             <Link
               href="/candidate"
               className="flex h-7 items-center gap-1.5 px-2 rounded-full border border-emerald-500/30 bg-emerald-500/10 text-emerald-400 text-xs font-medium"
@@ -280,8 +295,8 @@ export function Navbar({
             />
           </Link>
 
-          {/* Dynamic Center Navigation Items */}
-          <NavItems items={navItems} />
+          {/* Dynamic Center Navigation Items (ocultos em rotas de auth) */}
+          {!isAuthRoute && <NavItems items={navItems} />}
 
           {/* Right Actions */}
           <div className="flex items-center gap-2.5 shrink-0">
@@ -296,54 +311,56 @@ export function Navbar({
               {isDarkMode ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
             </button>
 
-            {/* Perfil do Usuário / Botão de Acesso */}
-            {authState.authenticated ? (
-              <Link
-                href="/candidate"
-                className="flex items-center gap-2 pl-2 border-l border-zinc-200 dark:border-zinc-800 hover:opacity-85 transition-opacity"
-              >
-                <div className="hidden text-right lg:block">
-                  <div className="text-xs font-medium text-zinc-800 dark:text-zinc-200 leading-none">
-                    {authState.name || defaultUserName}
-                  </div>
-                  <div className="text-[10px] text-zinc-500 font-mono mt-0.5 flex items-center justify-end gap-1">
-                    {authState.tier === 'premium' ? (
-                      <span className="text-amber-400 font-semibold flex items-center gap-0.5">
-                        <Crown className="w-2.5 h-2.5" /> Premium
-                      </span>
-                    ) : (
-                      <span className="text-zinc-400">Plano Free</span>
-                    )}
-                  </div>
-                </div>
-                <div className="flex h-7 w-7 items-center justify-center rounded-full border border-emerald-500/40 bg-emerald-500/10 text-emerald-400 font-medium text-xs shadow-sm">
-                  <User className="h-3.5 w-3.5" />
-                </div>
-              </Link>
-            ) : (
-              <div className="flex items-center gap-2 pl-1">
+            {/* Perfil do Usuário / Botão de Acesso (ocultos em rotas de auth) */}
+            {!isAuthRoute && (
+              authState.authenticated ? (
                 <Link
-                  href="/login"
-                  className="flex items-center gap-1.5 rounded-lg border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900 hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-700 dark:text-zinc-300 px-3 py-1.5 text-xs font-medium transition-colors shadow-sm"
+                  href="/candidate"
+                  className="flex items-center gap-2 pl-2 border-l border-zinc-200 dark:border-zinc-800 hover:opacity-85 transition-opacity"
                 >
-                  <LogIn className="w-3.5 h-3.5 text-zinc-400" />
-                  <span>Entrar</span>
+                  <div className="hidden text-right lg:block">
+                    <div className="text-xs font-medium text-zinc-800 dark:text-zinc-200 leading-none">
+                      {authState.name || defaultUserName}
+                    </div>
+                    <div className="text-[10px] text-zinc-500 font-mono mt-0.5 flex items-center justify-end gap-1">
+                      {authState.tier === 'premium' ? (
+                        <span className="text-amber-400 font-semibold flex items-center gap-0.5">
+                          <Crown className="w-2.5 h-2.5" /> Premium
+                        </span>
+                      ) : (
+                        <span className="text-zinc-400">Plano Free</span>
+                      )}
+                    </div>
+                  </div>
+                  <div className="flex h-7 w-7 items-center justify-center rounded-full border border-emerald-500/40 bg-emerald-500/10 text-emerald-400 font-medium text-xs shadow-sm">
+                    <User className="h-3.5 w-3.5" />
+                  </div>
                 </Link>
-                <Link
-                  href="/register"
-                  className="flex items-center gap-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white px-3 py-1.5 text-xs font-medium transition-colors shadow-sm shadow-emerald-600/20"
-                >
-                  <UserPlus className="w-3.5 h-3.5" />
-                  <span>Cadastre-se</span>
-                </Link>
-              </div>
+              ) : (
+                <div className="flex items-center gap-2 pl-1">
+                  <Link
+                    href="/login"
+                    className="flex items-center gap-1.5 rounded-lg border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900 hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-700 dark:text-zinc-300 px-3 py-1.5 text-xs font-medium transition-colors shadow-sm"
+                  >
+                    <LogIn className="w-3.5 h-3.5 text-zinc-400" />
+                    <span>Entrar</span>
+                  </Link>
+                  <Link
+                    href="/register"
+                    className="flex items-center gap-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white px-3 py-1.5 text-xs font-medium transition-colors shadow-sm shadow-emerald-600/20"
+                  >
+                    <UserPlus className="w-3.5 h-3.5" />
+                    <span>Cadastre-se</span>
+                  </Link>
+                </div>
+              )
             )}
           </div>
         </NavBody>
       </ResizableNavbarContainer>
 
-      {/* Floating Dock para Mobile (Responsivo) */}
-      <FloatingDockMobile items={mobileDockItems} />
+      {/* Floating Dock para Mobile (Responsivo, oculto em rotas de auth) */}
+      {!isAuthRoute && <FloatingDockMobile items={mobileDockItems} />}
     </>
   );
 }
