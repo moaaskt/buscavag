@@ -3,7 +3,6 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import {
-  Sparkles,
   Check,
   X,
   Crown,
@@ -97,10 +96,6 @@ export default function PricingPage() {
     <div className="max-w-6xl w-full mx-auto space-y-12 py-4">
       {/* Header */}
       <div className="text-center max-w-3xl mx-auto mb-12">
-        <div className="inline-flex items-center gap-2 rounded-full border border-emerald-500/20 dark:border-emerald-500/30 bg-emerald-500/10 px-3.5 py-1 text-xs font-medium text-emerald-700 dark:text-emerald-400 mb-4 shadow-sm">
-          <Sparkles className="w-3.5 h-3.5" />
-          <span>Planos Transparentes & Sem Pegadinhas</span>
-        </div>
         <h1 className="text-3xl md:text-5xl font-extrabold text-zinc-900 dark:text-zinc-100 tracking-tight leading-tight">
           Acelere sua contratação com{' '}
           <span className="bg-gradient-to-r from-emerald-500 to-teal-500 dark:from-emerald-400 dark:to-teal-300 bg-clip-text text-transparent">
