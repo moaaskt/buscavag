@@ -20,8 +20,10 @@ export async function POST(request: NextRequest) {
     const cwd = process.cwd();
     const env = {
       ...process.env,
+      PATH: process.env.PATH || '/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin',
       SCRAPER_RUN_ID: resolvedRunId,
       PYTHONUNBUFFERED: '1',
+      PYTHONIOENCODING: 'utf-8',
     };
 
     // Emite log inicial informando disparo do processo autônomo
@@ -30,12 +32,35 @@ export async function POST(request: NextRequest) {
       data: { runId: resolvedRunId },
     });
 
-    // Spawn the scraper process detached so it runs in background and emits logs to database/SSE
+    // Spawn do processo com captura de eventos para previnir travamento silencioso
     const child = spawn('npm', ['run', 'start'], {
       cwd,
       detached: true,
-      stdio: 'ignore',
+      stdio: ['ignore', 'pipe', 'pipe'],
       env,
+    });
+
+    if (child.stderr) {
+      child.stderr.on('data', (data) => {
+        const msg = data.toString().trim();
+        if (msg) logger.warn(`[Pipeline Stderr]: ${msg}`);
+      });
+    }
+
+    child.on('error', (err) => {
+      logger.error('Erro de execução ao disparar pipeline de scraper:', {
+        details: err.stack || err.message,
+      });
+    });
+
+    child.on('exit', (code, signal) => {
+      if (code !== 0 && code !== null) {
+        logger.error(`Processo do scraper finalizado com código de erro ${code}`, {
+          details: `Signal: ${signal}`,
+        });
+      } else {
+        logger.info('Processo do scraper finalizado com sucesso.', { step: 'FINISH' });
+      }
     });
 
     child.unref();

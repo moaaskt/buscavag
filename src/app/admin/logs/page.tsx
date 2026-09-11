@@ -103,12 +103,12 @@ export default function LogsPage() {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-zinc-800/80 pb-5">
         <div>
           <div className="flex items-center gap-2">
-            <Terminal className="w-5 h-5 text-emerald-400" />
-            <h1 className="text-xl md:text-2xl font-bold tracking-tight text-zinc-100">
+            <Terminal className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
+            <h1 className="text-xl md:text-2xl font-bold tracking-tight text-zinc-900 dark:text-zinc-100">
               Logs & Auditoria dos Scrapers
             </h1>
           </div>
-          <p className="text-xs md:text-sm text-zinc-400 font-mono mt-1">
+          <p className="text-xs md:text-sm text-zinc-600 dark:text-zinc-400 font-mono mt-1">
             Histórico detalhado de coletas, eventos, avisos e diagnóstico de erros.
           </p>
         </div>
@@ -153,16 +153,16 @@ export default function LogsPage() {
       </div>
 
       {/* Filter Bar */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 bg-zinc-900/50 p-4 rounded-xl border border-zinc-800/80">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 bg-white dark:bg-zinc-900/50 p-4 rounded-xl border border-zinc-200 dark:border-zinc-800/80 shadow-sm">
         {/* Search */}
         <div className="relative">
-          <Search className="w-3.5 h-3.5 text-zinc-500 absolute left-3 top-1/2 -translate-y-1/2" />
+          <Search className="w-3.5 h-3.5 text-zinc-400 dark:text-zinc-500 absolute left-3 top-1/2 -translate-y-1/2" />
           <input
             type="text"
             placeholder="Buscar em mensagens ou stack trace..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-9 pr-3 py-1.5 text-xs font-mono bg-zinc-950/80 border border-zinc-800 rounded-lg text-zinc-200 placeholder-zinc-500 focus:outline-none focus:border-emerald-500 transition-colors"
+            className="w-full pl-9 pr-3 py-1.5 text-xs font-mono bg-zinc-50 dark:bg-zinc-950/80 border border-zinc-200 dark:border-zinc-800 rounded-lg text-zinc-900 dark:text-zinc-200 placeholder-zinc-400 dark:placeholder-zinc-500 focus:outline-none focus:border-emerald-500 transition-colors"
           />
         </div>
 
@@ -171,7 +171,7 @@ export default function LogsPage() {
           <select
             value={selectedLevel}
             onChange={(e) => setSelectedLevel(e.target.value as any)}
-            className="w-full px-3 py-1.5 text-xs font-mono bg-zinc-950/80 border border-zinc-800 rounded-lg text-zinc-200 focus:outline-none focus:border-emerald-500 transition-colors"
+            className="w-full px-3 py-1.5 text-xs font-mono bg-zinc-50 dark:bg-zinc-950/80 border border-zinc-200 dark:border-zinc-800 rounded-lg text-zinc-900 dark:text-zinc-200 focus:outline-none focus:border-emerald-500 transition-colors"
           >
             <option value="ALL">Severidade: Todos</option>
             <option value="ERROR">Apenas Erros (ERROR)</option>
@@ -185,7 +185,7 @@ export default function LogsPage() {
           <select
             value={selectedScraper}
             onChange={(e) => setSelectedScraper(e.target.value)}
-            className="w-full px-3 py-1.5 text-xs font-mono bg-zinc-950/80 border border-zinc-800 rounded-lg text-zinc-200 focus:outline-none focus:border-emerald-500 transition-colors"
+            className="w-full px-3 py-1.5 text-xs font-mono bg-zinc-50 dark:bg-zinc-950/80 border border-zinc-200 dark:border-zinc-800 rounded-lg text-zinc-900 dark:text-zinc-200 focus:outline-none focus:border-emerald-500 transition-colors"
           >
             <option value="ALL">Fonte: Todas as 24+ fontes</option>
             {allScrapers.map((s) => (
@@ -201,7 +201,7 @@ export default function LogsPage() {
           <select
             value={selectedPeriod}
             onChange={(e) => setSelectedPeriod(e.target.value)}
-            className="w-full px-3 py-1.5 text-xs font-mono bg-zinc-950/80 border border-zinc-800 rounded-lg text-zinc-200 focus:outline-none focus:border-emerald-500 transition-colors"
+            className="w-full px-3 py-1.5 text-xs font-mono bg-zinc-50 dark:bg-zinc-950/80 border border-zinc-200 dark:border-zinc-800 rounded-lg text-zinc-900 dark:text-zinc-200 focus:outline-none focus:border-emerald-500 transition-colors"
           >
             <option value="24h">Período: Últimas 24 horas</option>
             <option value="48h">Últimas 48 horas</option>

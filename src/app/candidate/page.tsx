@@ -579,7 +579,7 @@ export default function CandidateDashboardPage() {
   }
 
   return (
-    <div className="min-h-screen bg-zinc-950 text-zinc-100 flex flex-col selection:bg-emerald-500 selection:text-black">
+    <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100 flex flex-col selection:bg-emerald-500 selection:text-black transition-colors">
       <main className="flex-1 max-w-6xl w-full mx-auto px-4 py-8">
         {/* User Hero Banner */}
         <div className="relative overflow-hidden rounded-2xl border border-zinc-800/80 bg-zinc-900/50 p-6 md:p-8 backdrop-blur-xl mb-8">
@@ -1122,29 +1122,29 @@ export default function CandidateDashboardPage() {
             <form onSubmit={handleSaveProfile} className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <label className="block text-xs font-mono text-zinc-300 mb-2">
+                  <label className="block text-xs font-mono text-zinc-700 dark:text-zinc-300 mb-2">
                     Cargo Alvo Desejado
                   </label>
                   <div className="relative">
-                    <Briefcase className="absolute left-3 top-3 w-4 h-4 text-zinc-500" />
+                    <Briefcase className="absolute left-3 top-3 w-4 h-4 text-zinc-400 dark:text-zinc-500" />
                     <input
                       type="text"
                       value={profile.target_role || ''}
                       onChange={(e) => setProfile({ ...profile, target_role: e.target.value })}
                       placeholder="Ex: Desenvolvedor Full Stack, Frontend React"
-                      className="w-full rounded-lg border border-zinc-800 bg-zinc-950/80 pl-9 pr-3 py-2.5 text-sm text-zinc-100 placeholder-zinc-500 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 transition-colors"
+                      className="w-full rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950/80 pl-9 pr-3 py-2.5 text-sm text-zinc-900 dark:text-zinc-100 placeholder-zinc-400 dark:placeholder-zinc-500 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 transition-colors shadow-sm"
                     />
                   </div>
                 </div>
 
                 <div>
-                  <label className="block text-xs font-mono text-zinc-300 mb-2">
+                  <label className="block text-xs font-mono text-zinc-700 dark:text-zinc-300 mb-2">
                     Senioridade
                   </label>
                   <select
                     value={profile.seniority || 'Júnior'}
                     onChange={(e) => setProfile({ ...profile, seniority: e.target.value })}
-                    className="w-full rounded-lg border border-zinc-800 bg-zinc-950/80 px-3 py-2.5 text-sm text-zinc-100 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 transition-colors"
+                    className="w-full rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950/80 px-3 py-2.5 text-sm text-zinc-900 dark:text-zinc-100 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 transition-colors shadow-sm"
                   >
                     <option value="Estágio">Estágio</option>
                     <option value="Júnior">Júnior</option>
@@ -1155,17 +1155,17 @@ export default function CandidateDashboardPage() {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-mono text-zinc-300 mb-2">
+                  <label className="block text-xs font-mono text-zinc-700 dark:text-zinc-300 mb-2">
                     Pretensão Salarial Mensal (R$)
                   </label>
                   <div className="relative">
-                    <DollarSign className="absolute left-3 top-3 w-4 h-4 text-zinc-500" />
+                    <DollarSign className="absolute left-3 top-3 w-4 h-4 text-zinc-400 dark:text-zinc-500" />
                     <input
                       type="text"
                       value={profile.expected_salary || ''}
                       onChange={(e) => setProfile({ ...profile, expected_salary: e.target.value })}
-                      placeholder="Ex: 4.500 - 6.000 ou 5.000 CLT"
-                      className="w-full rounded-lg border border-zinc-800 bg-zinc-950/80 pl-9 pr-3 py-2.5 text-sm text-zinc-100 placeholder-zinc-500 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 transition-colors"
+                      placeholder="Ex: 4500 ou 4.500"
+                      className="w-full rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950/80 pl-9 pr-3 py-2.5 text-sm text-zinc-900 dark:text-zinc-100 placeholder-zinc-400 dark:placeholder-zinc-500 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 transition-colors shadow-sm"
                     />
                   </div>
                 </div>

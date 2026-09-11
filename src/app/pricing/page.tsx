@@ -95,7 +95,7 @@ export default function PricingPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-zinc-950 text-zinc-100 flex flex-col selection:bg-emerald-500 selection:text-black">
+    <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100 flex flex-col selection:bg-emerald-500 selection:text-black transition-colors">
       <main className="flex-1 max-w-6xl w-full mx-auto px-4 py-12 md:py-16">
         {/* Header */}
         <div className="text-center max-w-3xl mx-auto mb-12">
@@ -103,13 +103,13 @@ export default function PricingPage() {
             <Sparkles className="w-3.5 h-3.5" />
             <span>Planos Transparentes & Simples</span>
           </div>
-          <h1 className="text-3xl md:text-5xl font-extrabold text-zinc-100 tracking-tight leading-tight">
+          <h1 className="text-3xl md:text-5xl font-extrabold text-zinc-900 dark:text-zinc-100 tracking-tight leading-tight">
             Acelere sua contratação com{' '}
-            <span className="bg-gradient-to-r from-emerald-400 to-teal-300 bg-clip-text text-transparent">
+            <span className="bg-gradient-to-r from-emerald-500 to-teal-500 dark:from-emerald-400 dark:to-teal-300 bg-clip-text text-transparent">
               Inteligência Artificial
             </span>
           </h1>
-          <p className="text-sm md:text-base text-zinc-400 mt-4 leading-relaxed">
+          <p className="text-sm md:text-base text-zinc-600 dark:text-zinc-400 mt-4 leading-relaxed">
             Pare de aplicar manualmente para centenas de vagas aleatórias. Deixe o motor do Buscavag cruzar seu perfil com as melhores oportunidades em tempo real.
           </p>
 
@@ -150,17 +150,17 @@ export default function PricingPage() {
         {/* Pricing Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto mb-20">
           {/* Free Card */}
-          <div className="rounded-3xl border border-zinc-800/80 bg-zinc-900/40 p-8 backdrop-blur-xl flex flex-col justify-between hover:border-zinc-700 transition-all">
+          <div className="rounded-3xl border border-zinc-200 dark:border-zinc-800/80 bg-white dark:bg-zinc-900/40 p-8 backdrop-blur-xl flex flex-col justify-between hover:border-zinc-300 dark:hover:border-zinc-700 transition-all shadow-sm">
             <div>
               <div className="flex items-center justify-between">
-                <span className="text-sm font-mono uppercase text-zinc-400 font-semibold">Gratuito</span>
-                <span className="rounded-full bg-zinc-800 px-3 py-0.5 text-xs text-zinc-400 font-medium">
+                <span className="text-sm font-mono uppercase text-zinc-500 dark:text-zinc-400 font-semibold">Gratuito</span>
+                <span className="rounded-full bg-zinc-100 dark:bg-zinc-800 px-3 py-0.5 text-xs text-zinc-600 dark:text-zinc-400 font-medium">
                   Para Começar
                 </span>
               </div>
               <div className="mt-4 flex items-baseline gap-1">
-                <span className="text-4xl font-extrabold text-zinc-100 font-mono">R$ 0</span>
-                <span className="text-xs text-zinc-500 font-sans">/para sempre</span>
+                <span className="text-4xl font-extrabold text-zinc-900 dark:text-zinc-100 font-mono">R$ 0</span>
+                <span className="text-xs text-zinc-500 dark:text-zinc-400 font-sans">/para sempre</span>
               </div>
               <p className="text-xs text-zinc-400 mt-2 leading-relaxed">
                 Ideal para explorar a base de vagas e testar a análise básica de currículo.
