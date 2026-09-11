@@ -43,6 +43,7 @@ services:
       - "3000:3000"
     volumes:
       - buscavag-data:/app/data
+      - buscavag-uploads:/app/uploads
     environment:
       - DATABASE_PATH=/app/data/buscavag.db
       - NODE_ENV=production
@@ -74,8 +75,10 @@ services:
     depends_on:
       - scrapling-engine
 
-# Volume nomeado para persistência do banco SQLite
+# Volume nomeado para persistência do banco SQLite e uploads de currículos
 volumes:
   buscavag-data:
+    driver: local
+  buscavag-uploads:
     driver: local
 

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { spawn } from 'child_process';
+import path from 'path';
 import { ScraperLogger } from '@/services/scraperLogger';
 
 export const dynamic = 'force-dynamic';
@@ -18,9 +19,10 @@ export async function POST(request: NextRequest) {
     const resolvedRunId = logger.getRunId();
 
     const cwd = process.cwd();
+    const nodeModulesBin = path.join(cwd, 'node_modules', '.bin');
     const env = {
       ...process.env,
-      PATH: process.env.PATH || '/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin',
+      PATH: `${nodeModulesBin}:${process.env.PATH || '/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin'}`,
       SCRAPER_RUN_ID: resolvedRunId,
       PYTHONUNBUFFERED: '1',
       PYTHONIOENCODING: 'utf-8',
@@ -32,8 +34,8 @@ export async function POST(request: NextRequest) {
       data: { runId: resolvedRunId },
     });
 
-    // Spawn do processo com captura de eventos para previnir travamento silencioso
-    const child = spawn('npm', ['run', 'start'], {
+    // Spawn do processo via npx tsx para execução direta no runtime
+    const child = spawn('npx', ['tsx', 'src/index.ts'], {
       cwd,
       detached: true,
       stdio: ['ignore', 'pipe', 'pipe'],
@@ -48,7 +50,7 @@ export async function POST(request: NextRequest) {
     }
 
     child.on('error', (err) => {
-      logger.error('Erro de execução ao disparar pipeline de scraper:', {
+      logger.error('Erro de execução ao disparar pipeline de scraper (binário ou runtime ausente):', {
         details: err.stack || err.message,
       });
     });
@@ -56,7 +58,9 @@ export async function POST(request: NextRequest) {
     child.on('exit', (code, signal) => {
       if (code !== 0 && code !== null) {
         logger.error(`Processo do scraper finalizado com código de erro ${code}`, {
-          details: `Signal: ${signal}`,
+          details: code === 127
+            ? 'Erro 127: Comando ou runtime (npx/tsx) não encontrado no container. Verifique os binários disponíveis.'
+            : `Signal: ${signal || 'nenhum'}`,
         });
       } else {
         logger.info('Processo do scraper finalizado com sucesso.', { step: 'FINISH' });

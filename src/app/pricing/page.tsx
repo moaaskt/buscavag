@@ -15,7 +15,6 @@ import {
   ChevronDown,
   Loader2
 } from 'lucide-react';
-import { Navbar } from '@/components/Navbar';
 import { UpgradeModal } from '@/components/UpgradeModal';
 import { cn } from '@/lib/utils';
 
@@ -95,57 +94,56 @@ export default function PricingPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100 flex flex-col selection:bg-emerald-500 selection:text-black transition-colors">
-      <main className="flex-1 max-w-6xl w-full mx-auto px-4 py-12 md:py-16">
-        {/* Header */}
-        <div className="text-center max-w-3xl mx-auto mb-12">
-          <div className="inline-flex items-center gap-2 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-3.5 py-1 text-xs font-mono text-emerald-400 mb-4">
-            <Sparkles className="w-3.5 h-3.5" />
-            <span>Planos Transparentes & Simples</span>
-          </div>
-          <h1 className="text-3xl md:text-5xl font-extrabold text-zinc-900 dark:text-zinc-100 tracking-tight leading-tight">
-            Acelere sua contratação com{' '}
-            <span className="bg-gradient-to-r from-emerald-500 to-teal-500 dark:from-emerald-400 dark:to-teal-300 bg-clip-text text-transparent">
-              Inteligência Artificial
-            </span>
-          </h1>
-          <p className="text-sm md:text-base text-zinc-600 dark:text-zinc-400 mt-4 leading-relaxed">
-            Pare de aplicar manualmente para centenas de vagas aleatórias. Deixe o motor do Buscavag cruzar seu perfil com as melhores oportunidades em tempo real.
-          </p>
+    <div className="max-w-6xl w-full mx-auto space-y-12 py-4">
+      {/* Header */}
+      <div className="text-center max-w-3xl mx-auto mb-12">
+        <div className="inline-flex items-center gap-2 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-3.5 py-1 text-xs font-mono text-emerald-400 mb-4">
+          <Sparkles className="w-3.5 h-3.5" />
+          <span>Planos Transparentes & Simples</span>
+        </div>
+        <h1 className="text-3xl md:text-5xl font-extrabold text-zinc-900 dark:text-zinc-100 tracking-tight leading-tight">
+          Acelere sua contratação com{' '}
+          <span className="bg-gradient-to-r from-emerald-500 to-teal-500 dark:from-emerald-400 dark:to-teal-300 bg-clip-text text-transparent">
+            Inteligência Artificial
+          </span>
+        </h1>
+        <p className="text-sm md:text-base text-zinc-600 dark:text-zinc-400 mt-4 leading-relaxed">
+          Pare de aplicar manualmente para centenas de vagas aleatórias. Deixe o motor do Buscavag cruzar seu perfil com as melhores oportunidades em tempo real.
+        </p>
 
-          {/* Billing Toggle */}
-          <div className="mt-8 flex justify-center">
-            <div className="flex items-center p-1 rounded-2xl bg-zinc-900 border border-zinc-800 shadow-lg">
-              <button
-                type="button"
-                onClick={() => setBillingPeriod('monthly')}
-                className={cn(
-                  'px-5 py-2 text-xs md:text-sm font-semibold rounded-xl transition-all',
-                  billingPeriod === 'monthly'
-                    ? 'bg-zinc-800 text-zinc-100 shadow'
-                    : 'text-zinc-400 hover:text-zinc-200'
-                )}
-              >
-                Cobrança Mensal
-              </button>
-              <button
-                type="button"
-                onClick={() => setBillingPeriod('annual')}
-                className={cn(
-                  'flex items-center gap-2 px-5 py-2 text-xs md:text-sm font-semibold rounded-xl transition-all',
-                  billingPeriod === 'annual'
-                    ? 'bg-emerald-600 text-zinc-950 font-bold shadow'
-                    : 'text-zinc-400 hover:text-zinc-200'
-                )}
-              >
-                <span>Anual</span>
-                <span className="rounded bg-amber-400/20 text-amber-300 px-2 py-0.5 text-[10px] uppercase font-mono font-bold">
-                  Economize 45%
-                </span>
-              </button>
-            </div>
+        {/* Billing Toggle */}
+        <div className="mt-8 flex justify-center">
+          <div className="flex items-center p-1 rounded-2xl bg-zinc-100 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-sm dark:shadow-lg">
+            <button
+              type="button"
+              onClick={() => setBillingPeriod('monthly')}
+              className={cn(
+                'px-5 py-2 text-xs md:text-sm font-semibold rounded-xl transition-all',
+                billingPeriod === 'monthly'
+                  ? 'bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 shadow'
+                  : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-800 dark:hover:text-zinc-200'
+              )}
+            >
+              Cobrança Mensal
+            </button>
+            <button
+              type="button"
+              onClick={() => setBillingPeriod('annual')}
+              className={cn(
+                'flex items-center gap-2 px-5 py-2 text-xs md:text-sm font-semibold rounded-xl transition-all',
+                billingPeriod === 'annual'
+                  ? 'bg-emerald-600 text-zinc-950 font-bold shadow'
+                  : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-800 dark:hover:text-zinc-200'
+              )}
+            >
+              <span>Anual</span>
+              <span className="rounded bg-amber-400/20 text-amber-500 dark:text-amber-300 px-2 py-0.5 text-[10px] uppercase font-mono font-bold">
+                Economize 45%
+              </span>
+            </button>
           </div>
         </div>
+      </div>
 
         {/* Pricing Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto mb-20">
@@ -166,7 +164,7 @@ export default function PricingPage() {
                 Ideal para explorar a base de vagas e testar a análise básica de currículo.
               </p>
 
-              <div className="mt-6 pt-6 border-t border-zinc-800/80 space-y-3 text-xs text-zinc-300">
+              <div className="mt-6 pt-6 border-t border-zinc-200 dark:border-zinc-800/80 space-y-3 text-xs text-zinc-600 dark:text-zinc-300">
                 {[
                   'Acesso a todas as 34 fontes de vagas',
                   'Até 5 vagas salvas / favoritadas',
@@ -175,7 +173,7 @@ export default function PricingPage() {
                   'Filtros básicos por cidade e senioridade',
                 ].map((feat, idx) => (
                   <div key={idx} className="flex items-start gap-2.5">
-                    <Check className="w-4 h-4 text-zinc-500 shrink-0 mt-0.5" />
+                    <Check className="w-4 h-4 text-emerald-600 dark:text-zinc-500 shrink-0 mt-0.5" />
                     <span>{feat}</span>
                   </div>
                 ))}
@@ -185,7 +183,7 @@ export default function PricingPage() {
             <div className="mt-8 pt-4">
               <Link
                 href={isAuthenticated ? '/candidate' : '/register'}
-                className="w-full inline-flex items-center justify-center rounded-xl border border-zinc-700 bg-zinc-800 hover:bg-zinc-700 px-4 py-3 text-xs font-semibold text-zinc-200 transition-colors"
+                className="w-full inline-flex items-center justify-center rounded-xl border border-zinc-200 dark:border-zinc-700 bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 px-4 py-3 text-xs font-semibold text-zinc-800 dark:text-zinc-200 transition-colors shadow-sm"
               >
                 {isAuthenticated ? 'Acessar Meu Painel' : 'Criar Conta Gratuita'}
               </Link>
@@ -264,41 +262,41 @@ export default function PricingPage() {
         </div>
 
         {/* Tabela Comparativa Detalhada */}
-        <div className="rounded-3xl border border-zinc-800/80 bg-zinc-900/40 p-6 md:p-10 backdrop-blur-xl mb-20">
-          <h2 className="text-xl md:text-2xl font-bold text-zinc-100 text-center mb-8">
+        <div className="rounded-3xl border border-zinc-200 dark:border-zinc-800/80 bg-white/80 dark:bg-zinc-900/40 p-6 md:p-10 backdrop-blur-xl mb-20 shadow-sm">
+          <h2 className="text-xl md:text-2xl font-bold text-zinc-900 dark:text-zinc-100 text-center mb-8">
             Comparativo Completo de Recursos
           </h2>
 
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs md:text-sm">
               <thead>
-                <tr className="border-b border-zinc-800 text-zinc-400 font-mono uppercase text-[11px]">
+                <tr className="border-b border-zinc-200 dark:border-zinc-800 text-zinc-500 dark:text-zinc-400 font-mono uppercase text-[11px]">
                   <th className="py-3 px-4">Funcionalidade</th>
                   <th className="py-3 px-4 text-center">Plano Free</th>
-                  <th className="py-3 px-4 text-center text-emerald-400 font-bold">Plano Premium Pro</th>
+                  <th className="py-3 px-4 text-center text-emerald-600 dark:text-emerald-400 font-bold">Plano Premium Pro</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-zinc-800/60 text-zinc-300">
+              <tbody className="divide-y divide-zinc-200 dark:divide-zinc-800/60 text-zinc-700 dark:text-zinc-300">
                 {comparisonFeatures.map((row, idx) => (
-                  <tr key={idx} className="hover:bg-zinc-800/20 transition-colors">
-                    <td className="py-3.5 px-4 font-medium">{row.feature}</td>
-                    <td className="py-3.5 px-4 text-center text-zinc-400 font-mono text-xs">
+                  <tr key={idx} className="hover:bg-zinc-50 dark:hover:bg-zinc-800/20 transition-colors">
+                    <td className="py-3.5 px-4 font-medium text-zinc-900 dark:text-zinc-100">{row.feature}</td>
+                    <td className="py-3.5 px-4 text-center text-zinc-500 dark:text-zinc-400 font-mono text-xs">
                       {typeof row.free === 'boolean' ? (
                         row.free ? (
-                          <Check className="w-4 h-4 text-emerald-400 mx-auto" />
+                          <Check className="w-4 h-4 text-emerald-500 mx-auto" />
                         ) : (
-                          <X className="w-4 h-4 text-zinc-600 mx-auto" />
+                          <X className="w-4 h-4 text-zinc-400 dark:text-zinc-600 mx-auto" />
                         )
                       ) : (
                         row.free
                       )}
                     </td>
-                    <td className="py-3.5 px-4 text-center text-emerald-300 font-mono text-xs font-semibold">
+                    <td className="py-3.5 px-4 text-center text-emerald-600 dark:text-emerald-300 font-mono text-xs font-semibold">
                       {typeof row.premium === 'boolean' ? (
                         row.premium ? (
-                          <Check className="w-4 h-4 text-emerald-400 mx-auto" />
+                          <Check className="w-4 h-4 text-emerald-500 mx-auto" />
                         ) : (
-                          <X className="w-4 h-4 text-zinc-600 mx-auto" />
+                          <X className="w-4 h-4 text-zinc-400 dark:text-zinc-600 mx-auto" />
                         )
                       ) : (
                         row.premium
@@ -313,7 +311,7 @@ export default function PricingPage() {
 
         {/* FAQ Accordion */}
         <div className="max-w-3xl mx-auto mb-12">
-          <h2 className="text-xl md:text-2xl font-bold text-zinc-100 text-center mb-8">
+          <h2 className="text-xl md:text-2xl font-bold text-zinc-900 dark:text-zinc-100 text-center mb-8">
             Perguntas Frequentes
           </h2>
 
@@ -323,18 +321,18 @@ export default function PricingPage() {
               return (
                 <div
                   key={idx}
-                  className="rounded-2xl border border-zinc-800/80 bg-zinc-900/40 overflow-hidden transition-all"
+                  className="rounded-2xl border border-zinc-200 dark:border-zinc-800/80 bg-white/80 dark:bg-zinc-900/40 overflow-hidden transition-all shadow-sm"
                 >
                   <button
                     type="button"
                     onClick={() => setOpenFaq(isOpen ? null : idx)}
-                    className="w-full flex items-center justify-between p-4 md:p-5 text-left text-xs md:text-sm font-semibold text-zinc-200 hover:text-emerald-400 transition-colors"
+                    className="w-full flex items-center justify-between p-4 md:p-5 text-left text-xs md:text-sm font-semibold text-zinc-800 dark:text-zinc-200 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors"
                   >
                     <span>{faq.q}</span>
-                    <ChevronDown className={cn('w-4 h-4 text-zinc-500 transition-transform duration-200', isOpen && 'rotate-180 text-emerald-400')} />
+                    <ChevronDown className={cn('w-4 h-4 text-zinc-500 transition-transform duration-200', isOpen && 'rotate-180 text-emerald-500 dark:text-emerald-400')} />
                   </button>
                   {isOpen && (
-                    <div className="px-4 pb-5 md:px-5 text-xs text-zinc-400 leading-relaxed border-t border-zinc-800/50 pt-3">
+                    <div className="px-4 pb-5 md:px-5 text-xs text-zinc-600 dark:text-zinc-400 leading-relaxed border-t border-zinc-200/60 dark:border-zinc-800/50 pt-3">
                       {faq.a}
                     </div>
                   )}
@@ -343,7 +341,6 @@ export default function PricingPage() {
             })}
           </div>
         </div>
-      </main>
 
       {/* Upgrade Modal */}
       <UpgradeModal

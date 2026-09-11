@@ -79,8 +79,7 @@ export default function AdminDashboardPage() {
   };
 
   return (
-    <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950 font-sans text-zinc-900 dark:text-zinc-100 flex flex-col">
-      <main className="flex-1 w-full max-w-[1400px] mx-auto px-4 md:px-6 py-6 md:py-8">
+    <div className="space-y-8">
         <div className="mb-8">
           <div className="flex items-center gap-3">
             <div className="p-2.5 rounded-lg bg-rose-500/10 border border-rose-500/20 text-rose-500">
@@ -239,12 +238,10 @@ export default function AdminDashboardPage() {
           </div>
         </div>
 
-      </main>
-
-      <ScraperTerminalModal 
-        isOpen={isTerminalOpen} 
-        onClose={() => setIsTerminalOpen(false)} 
-      />
-    </div>
-  );
+        <ScraperTerminalModal 
+          isOpen={isTerminalOpen} 
+          onClose={() => setIsTerminalOpen(false)} 
+        />
+      </div>
+    );
 }
