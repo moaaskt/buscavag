@@ -8,7 +8,7 @@
   - Create `/api/candidate/board/status` to update the user's specific job status.
   - Refactor `src/app/board/page.tsx` to use the new endpoints and initialize empty.
 
-- [ ] **Phase 46: Paywall Free na Análise de CV**
+- [x] **Phase 46: Paywall Free na Análise de CV**
   - Add restriction in `src/app/api/candidate/analyze-cv/route.ts` checking `if (tier === 'free' && resume.ai_analysis) return 403`.
   - Update UI components rendering the "Reanalisar" button to change to "Upgrade Pro" when restricted.
 
