@@ -405,6 +405,17 @@ export default function CandidateDashboardPage() {
       });
       const data = await res.json();
 
+      if (res.status === 403) {
+        setResumeFeedback({
+          type: 'error',
+          message: data.message || 'Re-análise restrita ao plano Pro. Faça o upgrade para reanalisar seu CV ilimitadamente!',
+        });
+        setTimeout(() => {
+          router.push('/pricing');
+        }, 1500);
+        return;
+      }
+
       if (res.ok && data.success) {
         setResume((prev) => (prev ? { ...prev, ai_analysis: data.analysis, analyzedAt: data.analyzedAt } : null));
         setResumeFeedback({ type: 'success', message: 'Análise por IA concluída com sucesso!' });
