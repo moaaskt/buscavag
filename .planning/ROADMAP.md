@@ -2,7 +2,7 @@
 
 ## Phases
 
-- [ ] **Phase 45: Kanban Isolamento Multi-tenant**
+- [x] **Phase 45: Kanban Isolamento Multi-tenant**
   - Create `/api/candidate/board` API reading strictly from `user_saved_jobs` joined with `jobs`.
   - Update `CandidateRepository.updateSavedJobStatus` to handle drag-and-drop status changes.
   - Create `/api/candidate/board/status` to update the user's specific job status.
