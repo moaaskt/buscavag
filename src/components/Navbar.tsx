@@ -14,7 +14,8 @@ import {
   Crown,
   UserPlus,
   FileText,
-  KanbanSquare
+  KanbanSquare,
+  ShieldCheck,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { CanvasText } from '@/components/ui/canvas-text';
@@ -141,7 +142,7 @@ export function Navbar({
     ...(authState.role === 'ADMIN' ? [{
       name: 'Painel Admin',
       link: '/admin',
-      icon: LayoutDashboard, // ou algum ícone de escudo
+      icon: ShieldCheck,
       active: pathname.startsWith('/admin'),
     }] : []),
   ];
@@ -188,7 +189,7 @@ export function Navbar({
     ...(authState.role === 'ADMIN' ? [{
       title: 'Admin',
       href: '/admin',
-      icon: <LayoutDashboard className="h-full w-full" />,
+      icon: <ShieldCheck className="h-full w-full" />,
       active: pathname.startsWith('/admin'),
     }] : []),
     {
