@@ -12,7 +12,7 @@
   - Add restriction in `src/app/api/candidate/analyze-cv/route.ts` checking `if (tier === 'free' && resume.ai_analysis) return 403`.
   - Update UI components rendering the "Reanalisar" button to change to "Upgrade Pro" when restricted.
 
-- [ ] **Phase 47: Sincronização do Resumo para Bio**
+- [x] **Phase 47: Sincronização do Resumo para Bio**
   - Update payload schema of `/api/candidate/sync-skills/route.ts` to accept `summary`.
   - Update `repo.syncSkillsToProfile` to save `summary` to the `bio` column in `candidate_profiles`.
   - Ensure the UI correctly dispatches the summary and refreshes the profile tab.
