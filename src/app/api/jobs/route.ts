@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { JobRepository } from '@/db/repository';
+import { getSessionUser } from '@/lib/auth';
 
 export const dynamic = 'force-dynamic';
 
@@ -14,6 +15,8 @@ export async function GET(request: NextRequest) {
     const onlyApproved = searchParams.get('onlyApproved') === 'true';
     const period = searchParams.get('period') || undefined;
     const location = searchParams.get('location') || undefined;
+    const session = await getSessionUser(request);
+    const userId = session?.userId;
 
     const repo = new JobRepository();
     const jobs = repo.getAllJobs({
@@ -25,6 +28,7 @@ export async function GET(request: NextRequest) {
       onlyApproved,
       period,
       location,
+      userId,
     });
 
 

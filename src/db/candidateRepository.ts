@@ -419,7 +419,7 @@ export class CandidateRepository {
     // Busca vagas ativas recentes no SQLite
     const stmt = db.prepare(`
       SELECT 
-        id, title, company, platform, description, published_at, location, 
+        id, url, title, company, platform, description, published_at, location, 
         overall_score, score_ia, application_status
       FROM jobs
       ORDER BY published_at DESC, created_at DESC

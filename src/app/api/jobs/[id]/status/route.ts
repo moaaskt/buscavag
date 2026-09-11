@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { JobRepository } from '@/db/repository';
+import { CandidateRepository } from '@/db/candidateRepository';
+import { getSessionUser } from '@/lib/auth';
 
 export const dynamic = 'force-dynamic';
 
@@ -8,11 +9,16 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const session = await getSessionUser(request);
+    if (!session) {
+      return NextResponse.json({ error: 'Não autenticado' }, { status: 401 });
+    }
+
     const { id } = await params;
     const body = await request.json();
     const { status } = body;
 
-    const validStatuses = ['pending', 'applied', 'interview', 'offer', 'rejected'];
+    const validStatuses = ['pending', 'applied', 'interview', 'offer', 'rejected', 'saved'];
     if (!status || !validStatuses.includes(status)) {
       return NextResponse.json(
         { success: false, error: 'Status inválido. Deve ser um de: ' + validStatuses.join(', ') },
@@ -20,14 +26,11 @@ export async function PATCH(
       );
     }
 
-    const repo = new JobRepository();
-    const updated = repo.updateApplicationStatus(id, status);
+    const repo = new CandidateRepository();
+    const updated = repo.updateSavedJobStatus(session.userId, id, status);
 
     if (!updated) {
-      return NextResponse.json(
-        { success: false, error: 'Vaga não encontrada ou não atualizada' },
-        { status: 404 }
-      );
+      repo.toggleSavedJob(session.userId, id, status);
     }
 
     return NextResponse.json({ success: true, id, status });
