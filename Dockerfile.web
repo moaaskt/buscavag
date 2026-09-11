@@ -26,6 +26,7 @@ COPY . .
 
 # Definir caminho do banco (será montado via volume)
 ENV DATABASE_PATH=/app/data/buscavag.db
+RUN mkdir -p /app/data
 
 RUN npm run build:next
 
@@ -36,8 +37,8 @@ WORKDIR /app
 ENV NODE_ENV=production
 ENV DATABASE_PATH=/app/data/buscavag.db
 
-# Criar diretório de dados para o volume
-RUN mkdir -p /app/data
+# Criar diretório de dados e uploads para os volumes
+RUN mkdir -p /app/data /app/uploads/resumes
 
 # Copiar o standalone output (já inclui server.js e node_modules internos)
 COPY --from=builder /app/.next/standalone ./

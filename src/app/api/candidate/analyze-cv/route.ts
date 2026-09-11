@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getSessionUser } from '@/lib/auth';
 import { CandidateRepository, CVAnalysisResult } from '@/db/candidateRepository';
 import { PythonBridgeClient } from '@/services/pythonBridge';
+import { logger } from '@/lib/logger';
 import fs from 'fs';
 
 export async function GET(req: NextRequest) {
@@ -24,7 +25,10 @@ export async function GET(req: NextRequest) {
       analyzedAt: resume.analyzed_at || null,
     });
   } catch (error) {
-    console.error('Error in GET /api/candidate/analyze-cv:', error);
+    logger.error('cv', 'Erro ao consultar análise de currículo em GET', {
+      metadata: { error: (error as Error).message },
+      req,
+    });
     return NextResponse.json({ error: 'Erro ao consultar análise' }, { status: 500 });
   }
 }
@@ -90,6 +94,12 @@ export async function POST(req: NextRequest) {
     // Salva a análise estruturada no SQLite
     repo.updateResumeAnalysis(session.userId, analysis);
 
+    logger.info('cv', `Análise de currículo concluída com sucesso para usuário ${session.email}`, {
+      userId: session.userId,
+      metadata: { role: analysis.detected_role, seniority: analysis.detected_seniority, source: analysis.source || 'python-engine' },
+      req,
+    });
+
     return NextResponse.json({
       success: true,
       message: 'Análise de currículo realizada com sucesso!',
@@ -97,7 +107,10 @@ export async function POST(req: NextRequest) {
       analyzedAt: new Date().toISOString(),
     });
   } catch (error: any) {
-    console.error('Error in POST /api/candidate/analyze-cv:', error);
+    logger.error('cv', 'Erro ao processar análise do currículo', {
+      metadata: { error: error.message },
+      req,
+    });
     return NextResponse.json(
       { error: error.message || 'Erro ao processar análise do currículo' },
       { status: 500 }
