@@ -10,9 +10,20 @@ if (!fs.existsSync(dbDir)) {
   fs.mkdirSync(dbDir, { recursive: true });
 }
 
-export const db = new Database(dbPath);
+export const db = new Database(dbPath, { timeout: 10000 });
+
+try {
+  db.pragma('journal_mode = WAL');
+  db.pragma('busy_timeout = 10000');
+} catch (err) {
+  console.warn('[DB Pragma] Aviso ao configurar pragmas:', (err as Error).message);
+}
+
+let isInitialized = false;
 
 export function initDatabase() {
+  if (isInitialized) return;
+
   db.exec(`
     CREATE TABLE IF NOT EXISTS jobs (
       id TEXT PRIMARY KEY,
@@ -178,4 +189,6 @@ export function initDatabase() {
   } catch (err) {
     console.warn('[DB Migration] Aviso ao criar índices:', (err as Error).message);
   }
+
+  isInitialized = true;
 }

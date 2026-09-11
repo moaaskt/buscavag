@@ -26,6 +26,7 @@ COPY . .
 
 # Definir caminho do banco (será montado via volume)
 ENV DATABASE_PATH=/app/data/buscavag.db
+RUN mkdir -p /app/data
 
 RUN npm run build:next
 

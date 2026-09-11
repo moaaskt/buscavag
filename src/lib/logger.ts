@@ -52,9 +52,8 @@ function extractRequestInfo(req?: LogContext['req']): { ip: string | null; userA
 }
 
 class SystemLogger {
-  constructor() {
-    initDatabase();
-  }
+  // Não executa DDL no constructor para evitar lock do SQLite durante next build (multi-workers)
+  constructor() {}
 
   private log(level: LogLevel, category: LogCategory, message: string, context?: LogContext) {
     const timestamp = new Date().toISOString();
@@ -76,15 +75,28 @@ class SystemLogger {
       console.log(`${prefix} ${message}`, metadataStr || '');
     }
 
-    // Persistência segura em SQLite
+    // Persistência segura em SQLite com fallback preguiçoso
     try {
       const stmt = db.prepare(`
         INSERT INTO system_logs (id, timestamp, level, category, message, user_id, metadata, ip, user_agent)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
       `);
       stmt.run(id, timestamp, level, category, message, userId, metadataStr, ip, userAgent);
-    } catch (err) {
-      console.error('[SystemLogger] Erro ao gravar log no banco SQLite:', (err as Error).message);
+    } catch (err: any) {
+      if (err.message && err.message.includes('no such table')) {
+        try {
+          initDatabase();
+          const stmt = db.prepare(`
+            INSERT INTO system_logs (id, timestamp, level, category, message, user_id, metadata, ip, user_agent)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+          `);
+          stmt.run(id, timestamp, level, category, message, userId, metadataStr, ip, userAgent);
+        } catch {
+          // Silencia falha se ainda assim ocorrer em ambiente restrito
+        }
+      } else {
+        console.error('[SystemLogger] Erro ao gravar log no banco SQLite:', (err as Error).message);
+      }
     }
   }
 
