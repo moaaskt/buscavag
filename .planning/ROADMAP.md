@@ -17,6 +17,6 @@
   - Update `repo.syncSkillsToProfile` to save `summary` to the `bio` column in `candidate_profiles`.
   - Ensure the UI correctly dispatches the summary and refreshes the profile tab.
 
-- [ ] **Phase 48: Polimento de UI, Scraper Stream & Zero-State DB**
+- [x] **Phase 48: Polimento de UI, Scraper Stream & Zero-State DB**
   - Verify and refine scraper logs streaming visual layout.
   - Add robust fallback states for zero-state DB scenarios in candidate dashboard and scrapers hub.

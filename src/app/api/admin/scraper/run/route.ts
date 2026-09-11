@@ -21,6 +21,7 @@ export async function POST(request: NextRequest) {
     const env = {
       ...process.env,
       SCRAPER_RUN_ID: resolvedRunId,
+      PYTHONUNBUFFERED: '1',
     };
 
     // Emite log inicial informando disparo do processo autônomo

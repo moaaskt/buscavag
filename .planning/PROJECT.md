@@ -2,8 +2,8 @@
 
 ## Current State
 
-- **Shipped Milestone**: v11.0 — Painel Admin, RBAC e Refatoração de UI (2026-09-10)
-- **Active Milestone**: v12.0 — Polimento UI/UX, Total Multi-tenancy, Scraper Stream & Zero-State DB
+- **Shipped Milestone**: v12.0 — Polimento UI/UX, Total Multi-tenancy, Scraper Stream & Zero-State DB (2026-09-11)
+- **Active Milestone**: v13.0 — Sistema Completo de Assinaturas (Stripe/Mercado Pago) & Notificações WhatsApp
 
 <details>
 <summary>Previous Milestones</summary>
