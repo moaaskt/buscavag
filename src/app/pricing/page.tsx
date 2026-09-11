@@ -97,9 +97,9 @@ export default function PricingPage() {
     <div className="max-w-6xl w-full mx-auto space-y-12 py-4">
       {/* Header */}
       <div className="text-center max-w-3xl mx-auto mb-12">
-        <div className="inline-flex items-center gap-2 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-3.5 py-1 text-xs font-mono text-emerald-400 mb-4">
+        <div className="inline-flex items-center gap-2 rounded-full border border-emerald-500/20 dark:border-emerald-500/30 bg-emerald-500/10 px-3.5 py-1 text-xs font-medium text-emerald-700 dark:text-emerald-400 mb-4 shadow-sm">
           <Sparkles className="w-3.5 h-3.5" />
-          <span>Planos Transparentes & Simples</span>
+          <span>Planos Transparentes & Sem Pegadinhas</span>
         </div>
         <h1 className="text-3xl md:text-5xl font-extrabold text-zinc-900 dark:text-zinc-100 tracking-tight leading-tight">
           Acelere sua contratação com{' '}
@@ -191,7 +191,7 @@ export default function PricingPage() {
           </div>
 
           {/* Premium Pro Card */}
-          <div className="relative rounded-3xl border-2 border-emerald-500/60 bg-gradient-to-b from-zinc-900/90 to-zinc-950 p-8 backdrop-blur-xl flex flex-col justify-between shadow-2xl shadow-emerald-950/50 hover:border-emerald-400 transition-all">
+          <div className="relative rounded-3xl border-2 border-emerald-500/50 dark:border-emerald-500/60 bg-gradient-to-b from-emerald-50/40 via-white to-white dark:from-zinc-900/90 dark:to-zinc-950 p-8 backdrop-blur-xl flex flex-col justify-between shadow-xl shadow-emerald-500/10 dark:shadow-2xl dark:shadow-emerald-950/50 hover:border-emerald-500 dark:hover:border-emerald-400 transition-all">
             {/* Top Badge */}
             <div className="absolute -top-3.5 right-8">
               <span className="inline-flex items-center gap-1 rounded-full bg-gradient-to-r from-emerald-500 to-teal-400 px-3.5 py-1 text-[11px] font-bold text-zinc-950 uppercase tracking-wider shadow-md">
@@ -201,25 +201,25 @@ export default function PricingPage() {
 
             <div>
               <div className="flex items-center justify-between">
-                <span className="text-sm font-mono uppercase text-emerald-400 font-bold">Premium Pro</span>
-                <span className="rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 px-3 py-0.5 text-xs font-medium font-mono">
+                <span className="text-sm font-bold uppercase text-emerald-600 dark:text-emerald-400">Premium Pro</span>
+                <span className="rounded-full bg-emerald-500/15 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30 px-3 py-0.5 text-xs font-semibold">
                   Acesso Total
                 </span>
               </div>
 
               <div className="mt-4 flex items-baseline gap-1">
-                <span className="text-4xl font-extrabold text-zinc-100 font-mono">
+                <span className="text-4xl font-extrabold text-zinc-900 dark:text-zinc-100 font-mono">
                   {billingPeriod === 'annual' ? 'R$ 16,65' : 'R$ 29,90'}
                 </span>
-                <span className="text-xs text-zinc-400 font-sans">/mês</span>
+                <span className="text-xs text-zinc-500 dark:text-zinc-400 font-sans">/mês</span>
               </div>
-              <p className="text-xs text-zinc-400 mt-2 leading-relaxed">
+              <p className="text-xs text-zinc-600 dark:text-zinc-400 mt-2 leading-relaxed">
                 {billingPeriod === 'annual'
                   ? 'Faturado anualmente por R$ 199,90 (Economia de 45%)'
                   : 'Faturado mensalmente com cancelamento a qualquer momento'}
               </p>
 
-              <div className="mt-6 pt-6 border-t border-zinc-800/80 space-y-3 text-xs text-zinc-200">
+              <div className="mt-6 pt-6 border-t border-zinc-200/80 dark:border-zinc-800/80 space-y-3 text-xs text-zinc-700 dark:text-zinc-200">
                 {[
                   'Todas as centenas de Vagas Recomendadas desbloqueadas',
                   'Vagas salvas e candidaturas ilimitadas',
@@ -230,10 +230,10 @@ export default function PricingPage() {
                   'Suporte prioritário via Telegram / E-mail',
                 ].map((feat, idx) => (
                   <div key={idx} className="flex items-start gap-2.5">
-                    <div className="rounded-full bg-emerald-500/20 p-0.5 text-emerald-400 shrink-0 mt-0.5">
+                    <div className="rounded-full bg-emerald-500/15 dark:bg-emerald-500/20 p-0.5 text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5">
                       <Check className="w-3.5 h-3.5" />
                     </div>
-                    <span className="font-medium">{feat}</span>
+                    <span className="font-medium text-zinc-700 dark:text-zinc-200">{feat}</span>
                   </div>
                 ))}
               </div>
@@ -243,7 +243,7 @@ export default function PricingPage() {
               {userTier === 'premium' ? (
                 <button
                   disabled
-                  className="w-full rounded-xl border border-emerald-500/40 bg-emerald-500/10 py-3 text-xs font-bold text-emerald-300 cursor-default"
+                  className="w-full rounded-xl border border-emerald-500/40 bg-emerald-500/10 py-3 text-xs font-bold text-emerald-700 dark:text-emerald-300 cursor-default"
                 >
                   Plano Ativo no Seu Perfil ✓
                 </button>
@@ -251,7 +251,7 @@ export default function PricingPage() {
                 <button
                   type="button"
                   onClick={() => setIsUpgradeModalOpen(true)}
-                  className="w-full flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-400 hover:from-emerald-400 hover:to-teal-300 text-zinc-950 font-bold py-3 px-4 text-sm shadow-xl shadow-emerald-950/60 transition-all duration-200 active:scale-[0.98]"
+                  className="w-full flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-400 hover:from-emerald-400 hover:to-teal-300 text-zinc-950 font-bold py-3 px-4 text-sm shadow-xl shadow-emerald-500/20 dark:shadow-emerald-950/60 transition-all duration-200 active:scale-[0.98]"
                 >
                   <span>Ativar Plano Pro Agora</span>
                   <ArrowRight className="w-4 h-4" />

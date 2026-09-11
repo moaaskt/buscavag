@@ -79,15 +79,16 @@ export function FloatingActionBar({
                 </DropdownMenuContent>
               </DropdownMenu>
 
-              {/* Botão de Excluir Selecionadas */}
+              {/* Botão de Ocultar Selecionadas */}
               <button
                 onClick={onDeleteSelected}
                 disabled={isDeleting}
                 type="button"
+                title="Ocultar vagas selecionadas do seu feed"
                 className="h-8 px-2.5 md:px-3 rounded-lg bg-rose-600/90 hover:bg-rose-600 text-white text-xs font-medium flex items-center gap-1.5 transition-colors shadow-sm disabled:opacity-50 cursor-pointer"
               >
                 <Trash2 className="w-3.5 h-3.5" />
-                <span className="hidden sm:inline">Excluir</span>
+                <span className="hidden sm:inline">Ocultar</span>
               </button>
 
               <div className="w-[1px] h-5 bg-zinc-800 mx-0.5" />
