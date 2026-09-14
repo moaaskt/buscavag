@@ -526,10 +526,10 @@ export default function CandidateDashboardPage() {
   };
 
   const getScoreColor = (score: number) => {
-    if (score >= 85) return 'text-emerald-400 border-emerald-500/40 bg-emerald-500/10 shadow-emerald-950/40';
-    if (score >= 70) return 'text-teal-300 border-teal-500/40 bg-teal-500/10 shadow-teal-950/40';
-    if (score >= 50) return 'text-amber-300 border-amber-500/40 bg-amber-500/10 shadow-amber-950/40';
-    return 'text-zinc-400 border-zinc-700 bg-zinc-800/60 shadow-none';
+    if (score >= 85) return 'text-emerald-600 dark:text-emerald-400 border-emerald-500/40 bg-emerald-50 dark:bg-emerald-500/10 shadow-emerald-100 dark:shadow-emerald-950/40';
+    if (score >= 70) return 'text-teal-600 dark:text-teal-300 border-teal-500/40 bg-teal-50 dark:bg-teal-500/10 shadow-teal-100 dark:shadow-teal-950/40';
+    if (score >= 50) return 'text-amber-600 dark:text-amber-300 border-amber-500/40 bg-amber-50 dark:bg-amber-500/10 shadow-amber-100 dark:shadow-amber-950/40';
+    return 'text-zinc-500 dark:text-zinc-400 border-zinc-300 dark:border-zinc-700 bg-zinc-100 dark:bg-zinc-800/60 shadow-none';
   };
 
   if (loading) {
@@ -596,13 +596,13 @@ export default function CandidateDashboardPage() {
                     className={cn(
                       'inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-semibold uppercase tracking-wider',
                       user?.tier === 'premium'
-                        ? 'border border-amber-500/40 bg-amber-500/10 text-amber-300'
-                        : 'border border-zinc-700 bg-zinc-800 text-zinc-400'
+                        ? 'border border-amber-500/40 bg-amber-500/10 text-amber-600 dark:text-amber-300'
+                        : 'border border-zinc-200 dark:border-zinc-700 bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300'
                     )}
                   >
                     {user?.tier === 'premium' ? (
                       <>
-                        <Crown className="w-3 h-3 text-amber-400" />
+                        <Crown className="w-3 h-3 text-amber-500 dark:text-amber-400" />
                         <span>Premium Pro</span>
                       </>
                     ) : (
@@ -610,7 +610,7 @@ export default function CandidateDashboardPage() {
                     )}
                   </span>
                 </div>
-                <p className="text-sm text-zinc-400 mt-1 font-mono">{user?.email}</p>
+                <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-1 font-mono">{user?.email}</p>
               </div>
             </div>
 
@@ -632,7 +632,7 @@ export default function CandidateDashboardPage() {
               )}
               <button
                 onClick={handleLogout}
-                className="flex items-center gap-2 rounded-lg border border-zinc-800 bg-zinc-900 px-3.5 py-2 text-xs font-medium text-zinc-400 hover:text-rose-400 hover:border-rose-900/50 hover:bg-rose-950/20 transition-all active:scale-95"
+                className="flex items-center gap-2 rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-3.5 py-2 text-xs font-medium text-zinc-600 dark:text-zinc-400 hover:text-rose-600 dark:hover:text-rose-400 hover:border-rose-300 dark:hover:border-rose-900/50 hover:bg-rose-50 dark:hover:bg-rose-950/20 transition-all active:scale-95"
               >
                 <LogOut className="w-4 h-4" />
                 <span>Sair</span>
@@ -641,20 +641,20 @@ export default function CandidateDashboardPage() {
           </div>
 
           {/* Navigation Tabs */}
-          <div className="mt-8 flex border-b border-zinc-200 dark:border-zinc-800 gap-2 overflow-x-auto pb-px">
+          <div className="mt-8 flex border-b border-zinc-200 dark:border-zinc-800 gap-1 overflow-x-auto pb-px">
             <button
               onClick={() => setActiveTab('recommended')}
               className={cn(
-                'flex items-center gap-2 px-4 py-2.5 text-sm font-medium transition-colors border-b-2 -mb-px shrink-0',
+                'flex items-center gap-2 px-4 py-2.5 text-sm font-medium transition-colors border-b-2 -mb-px shrink-0 rounded-t-xl',
                 activeTab === 'recommended'
-                  ? 'border-emerald-500 text-emerald-400 bg-emerald-500/5 rounded-t-lg font-semibold'
-                  : 'border-transparent text-zinc-500 dark:text-zinc-400 hover:text-zinc-800 dark:hover:text-zinc-200'
+                  ? 'border-emerald-500 text-emerald-600 dark:text-emerald-400 bg-emerald-50/80 dark:bg-emerald-500/10 font-semibold'
+                  : 'border-transparent text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 hover:bg-zinc-100/60 dark:hover:bg-zinc-800/40'
               )}
             >
               <Target className="w-4 h-4" />
               <span>Vagas Recomendadas (Match IA)</span>
               {recommendedJobs.length > 0 && (
-                <span className="rounded-full bg-emerald-500/20 text-emerald-300 px-2 py-0.5 text-xs font-mono">
+                <span className="rounded-full bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 border border-zinc-200 dark:border-zinc-700 px-2 py-0.5 text-xs font-mono">
                   {recommendedJobs.length}
                 </span>
               )}
@@ -663,10 +663,10 @@ export default function CandidateDashboardPage() {
             <button
               onClick={() => setActiveTab('profile')}
               className={cn(
-                'flex items-center gap-2 px-4 py-2.5 text-sm font-medium transition-colors border-b-2 -mb-px shrink-0',
+                'flex items-center gap-2 px-4 py-2.5 text-sm font-medium transition-colors border-b-2 -mb-px shrink-0 rounded-t-xl',
                 activeTab === 'profile'
-                  ? 'border-emerald-500 text-emerald-400 bg-emerald-500/5 rounded-t-lg font-semibold'
-                  : 'border-transparent text-zinc-400 hover:text-zinc-200'
+                  ? 'border-emerald-500 text-emerald-600 dark:text-emerald-400 bg-emerald-50/80 dark:bg-emerald-500/10 font-semibold'
+                  : 'border-transparent text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 hover:bg-zinc-100/60 dark:hover:bg-zinc-800/40'
               )}
             >
               <Briefcase className="w-4 h-4" />
@@ -676,10 +676,10 @@ export default function CandidateDashboardPage() {
             <button
               onClick={() => setActiveTab('resume')}
               className={cn(
-                'flex items-center gap-2 px-4 py-2.5 text-sm font-medium transition-colors border-b-2 -mb-px shrink-0',
+                'flex items-center gap-2 px-4 py-2.5 text-sm font-medium transition-colors border-b-2 -mb-px shrink-0 rounded-t-xl',
                 activeTab === 'resume'
-                  ? 'border-emerald-500 text-emerald-400 bg-emerald-500/5 rounded-t-lg font-semibold'
-                  : 'border-transparent text-zinc-400 hover:text-zinc-200'
+                  ? 'border-emerald-500 text-emerald-600 dark:text-emerald-400 bg-emerald-50/80 dark:bg-emerald-500/10 font-semibold'
+                  : 'border-transparent text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 hover:bg-zinc-100/60 dark:hover:bg-zinc-800/40'
               )}
             >
               <FileText className="w-4 h-4" />
@@ -692,16 +692,16 @@ export default function CandidateDashboardPage() {
             <button
               onClick={() => setActiveTab('saved')}
               className={cn(
-                'flex items-center gap-2 px-4 py-2.5 text-sm font-medium transition-colors border-b-2 -mb-px shrink-0',
+                'flex items-center gap-2 px-4 py-2.5 text-sm font-medium transition-colors border-b-2 -mb-px shrink-0 rounded-t-xl',
                 activeTab === 'saved'
-                  ? 'border-emerald-500 text-emerald-400 bg-emerald-500/5 rounded-t-lg font-semibold'
-                  : 'border-transparent text-zinc-400 hover:text-zinc-200'
+                  ? 'border-emerald-500 text-emerald-600 dark:text-emerald-400 bg-emerald-50/80 dark:bg-emerald-500/10 font-semibold'
+                  : 'border-transparent text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 hover:bg-zinc-100/60 dark:hover:bg-zinc-800/40'
               )}
             >
               <Bookmark className="w-4 h-4" />
               <span>Vagas Salvas</span>
               {savedJobs.length > 0 && (
-                <span className="rounded-full bg-zinc-800 px-2 py-0.5 text-xs text-zinc-300">
+                <span className="rounded-full bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 border border-zinc-200 dark:border-zinc-700 px-2 py-0.5 text-xs font-mono">
                   {savedJobs.length}
                 </span>
               )}
@@ -769,12 +769,12 @@ export default function CandidateDashboardPage() {
 
                 <div className="rounded-2xl border border-zinc-200 dark:border-zinc-800/80 bg-white dark:bg-zinc-900/50 p-5 backdrop-blur-xl shadow-sm">
                   <div className="flex items-center justify-between">
-                    <span className="text-xs font-mono uppercase text-zinc-400">Top Competências</span>
-                    <Award className="w-4 h-4 text-teal-400" />
+                    <span className="text-xs font-mono uppercase text-zinc-500 dark:text-zinc-400">Top Competências</span>
+                    <Award className="w-4 h-4 text-teal-500 dark:text-teal-400" />
                   </div>
                   <div className="mt-2 flex flex-wrap gap-1.5">
                     {matchStats.topMatchedSkills.slice(0, 3).map((s) => (
-                      <span key={s.skill} className="rounded-md border border-teal-500/30 bg-teal-500/10 px-2 py-0.5 text-[11px] font-mono text-teal-300">
+                      <span key={s.skill} className="rounded-md border border-teal-500/30 bg-teal-50 dark:bg-teal-500/10 px-2 py-0.5 text-[11px] font-mono text-teal-700 dark:text-teal-300">
                         {s.skill} ({s.count})
                       </span>
                     ))}
@@ -838,10 +838,10 @@ export default function CandidateDashboardPage() {
                   type="button"
                   onClick={fetchRecommendedJobs}
                   disabled={loadingRecommended}
-                  className="rounded-lg border border-zinc-800 bg-zinc-950/80 p-2 text-zinc-400 hover:text-zinc-200 transition-colors"
+                  className="rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950/80 p-2 text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-200 hover:border-zinc-300 dark:hover:border-zinc-700 transition-colors"
                   title="Atualizar Recomendações"
                 >
-                  <RefreshCw className={cn('w-3.5 h-3.5', loadingRecommended && 'animate-spin text-emerald-400')} />
+                  <RefreshCw className={cn('w-3.5 h-3.5', loadingRecommended && 'animate-spin text-emerald-500 dark:text-emerald-400')} />
                 </button>
               </div>
             </div>
@@ -853,9 +853,9 @@ export default function CandidateDashboardPage() {
                 <span>Calculando algoritmo de match perfeito...</span>
               </div>
             ) : recommendedJobs.length === 0 ? (
-              <div className="py-16 text-center border border-zinc-800/80 rounded-2xl bg-zinc-900/40 p-8">
-                <Target className="w-12 h-12 text-zinc-600 mx-auto mb-3" />
-                <h3 className="text-base font-semibold text-zinc-200">Nenhuma vaga recomendada para este filtro</h3>
+              <div className="py-16 text-center border border-zinc-200 dark:border-zinc-800/80 rounded-2xl bg-zinc-50 dark:bg-zinc-900/40 p-8">
+                <Target className="w-12 h-12 text-zinc-400 dark:text-zinc-600 mx-auto mb-3" />
+                <h3 className="text-base font-semibold text-zinc-700 dark:text-zinc-200">Nenhuma vaga recomendada para este filtro</h3>
                 <p className="text-xs text-zinc-500 mt-1.5 max-w-md mx-auto">
                   Tente diminuir o percentual mínimo de match ou adicione mais tecnologias ao seu Perfil Profissional para ampliar as oportunidades detectadas pela IA.
                 </p>
@@ -866,7 +866,7 @@ export default function CandidateDashboardPage() {
                       setSearchRec('');
                       setWorkModelRec('');
                     }}
-                    className="rounded-lg border border-zinc-700 bg-zinc-800 hover:bg-zinc-700 px-4 py-2 text-xs font-medium text-zinc-200 transition-colors"
+                    className="rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 hover:bg-zinc-100 dark:hover:bg-zinc-700 px-4 py-2 text-xs font-medium text-zinc-700 dark:text-zinc-200 transition-colors"
                   >
                     Limpar Filtros
                   </button>
@@ -960,11 +960,11 @@ export default function CandidateDashboardPage() {
                         {/* Top Header Card */}
                         <div className="flex items-start justify-between gap-3">
                           <div className="flex items-center gap-2">
-                            <span className="rounded border border-zinc-800 bg-zinc-950 px-2 py-0.5 text-[10px] font-mono text-zinc-400 uppercase">
+                            <span className="rounded border border-zinc-200 dark:border-zinc-800 bg-zinc-100 dark:bg-zinc-950 px-2 py-0.5 text-[10px] font-mono text-zinc-600 dark:text-zinc-400 uppercase">
                               {item.job.platform}
                             </span>
                             {item.match.isStrongMatch && (
-                              <span className="inline-flex items-center gap-1 rounded border border-emerald-500/30 bg-emerald-500/10 px-2 py-0.5 text-[10px] font-semibold text-emerald-400 font-mono">
+                              <span className="inline-flex items-center gap-1 rounded border border-emerald-500/30 bg-emerald-50 dark:bg-emerald-500/10 px-2 py-0.5 text-[10px] font-semibold text-emerald-700 dark:text-emerald-400 font-mono">
                                 <Sparkles className="w-2.5 h-2.5" />
                                 <span>Alta Afinidade</span>
                               </span>
@@ -984,10 +984,10 @@ export default function CandidateDashboardPage() {
                         </div>
 
                         {/* Title & Company */}
-                        <h3 className="text-base font-bold text-zinc-100 mt-3 line-clamp-2 group-hover:text-emerald-300 transition-colors">
+                        <h3 className="text-base font-bold text-zinc-900 dark:text-zinc-100 mt-3 line-clamp-2 group-hover:text-emerald-600 dark:group-hover:text-emerald-300 transition-colors">
                           {item.job.title}
                         </h3>
-                        <p className="text-xs text-zinc-400 mt-0.5 font-medium">{item.job.company}</p>
+                        <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5 font-medium">{item.job.company}</p>
 
                         <div className="flex items-center gap-4 text-[11px] text-zinc-500 mt-2.5">
                           {item.job.location && (
@@ -1005,9 +1005,9 @@ export default function CandidateDashboardPage() {
                         </div>
 
                         {/* Parecer Explicativo da IA */}
-                        <div className="mt-4 rounded-xl border border-zinc-800 bg-zinc-950/60 p-3 text-xs text-zinc-300 leading-relaxed">
-                          <div className="flex items-center gap-1.5 text-emerald-400 font-mono text-[10px] uppercase font-bold mb-1">
-                            <Lightbulb className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                        <div className="mt-4 rounded-xl border border-emerald-200/60 dark:border-emerald-800/40 bg-emerald-50/70 dark:bg-emerald-950/20 p-3 text-xs text-zinc-700 dark:text-zinc-300 leading-relaxed">
+                          <div className="flex items-center gap-1.5 text-emerald-700 dark:text-emerald-400 font-mono text-[10px] uppercase font-bold mb-1">
+                            <Lightbulb className="w-3.5 h-3.5 shrink-0" />
                             <span>Parecer de Match</span>
                           </div>
                           {item.match.matchReasoning}
@@ -1043,7 +1043,7 @@ export default function CandidateDashboardPage() {
                               {item.match.missingSkills.slice(0, 4).map((s) => (
                                 <span
                                   key={s}
-                                  className="rounded border border-zinc-800 bg-zinc-950 px-2 py-0.5 text-[10px] font-mono text-zinc-400"
+                                  className="rounded border border-zinc-200 dark:border-zinc-800 bg-zinc-100 dark:bg-zinc-950 px-2 py-0.5 text-[10px] font-mono text-zinc-600 dark:text-zinc-400"
                                 >
                                   {s}
                                 </span>
@@ -1054,15 +1054,15 @@ export default function CandidateDashboardPage() {
                       </div>
 
                       {/* Card Footer Actions */}
-                      <div className="mt-5 pt-3 border-t border-zinc-800/80 flex items-center justify-between gap-2">
+                      <div className="mt-5 pt-3 border-t border-zinc-200 dark:border-zinc-800/80 flex items-center justify-between gap-2">
                         <button
                           type="button"
                           onClick={() => handleToggleJob(item.job.id, 'saved')}
                           className={cn(
                             'inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-medium transition-all active:scale-95',
                             item.isSaved
-                              ? 'border-emerald-500/50 bg-emerald-500/15 text-emerald-300'
-                              : 'border-zinc-800 bg-zinc-950 text-zinc-400 hover:border-zinc-700 hover:text-zinc-200'
+                              ? 'border-emerald-500/50 bg-emerald-500/15 text-emerald-600 dark:text-emerald-300'
+                              : 'border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 text-zinc-600 dark:text-zinc-400 hover:border-zinc-300 dark:hover:border-zinc-700 hover:text-zinc-900 dark:hover:text-zinc-200'
                           )}
                         >
                           <Bookmark className={cn('w-3.5 h-3.5', item.isSaved && 'fill-emerald-400 text-emerald-400')} />
@@ -1348,14 +1348,14 @@ export default function CandidateDashboardPage() {
 
               {resume ? (
                 <div className="space-y-6">
-                  <div className="rounded-xl border border-zinc-800 bg-zinc-950/60 p-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                  <div className="rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950/60 p-6 flex flex-col md:flex-row md:items-center justify-between gap-4 shadow-sm">
                     <div className="flex items-center gap-4">
-                      <div className="flex h-12 w-12 items-center justify-center rounded-xl border border-emerald-500/30 bg-emerald-500/10 text-emerald-400">
+                      <div className="flex h-12 w-12 items-center justify-center rounded-xl border border-emerald-500/30 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
                         <FileText className="w-6 h-6" />
                       </div>
                       <div>
-                        <h3 className="text-base font-semibold text-zinc-100">{resume.filename}</h3>
-                        <div className="flex items-center gap-3 text-xs text-zinc-400 mt-1 font-mono">
+                        <h3 className="text-base font-semibold text-zinc-900 dark:text-zinc-100">{resume.filename}</h3>
+                        <div className="flex items-center gap-3 text-xs text-zinc-500 dark:text-zinc-400 mt-1 font-mono">
                           <span>{formatBytes(resume.fileSize)}</span>
                           <span>•</span>
                           <span>Enviado em {new Date(resume.uploadedAt).toLocaleDateString('pt-BR')}</span>
@@ -1375,7 +1375,7 @@ export default function CandidateDashboardPage() {
                         type="button"
                         onClick={() => fileInputRef.current?.click()}
                         disabled={uploadingResume}
-                        className="flex items-center gap-2 rounded-lg border border-zinc-700 bg-zinc-800 hover:bg-zinc-700 px-3.5 py-2 text-xs font-medium text-zinc-200 transition-colors"
+                        className="flex items-center gap-2 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 hover:bg-zinc-100 dark:hover:bg-zinc-700 px-3.5 py-2 text-xs font-medium text-zinc-700 dark:text-zinc-200 transition-colors"
                       >
                         <FileUp className="w-4 h-4" />
                         <span>Substituir Arquivo</span>
@@ -1383,7 +1383,7 @@ export default function CandidateDashboardPage() {
                       <button
                         type="button"
                         onClick={handleDeleteResume}
-                        className="flex items-center gap-2 rounded-lg border border-rose-900/50 bg-rose-950/30 hover:bg-rose-900/50 px-3.5 py-2 text-xs font-medium text-rose-300 transition-colors"
+                        className="flex items-center gap-2 rounded-lg border border-rose-200 dark:border-rose-900/50 bg-rose-50 dark:bg-rose-950/30 hover:bg-rose-100 dark:hover:bg-rose-900/50 px-3.5 py-2 text-xs font-medium text-rose-600 dark:text-rose-300 transition-colors"
                       >
                         <Trash2 className="w-4 h-4" />
                         <span>Excluir</span>
@@ -1429,16 +1429,16 @@ export default function CandidateDashboardPage() {
                   />
                   <div
                     onClick={() => fileInputRef.current?.click()}
-                    className="cursor-pointer border-2 border-dashed border-zinc-800 hover:border-emerald-500/50 rounded-2xl p-12 text-center bg-zinc-950/30 hover:bg-emerald-500/5 transition-all duration-200 group"
+                    className="cursor-pointer border-2 border-dashed border-zinc-300 dark:border-zinc-800 hover:border-emerald-500/50 rounded-2xl p-12 text-center bg-zinc-50 dark:bg-zinc-950/30 hover:bg-emerald-50/60 dark:hover:bg-emerald-500/5 transition-all duration-200 group"
                   >
-                    <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl border border-zinc-800 bg-zinc-900 text-zinc-400 group-hover:text-emerald-400 group-hover:border-emerald-500/30 transition-colors">
+                    <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-zinc-400 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 group-hover:border-emerald-500/30 transition-colors">
                       {uploadingResume ? (
-                        <Loader2 className="w-8 h-8 animate-spin text-emerald-400" />
+                        <Loader2 className="w-8 h-8 animate-spin text-emerald-500 dark:text-emerald-400" />
                       ) : (
                         <UploadCloud className="w-8 h-8" />
                       )}
                     </div>
-                    <h3 className="mt-4 text-base font-semibold text-zinc-200">
+                    <h3 className="mt-4 text-base font-semibold text-zinc-700 dark:text-zinc-200">
                       {uploadingResume ? 'Processando envio...' : 'Clique para selecionar seu currículo'}
                     </h3>
                     <p className="mt-1.5 text-xs text-zinc-500 max-w-sm mx-auto">
@@ -1483,21 +1483,21 @@ export default function CandidateDashboardPage() {
                 </div>
 
                 {/* Resumo Executivo */}
-                <div className="rounded-xl border border-zinc-800 bg-zinc-950/60 p-5">
-                  <h4 className="text-xs font-mono uppercase text-zinc-400 mb-2 flex items-center gap-2">
-                    <FileText className="w-4 h-4 text-emerald-400" />
+                <div className="rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950/60 p-5">
+                  <h4 className="text-xs font-mono uppercase text-zinc-500 dark:text-zinc-400 mb-2 flex items-center gap-2">
+                    <FileText className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
                     <span>Resumo Executivo do Perfil</span>
                   </h4>
-                  <p className="text-sm text-zinc-200 leading-relaxed">
+                  <p className="text-sm text-zinc-700 dark:text-zinc-200 leading-relaxed">
                     {resume.ai_analysis.summary}
                   </p>
                 </div>
 
                 {/* Hard Skills Detectadas */}
-                <div className="rounded-xl border border-zinc-800 bg-zinc-950/60 p-5">
+                <div className="rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950/60 p-5">
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-3">
-                    <h4 className="text-xs font-mono uppercase text-zinc-400 flex items-center gap-2">
-                      <Zap className="w-4 h-4 text-emerald-400" />
+                    <h4 className="text-xs font-mono uppercase text-zinc-500 dark:text-zinc-400 flex items-center gap-2">
+                      <Zap className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
                       <span>Hard Skills & Tecnologias Identificadas ({resume.ai_analysis.hard_skills.length})</span>
                     </h4>
 
@@ -1544,15 +1544,15 @@ export default function CandidateDashboardPage() {
                 {/* Pontos Fortes e Dicas de Melhoria ATS */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   {/* Pontos Fortes */}
-                  <div className="rounded-xl border border-zinc-800 bg-zinc-950/60 p-5">
-                    <h4 className="text-xs font-mono uppercase text-zinc-400 mb-3 flex items-center gap-2">
-                      <Award className="w-4 h-4 text-emerald-400" />
+                  <div className="rounded-xl border border-emerald-200/70 dark:border-emerald-800/40 bg-emerald-50/60 dark:bg-zinc-950/60 p-5">
+                    <h4 className="text-xs font-mono uppercase text-emerald-700 dark:text-zinc-400 mb-3 flex items-center gap-2">
+                      <Award className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
                       <span>Pontos Fortes Identificados</span>
                     </h4>
                     <ul className="space-y-2.5">
                       {resume.ai_analysis.strengths.map((str, idx) => (
-                        <li key={idx} className="flex items-start gap-2 text-xs text-zinc-300 leading-relaxed">
-                          <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0 mt-0.5" />
+                        <li key={idx} className="flex items-start gap-2 text-xs text-zinc-700 dark:text-zinc-300 leading-relaxed">
+                          <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5" />
                           <span>{str}</span>
                         </li>
                       ))}
@@ -1560,15 +1560,15 @@ export default function CandidateDashboardPage() {
                   </div>
 
                   {/* Recomendações ATS */}
-                  <div className="rounded-xl border border-zinc-800 bg-zinc-950/60 p-5">
-                    <h4 className="text-xs font-mono uppercase text-zinc-400 mb-3 flex items-center gap-2">
-                      <Lightbulb className="w-4 h-4 text-amber-400" />
+                  <div className="rounded-xl border border-amber-200/70 dark:border-zinc-800 bg-amber-50/60 dark:bg-zinc-950/60 p-5">
+                    <h4 className="text-xs font-mono uppercase text-amber-700 dark:text-zinc-400 mb-3 flex items-center gap-2">
+                      <Lightbulb className="w-4 h-4 text-amber-600 dark:text-amber-400" />
                       <span>Otimizações para Vagas & ATS</span>
                     </h4>
                     <ul className="space-y-2.5">
                       {resume.ai_analysis.improvement_tips.map((tip, idx) => (
-                        <li key={idx} className="flex items-start gap-2 text-xs text-zinc-300 leading-relaxed">
-                          <span className="text-amber-400 font-bold shrink-0">•</span>
+                        <li key={idx} className="flex items-start gap-2 text-xs text-zinc-700 dark:text-zinc-300 leading-relaxed">
+                          <span className="text-amber-600 dark:text-amber-400 font-bold shrink-0">•</span>
                           <span>{tip}</span>
                         </li>
                       ))}
@@ -1608,15 +1608,15 @@ export default function CandidateDashboardPage() {
                 <span>Carregando vagas salvas...</span>
               </div>
             ) : savedJobs.length === 0 ? (
-              <div className="py-16 text-center border border-zinc-800/80 rounded-xl bg-zinc-950/40 p-8">
-                <Bookmark className="w-12 h-12 text-zinc-600 mx-auto mb-3" />
-                <h3 className="text-base font-medium text-zinc-300">Nenhuma vaga salva ainda</h3>
+              <div className="py-16 text-center border border-zinc-200 dark:border-zinc-800/80 rounded-xl bg-zinc-50 dark:bg-zinc-950/40 p-8">
+                <Bookmark className="w-12 h-12 text-zinc-400 dark:text-zinc-600 mx-auto mb-3" />
+                <h3 className="text-base font-medium text-zinc-700 dark:text-zinc-300">Nenhuma vaga salva ainda</h3>
                 <p className="text-xs text-zinc-500 mt-1 max-w-sm mx-auto">
                   Acesse as Vagas Recomendadas e clique em &quot;Salvar Vaga&quot; para acompanhar suas oportunidades aqui.
                 </p>
                 <button
                   onClick={() => setActiveTab('recommended')}
-                  className="mt-4 inline-flex items-center gap-2 rounded-lg border border-zinc-700 bg-zinc-800 hover:bg-zinc-700 px-4 py-2 text-xs font-medium text-zinc-200 transition-colors"
+                  className="mt-4 inline-flex items-center gap-2 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 hover:bg-zinc-100 dark:hover:bg-zinc-700 px-4 py-2 text-xs font-medium text-zinc-700 dark:text-zinc-200 transition-colors"
                 >
                   Ir para Vagas Recomendadas
                 </button>
@@ -1626,26 +1626,26 @@ export default function CandidateDashboardPage() {
                 {savedJobs.map((item) => (
                   <div
                     key={item.job_id}
-                    className="rounded-xl border border-zinc-800 bg-zinc-950/60 p-5 hover:border-zinc-700 transition-all flex flex-col justify-between"
+                    className="rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950/60 p-5 hover:border-zinc-300 dark:hover:border-zinc-700 hover:shadow-sm transition-all flex flex-col justify-between"
                   >
                     <div>
                       <div className="flex items-start justify-between gap-2">
-                        <span className="inline-block rounded border border-zinc-800 bg-zinc-900 px-2 py-0.5 text-[10px] font-mono text-zinc-400 uppercase">
+                        <span className="inline-block rounded border border-zinc-200 dark:border-zinc-800 bg-zinc-100 dark:bg-zinc-900 px-2 py-0.5 text-[10px] font-mono text-zinc-600 dark:text-zinc-400 uppercase">
                           {item.job.platform}
                         </span>
                         <button
                           onClick={() => handleToggleJob(item.job_id, item.status)}
-                          className="text-zinc-500 hover:text-rose-400 transition-colors p-1"
+                          className="text-zinc-400 dark:text-zinc-500 hover:text-rose-500 dark:hover:text-rose-400 transition-colors p-1"
                           title="Remover vaga salva"
                         >
                           <Trash2 className="w-4 h-4" />
                         </button>
                       </div>
 
-                      <h3 className="text-base font-semibold text-zinc-100 mt-2 line-clamp-1">
+                      <h3 className="text-base font-semibold text-zinc-900 dark:text-zinc-100 mt-2 line-clamp-1">
                         {item.job.title}
                       </h3>
-                      <p className="text-sm text-zinc-400 mt-0.5">{item.job.company}</p>
+                      <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-0.5">{item.job.company}</p>
 
                       <div className="flex items-center gap-4 text-xs text-zinc-500 mt-3">
                         {item.job.location && (
@@ -1663,8 +1663,8 @@ export default function CandidateDashboardPage() {
                       </div>
                     </div>
 
-                    <div className="mt-5 pt-3 border-t border-zinc-800/80 flex items-center justify-between">
-                      <span className="text-xs font-mono text-emerald-400">
+                    <div className="mt-5 pt-3 border-t border-zinc-100 dark:border-zinc-800/80 flex items-center justify-between">
+                      <span className="text-xs font-mono text-emerald-600 dark:text-emerald-400">
                         Score IA: {item.job.score_ia || item.job.overall_score || 0}%
                       </span>
 
@@ -1672,7 +1672,7 @@ export default function CandidateDashboardPage() {
                         href={item.job.url}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 px-3 py-1.5 text-xs font-medium transition-colors"
+                        className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-600 dark:text-emerald-300 border border-emerald-500/30 px-3 py-1.5 text-xs font-medium transition-colors"
                       >
                         <span>Ver Vaga</span>
                         <ExternalLink className="w-3 h-3" />
