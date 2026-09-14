@@ -716,14 +716,14 @@ export default function CandidateDashboardPage() {
             {user?.tier === 'free' && (
               <div className="relative overflow-hidden rounded-2xl border border-amber-500/30 bg-gradient-to-r from-amber-500/10 via-yellow-500/5 to-emerald-500/10 p-5 backdrop-blur-xl flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div className="flex items-start sm:items-center gap-3.5">
-                  <div className="h-10 w-10 rounded-xl bg-amber-500/20 border border-amber-500/30 flex items-center justify-center text-amber-400 shrink-0">
+                  <div className="h-10 w-10 rounded-xl bg-amber-500/20 border border-amber-500/30 flex items-center justify-center text-amber-500 dark:text-amber-400 shrink-0 shadow-xs">
                     <Crown className="w-5 h-5" />
                   </div>
                   <div>
-                    <h4 className="text-sm font-bold text-amber-200">
+                    <h4 className="text-sm font-bold text-zinc-900 dark:text-amber-200">
                       Você está no Plano Free (5 Melhores Vagas Desbloqueadas)
                     </h4>
-                    <p className="text-xs text-zinc-400 mt-0.5">
+                    <p className="text-xs text-zinc-600 dark:text-zinc-400 mt-0.5">
                       Desbloqueie todas as recomendações de IA, limite ampliado de vagas salvas e alertas no Telegram com o <strong>Plano Pro</strong>.
                     </p>
                   </div>
@@ -731,7 +731,7 @@ export default function CandidateDashboardPage() {
                 <button
                   type="button"
                   onClick={() => setIsUpgradeModalOpen(true)}
-                  className="rounded-xl bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-400 hover:to-yellow-400 text-zinc-950 font-bold px-4 py-2.5 text-xs shadow-lg shadow-amber-950/30 transition-all active:scale-95 shrink-0"
+                  className="rounded-xl bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-400 hover:to-yellow-400 text-zinc-950 font-bold px-4 py-2.5 text-xs shadow-md shadow-amber-950/20 transition-all active:scale-95 shrink-0"
                 >
                   Fazer Upgrade Pro
                 </button>
@@ -744,7 +744,7 @@ export default function CandidateDashboardPage() {
                 <div className="rounded-2xl border border-zinc-200 dark:border-zinc-800/80 bg-white dark:bg-zinc-900/50 p-5 backdrop-blur-xl shadow-sm">
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-mono uppercase text-zinc-500 dark:text-zinc-400">Aderência Média</span>
-                    <Sparkles className="w-4 h-4 text-emerald-400" />
+                    <Sparkles className="w-4 h-4 text-emerald-500 dark:text-emerald-400" />
                   </div>
                   <div className="mt-2 text-2xl font-bold text-zinc-900 dark:text-zinc-100 font-mono">
                     {matchStats.avgScore}%
@@ -757,9 +757,9 @@ export default function CandidateDashboardPage() {
                 <div className="rounded-2xl border border-zinc-200 dark:border-zinc-800/80 bg-white dark:bg-zinc-900/50 p-5 backdrop-blur-xl shadow-sm">
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-mono uppercase text-zinc-500 dark:text-zinc-400">Super Match (&ge; 75%)</span>
-                    <Flame className="w-4 h-4 text-amber-400" />
+                    <Flame className="w-4 h-4 text-amber-500 dark:text-amber-400" />
                   </div>
-                  <div className="mt-2 text-2xl font-bold text-amber-500 dark:text-amber-300 font-mono">
+                  <div className="mt-2 text-2xl font-bold text-amber-600 dark:text-amber-300 font-mono">
                     {matchStats.highMatchCount} vagas
                   </div>
                   <p className="text-[11px] text-zinc-500 mt-1">
@@ -802,8 +802,8 @@ export default function CandidateDashboardPage() {
                     className={cn(
                       'rounded-lg border px-3 py-1.5 text-xs font-medium transition-all',
                       minScoreFilter === f.val
-                        ? 'border-emerald-500/50 bg-emerald-500/10 text-emerald-300 font-semibold shadow-sm'
-                        : 'border-zinc-200 dark:border-zinc-800 bg-zinc-100 dark:bg-zinc-950/60 text-zinc-600 dark:text-zinc-400 hover:border-zinc-300 dark:hover:border-zinc-700 hover:text-zinc-900 dark:hover:text-zinc-200'
+                        ? 'border-emerald-500/40 bg-emerald-50 dark:bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 font-semibold shadow-xs'
+                        : 'border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950/60 text-zinc-600 dark:text-zinc-400 hover:border-zinc-300 dark:hover:border-zinc-700 hover:text-zinc-900 dark:hover:text-zinc-200'
                     )}
                   >
                     {f.label.replace('&ge;', '≥')}
@@ -848,15 +848,15 @@ export default function CandidateDashboardPage() {
 
             {/* Lista de Vagas Recomendadas */}
             {loadingRecommended ? (
-              <div className="py-20 text-center text-zinc-400 font-mono text-sm flex items-center justify-center gap-3">
-                <Loader2 className="w-6 h-6 animate-spin text-emerald-400" />
+              <div className="py-20 text-center text-zinc-500 dark:text-zinc-400 font-mono text-sm flex items-center justify-center gap-3">
+                <Loader2 className="w-6 h-6 animate-spin text-emerald-500 dark:text-emerald-400" />
                 <span>Calculando algoritmo de match perfeito...</span>
               </div>
             ) : recommendedJobs.length === 0 ? (
               <div className="py-16 text-center border border-zinc-200 dark:border-zinc-800/80 rounded-2xl bg-zinc-50 dark:bg-zinc-900/40 p-8">
                 <Target className="w-12 h-12 text-zinc-400 dark:text-zinc-600 mx-auto mb-3" />
-                <h3 className="text-base font-semibold text-zinc-700 dark:text-zinc-200">Nenhuma vaga recomendada para este filtro</h3>
-                <p className="text-xs text-zinc-500 mt-1.5 max-w-md mx-auto">
+                <h3 className="text-base font-semibold text-zinc-800 dark:text-zinc-200">Nenhuma vaga recomendada para este filtro</h3>
+                <p className="text-xs text-zinc-600 dark:text-zinc-400 mt-1.5 max-w-md mx-auto">
                   Tente diminuir o percentual mínimo de match ou adicione mais tecnologias ao seu Perfil Profissional para ampliar as oportunidades detectadas pela IA.
                 </p>
                 <div className="mt-5 flex justify-center gap-3">
@@ -866,13 +866,13 @@ export default function CandidateDashboardPage() {
                       setSearchRec('');
                       setWorkModelRec('');
                     }}
-                    className="rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 hover:bg-zinc-100 dark:hover:bg-zinc-700 px-4 py-2 text-xs font-medium text-zinc-700 dark:text-zinc-200 transition-colors"
+                    className="rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 hover:bg-zinc-100 dark:hover:bg-zinc-700 px-4 py-2 text-xs font-medium text-zinc-700 dark:text-zinc-200 transition-colors shadow-xs"
                   >
                     Limpar Filtros
                   </button>
                   <button
                     onClick={() => setActiveTab('profile')}
-                    className="rounded-lg bg-emerald-600 hover:bg-emerald-500 text-zinc-950 font-semibold px-4 py-2 text-xs transition-colors"
+                    className="rounded-lg bg-emerald-600 hover:bg-emerald-500 text-zinc-950 font-semibold px-4 py-2 text-xs transition-colors shadow-xs"
                   >
                     Editar Perfil
                   </button>
@@ -887,23 +887,23 @@ export default function CandidateDashboardPage() {
                     return (
                       <div
                         key={item.job.id}
-                        className="relative overflow-hidden rounded-2xl border border-amber-500/30 bg-zinc-900/40 p-6 backdrop-blur-xl flex flex-col justify-between group shadow-lg"
+                        className="relative overflow-hidden rounded-2xl border border-amber-500/30 bg-white/95 dark:bg-zinc-900/50 p-6 backdrop-blur-xl flex flex-col justify-between group shadow-sm dark:shadow-lg hover:border-amber-500/50 transition-all"
                       >
                         {/* Header Bloqueado */}
                         <div className="flex items-start justify-between gap-3">
                           <div className="flex items-center gap-2">
-                            <span className="rounded border border-zinc-800 bg-zinc-950 px-2 py-0.5 text-[10px] font-mono text-zinc-400 uppercase">
+                            <span className="rounded border border-zinc-200 dark:border-zinc-800 bg-zinc-100 dark:bg-zinc-950 px-2 py-0.5 text-[10px] font-mono text-zinc-600 dark:text-zinc-400 uppercase">
                               {item.job.platform}
                             </span>
-                            <span className="inline-flex items-center gap-1 rounded border border-amber-500/40 bg-amber-500/10 px-2 py-0.5 text-[10px] font-semibold text-amber-300 font-mono">
-                              <Crown className="w-2.5 h-2.5 text-amber-400" />
+                            <span className="inline-flex items-center gap-1 rounded border border-amber-500/30 bg-amber-500/10 px-2 py-0.5 text-[10px] font-semibold text-amber-700 dark:text-amber-300 font-mono">
+                              <Crown className="w-2.5 h-2.5 text-amber-500 dark:text-amber-400" />
                               <span>Exclusivo Pro</span>
                             </span>
                           </div>
 
                           <div
                             className={cn(
-                              'flex items-center gap-1 rounded-xl border px-3 py-1 font-mono text-xs font-bold shadow-md',
+                              'flex items-center gap-1 rounded-xl border px-3 py-1 font-mono text-xs font-bold shadow-xs',
                               scoreClass
                             )}
                           >
@@ -914,26 +914,26 @@ export default function CandidateDashboardPage() {
 
                         {/* Detalhes com Efeito de Blur */}
                         <div className="mt-3">
-                          <h3 className="text-base font-bold text-zinc-200">
+                          <h3 className="text-base font-bold text-zinc-900 dark:text-zinc-100">
                             {item.job.title}
                           </h3>
-                          <p className="text-xs text-zinc-500 mt-0.5 font-mono select-none blur-[3px]">
+                          <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5 font-mono select-none blur-[3px]">
                             {item.job.company} • Remoto / Brasil
                           </p>
 
-                          <div className="mt-4 rounded-xl border border-amber-500/20 bg-amber-500/5 p-4 text-center">
-                            <Crown className="w-6 h-6 text-amber-400 mx-auto mb-2" />
-                            <h4 className="text-xs font-bold text-amber-200 uppercase tracking-wide">
+                          <div className="mt-4 rounded-xl border border-amber-500/30 bg-amber-50/70 dark:bg-amber-500/10 p-4 text-center">
+                            <Crown className="w-6 h-6 text-amber-500 dark:text-amber-400 mx-auto mb-2" />
+                            <h4 className="text-xs font-bold text-amber-800 dark:text-amber-200 uppercase tracking-wide">
                               Oportunidade Bloqueada no Plano Free
                             </h4>
-                            <p className="text-[11px] text-zinc-400 mt-1 max-w-xs mx-auto">
+                            <p className="text-[11px] text-zinc-600 dark:text-zinc-400 mt-1 max-w-xs mx-auto">
                               Esta oportunidade possui <strong>{item.match.overallScore}% de aderência</strong> ao seu perfil. Desbloqueie com o plano Pro para ver a empresa e link direto.
                             </p>
                           </div>
                         </div>
 
                         {/* CTA do Card Bloqueado */}
-                        <div className="mt-5 pt-3 border-t border-zinc-800/80 flex items-center justify-between gap-2">
+                        <div className="mt-5 pt-3 border-t border-zinc-200 dark:border-zinc-800/80 flex items-center justify-between gap-2">
                           <span className="text-[11px] text-zinc-500 font-mono">
                             Vaga #{item.match.jobId.slice(0, 8)}
                           </span>
@@ -1016,15 +1016,15 @@ export default function CandidateDashboardPage() {
                         {/* Habilidades Correspondentes (Matched Skills) */}
                         {item.match.matchedSkills.length > 0 && (
                           <div className="mt-3.5">
-                            <div className="text-[10px] font-mono text-zinc-400 uppercase tracking-wider mb-1.5 flex items-center gap-1">
-                              <Check className="w-3 h-3 text-emerald-400" />
+                            <div className="text-[10px] font-mono text-zinc-600 dark:text-zinc-400 uppercase tracking-wider mb-1.5 flex items-center gap-1">
+                              <Check className="w-3 h-3 text-emerald-600 dark:text-emerald-400" />
                               <span>Habilidades Atendidas ({item.match.matchedSkills.length}):</span>
                             </div>
                             <div className="flex flex-wrap gap-1.5">
                               {item.match.matchedSkills.map((s) => (
                                 <span
                                   key={s}
-                                  className="rounded border border-emerald-500/30 bg-emerald-500/10 px-2 py-0.5 text-[11px] font-mono text-emerald-300 font-medium"
+                                  className="rounded border border-emerald-500/30 bg-emerald-50 dark:bg-emerald-500/10 px-2 py-0.5 text-[11px] font-mono text-emerald-700 dark:text-emerald-300 font-medium"
                                 >
                                   {s}
                                 </span>
@@ -1036,7 +1036,7 @@ export default function CandidateDashboardPage() {
                         {/* Lacunas / Requisitos Adicionais (Missing Skills) */}
                         {item.match.missingSkills.length > 0 && (
                           <div className="mt-3">
-                            <div className="text-[10px] font-mono text-zinc-500 uppercase tracking-wider mb-1.5">
+                            <div className="text-[10px] font-mono text-zinc-500 dark:text-zinc-400 uppercase tracking-wider mb-1.5">
                               Requisitos adicionais:
                             </div>
                             <div className="flex flex-wrap gap-1.5">
