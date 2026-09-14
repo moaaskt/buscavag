@@ -14,6 +14,9 @@ import {
   CheckCircle2,
   ChevronDown,
   ChevronUp,
+  MessageSquare,
+  Copy,
+  Check,
 } from 'lucide-react';
 
 interface JobModalProps {
@@ -24,8 +27,23 @@ interface JobModalProps {
 
 export function JobModal({ job, onClose, onStatusChange }: JobModalProps) {
   const [descExpanded, setDescExpanded] = useState(false);
+  const [copiedPitch, setCopiedPitch] = useState(false);
 
   if (!job) return null;
+
+  const handleCopyPitch = () => {
+    const pitch = `Olá, time de recrutamento da ${job.company}!\n\nMe interessei muito pela vaga de ${job.title}.\nPossuo sólida experiência no ecossistema Full Stack (TypeScript, React, Next.js, Node.js, Python e APIs), além de foco em entregas de qualidade e código limpo.\n\nLink da vaga: ${job.url}\n\nFico à disposição para uma conversa!`;
+    navigator.clipboard.writeText(pitch);
+    setCopiedPitch(true);
+    setTimeout(() => setCopiedPitch(false), 2500);
+  };
+
+  const handleShareWhatsApp = () => {
+    const text = encodeURIComponent(
+      `🚀 *Oportunidade Tech - ${job.title}*\n🏢 *Empresa:* ${job.company}\n📍 *Local:* ${job.location || 'Remoto'}\n⭐ *Score Match:* ${job.overallScore ?? job.scoreIa ?? 'N/A'}/100\n🔗 *Link da Vaga:* ${job.url}\n\n_Encontrada no Buscavag_`
+    );
+    window.open(`https://api.whatsapp.com/send?text=${text}`, '_blank');
+  };
 
   const publishedStr = new Date(job.publishedAt).toLocaleDateString('pt-BR', {
     day: '2-digit',
@@ -260,21 +278,51 @@ export function JobModal({ job, onClose, onStatusChange }: JobModalProps) {
           </div>
 
           {/* Buttons CTA Group */}
-          <div className="flex items-center justify-end gap-2.5">
+          <div className="flex items-center flex-wrap justify-end gap-2">
+            <button
+              onClick={handleCopyPitch}
+              type="button"
+              className="h-9 px-3 rounded-lg text-xs font-medium border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors flex items-center gap-1.5 shadow-sm"
+              title="Copiar carta de apresentação para esta vaga"
+            >
+              {copiedPitch ? (
+                <>
+                  <Check className="w-3.5 h-3.5 text-emerald-500" />
+                  <span className="text-emerald-600 dark:text-emerald-400 font-semibold">Copiado!</span>
+                </>
+              ) : (
+                <>
+                  <Copy className="w-3.5 h-3.5 text-zinc-500 dark:text-zinc-400" />
+                  <span>Copiar Carta</span>
+                </>
+              )}
+            </button>
+
+            <button
+              onClick={handleShareWhatsApp}
+              type="button"
+              className="h-9 px-3 rounded-lg text-xs font-medium border border-emerald-500/30 bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-100 dark:hover:bg-emerald-900/40 transition-colors flex items-center gap-1.5 shadow-sm"
+              title="Compartilhar vaga no WhatsApp"
+            >
+              <MessageSquare className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+              <span>WhatsApp</span>
+            </button>
+
             <button
               onClick={onClose}
               type="button"
-              className="h-9 px-4 rounded-lg text-xs md:text-sm font-medium text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 border border-zinc-200 dark:border-zinc-700/60 transition-colors"
+              className="h-9 px-3.5 rounded-lg text-xs md:text-sm font-medium text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 border border-zinc-200 dark:border-zinc-700/60 transition-colors"
             >
               Fechar
             </button>
+
             <a
               href={job.url}
               target="_blank"
               rel="noopener noreferrer"
               className="h-9 px-4 rounded-lg bg-zinc-900 hover:bg-zinc-800 dark:bg-zinc-100 dark:hover:bg-white text-zinc-100 dark:text-zinc-900 text-xs md:text-sm font-semibold transition-colors flex items-center gap-2 shadow-sm"
             >
-              <span>Abrir Vaga Original</span>
+              <span>Abrir Vaga</span>
               <ExternalLink className="w-3.5 h-3.5" />
             </a>
           </div>

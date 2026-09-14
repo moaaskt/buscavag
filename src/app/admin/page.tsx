@@ -14,8 +14,8 @@ import {
   RefreshCw,
   Server,
   Zap,
+  Loader2,
 } from 'lucide-react';
-import { LoaderThree } from '@/components/ui/loader';
 
 export default function AdminDashboardPage() {
   const [stats, setStats] = useState<DashboardStats | null>(null);
@@ -129,7 +129,7 @@ export default function AdminDashboardPage() {
                     disabled={isSyncing}
                     className="w-full flex items-center justify-center gap-2 h-9 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-medium transition-colors disabled:opacity-50"
                   >
-                    {isSyncing ? <LoaderThree className="text-white w-4 h-4" /> : <RefreshCw className="w-4 h-4" />}
+                    {isSyncing ? <Loader2 className="w-4 h-4 animate-spin text-white" /> : <RefreshCw className="w-4 h-4" />}
                     <span>Iniciar Varredura</span>
                   </button>
                 </div>
@@ -150,7 +150,7 @@ export default function AdminDashboardPage() {
                     disabled={isPurging}
                     className="w-full flex items-center justify-center gap-2 h-9 rounded-lg border border-rose-500/50 bg-rose-500/10 hover:bg-rose-500/20 text-rose-600 dark:text-rose-400 text-sm font-medium transition-colors disabled:opacity-50"
                   >
-                    {isPurging ? <LoaderThree className="text-rose-500 w-4 h-4" /> : <Trash2 className="w-4 h-4" />}
+                    {isPurging ? <Loader2 className="w-4 h-4 animate-spin text-rose-500" /> : <Trash2 className="w-4 h-4" />}
                     <span>Executar Hard Delete</span>
                   </button>
                 </div>
