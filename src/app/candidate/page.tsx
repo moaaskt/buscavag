@@ -1589,14 +1589,14 @@ export default function CandidateDashboardPage() {
                 <h2 className="text-xl font-bold text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
                   <span>Minhas Vagas Salvas</span>
                 </h2>
-                <p className="text-sm text-zinc-400 mt-1">
+                <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-1">
                   Gerencie as oportunidades de interesse favoritadas nas buscas
                 </p>
               </div>
 
               <button
                 onClick={() => setActiveTab('recommended')}
-                className="inline-flex items-center gap-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-zinc-950 font-semibold px-4 py-2 text-xs transition-colors self-start md:self-auto"
+                className="inline-flex items-center gap-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-zinc-950 font-semibold px-4 py-2 text-xs transition-colors self-start md:self-auto shadow-xs"
               >
                 <span>Ver Vagas Recomendadas</span>
                 <Target className="w-3.5 h-3.5" />
@@ -1604,68 +1604,68 @@ export default function CandidateDashboardPage() {
             </div>
 
             {loadingJobs ? (
-              <div className="py-12 text-center text-zinc-400 font-mono text-sm flex items-center justify-center gap-2">
-                <Loader2 className="w-4 h-4 animate-spin text-emerald-400" />
+              <div className="py-16 text-center text-zinc-500 dark:text-zinc-400 font-mono text-sm flex items-center justify-center gap-3">
+                <Loader2 className="w-5 h-5 animate-spin text-emerald-500 dark:text-emerald-400" />
                 <span>Carregando vagas salvas...</span>
               </div>
             ) : savedJobs.length === 0 ? (
-              <div className="py-16 text-center border border-zinc-200 dark:border-zinc-800/80 rounded-xl bg-zinc-50 dark:bg-zinc-950/40 p-8">
+              <div className="py-16 text-center border border-zinc-200 dark:border-zinc-800/80 rounded-2xl bg-zinc-50 dark:bg-zinc-900/40 p-8">
                 <Bookmark className="w-12 h-12 text-zinc-400 dark:text-zinc-600 mx-auto mb-3" />
-                <h3 className="text-base font-medium text-zinc-700 dark:text-zinc-300">Nenhuma vaga salva ainda</h3>
-                <p className="text-xs text-zinc-500 mt-1 max-w-sm mx-auto">
+                <h3 className="text-base font-semibold text-zinc-800 dark:text-zinc-200">Nenhuma vaga salva ainda</h3>
+                <p className="text-xs text-zinc-600 dark:text-zinc-400 mt-1.5 max-w-sm mx-auto">
                   Acesse as Vagas Recomendadas e clique em &quot;Salvar Vaga&quot; para acompanhar suas oportunidades aqui.
                 </p>
                 <button
                   onClick={() => setActiveTab('recommended')}
-                  className="mt-4 inline-flex items-center gap-2 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 hover:bg-zinc-100 dark:hover:bg-zinc-700 px-4 py-2 text-xs font-medium text-zinc-700 dark:text-zinc-200 transition-colors"
+                  className="mt-5 inline-flex items-center gap-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-zinc-950 font-semibold px-4 py-2 text-xs transition-colors shadow-xs"
                 >
                   Ir para Vagas Recomendadas
                 </button>
               </div>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                 {savedJobs.map((item) => (
                   <div
                     key={item.job_id}
-                    className="rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950/60 p-5 hover:border-zinc-300 dark:hover:border-zinc-700 hover:shadow-sm transition-all flex flex-col justify-between"
+                    className="rounded-2xl border border-zinc-200 dark:border-zinc-800/80 bg-white dark:bg-zinc-900/50 p-6 backdrop-blur-xl hover:border-zinc-300 dark:hover:border-zinc-700 shadow-sm hover:shadow-md transition-all flex flex-col justify-between group"
                   >
                     <div>
                       <div className="flex items-start justify-between gap-2">
-                        <span className="inline-block rounded border border-zinc-200 dark:border-zinc-800 bg-zinc-100 dark:bg-zinc-900 px-2 py-0.5 text-[10px] font-mono text-zinc-600 dark:text-zinc-400 uppercase">
+                        <span className="inline-block rounded border border-zinc-200 dark:border-zinc-800 bg-zinc-100 dark:bg-zinc-950 px-2 py-0.5 text-[10px] font-mono text-zinc-600 dark:text-zinc-400 uppercase">
                           {item.job.platform}
                         </span>
                         <button
                           onClick={() => handleToggleJob(item.job_id, item.status)}
-                          className="text-zinc-400 dark:text-zinc-500 hover:text-rose-500 dark:hover:text-rose-400 transition-colors p-1"
+                          className="text-zinc-400 dark:text-zinc-500 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/30 rounded-lg p-1.5 transition-colors"
                           title="Remover vaga salva"
                         >
                           <Trash2 className="w-4 h-4" />
                         </button>
                       </div>
 
-                      <h3 className="text-base font-semibold text-zinc-900 dark:text-zinc-100 mt-2 line-clamp-1">
+                      <h3 className="text-base font-bold text-zinc-900 dark:text-zinc-100 mt-2.5 line-clamp-2 group-hover:text-emerald-600 dark:group-hover:text-emerald-300 transition-colors">
                         {item.job.title}
                       </h3>
-                      <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-0.5">{item.job.company}</p>
+                      <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5 font-medium">{item.job.company}</p>
 
-                      <div className="flex items-center gap-4 text-xs text-zinc-500 mt-3">
+                      <div className="flex items-center gap-4 text-xs text-zinc-500 dark:text-zinc-400 mt-3">
                         {item.job.location && (
                           <div className="flex items-center gap-1">
-                            <MapPin className="w-3.5 h-3.5" />
+                            <MapPin className="w-3.5 h-3.5 text-zinc-400 shrink-0" />
                             <span className="truncate max-w-[150px]">{item.job.location}</span>
                           </div>
                         )}
                         {item.job.published_at && (
                           <div className="flex items-center gap-1 font-mono text-[11px]">
-                            <Clock className="w-3.5 h-3.5" />
+                            <Clock className="w-3.5 h-3.5 text-zinc-400 shrink-0" />
                             <span>{new Date(item.job.published_at).toLocaleDateString('pt-BR')}</span>
                           </div>
                         )}
                       </div>
                     </div>
 
-                    <div className="mt-5 pt-3 border-t border-zinc-100 dark:border-zinc-800/80 flex items-center justify-between">
-                      <span className="text-xs font-mono text-emerald-600 dark:text-emerald-400">
+                    <div className="mt-5 pt-3 border-t border-zinc-200 dark:border-zinc-800/80 flex items-center justify-between gap-2">
+                      <span className="inline-flex items-center gap-1 rounded-md border border-emerald-500/30 bg-emerald-50 dark:bg-emerald-500/10 px-2 py-0.5 text-xs font-mono font-semibold text-emerald-700 dark:text-emerald-400">
                         Score IA: {item.job.score_ia || item.job.overall_score || 0}%
                       </span>
 
@@ -1673,10 +1673,10 @@ export default function CandidateDashboardPage() {
                         href={item.job.url}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-600 dark:text-emerald-300 border border-emerald-500/30 px-3 py-1.5 text-xs font-medium transition-colors"
+                        className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-zinc-950 font-semibold px-3.5 py-1.5 text-xs transition-colors shadow-xs"
                       >
-                        <span>Ver Vaga</span>
-                        <ExternalLink className="w-3 h-3" />
+                        <span>Acessar Vaga</span>
+                        <ExternalLink className="w-3.5 h-3.5" />
                       </a>
                     </div>
                   </div>
