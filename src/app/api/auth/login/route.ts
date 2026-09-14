@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { CandidateRepository } from '@/db/candidateRepository';
 import { verifyPassword, createSessionToken, SESSION_COOKIE_NAME } from '@/lib/auth';
+import { logger } from '@/lib/logger';
 
 const LoginSchema = z.object({
   email: z.string().email('E-mail inválido'),
@@ -25,6 +26,7 @@ export async function POST(req: NextRequest) {
 
     const user = repo.getUserByEmail(email);
     if (!user) {
+      logger.security('auth', `Falha de login: usuário não encontrado (${email})`, { req });
       return NextResponse.json(
         { success: false, error: 'E-mail ou senha incorretos' },
         { status: 401 }
@@ -33,11 +35,14 @@ export async function POST(req: NextRequest) {
 
     const isValid = verifyPassword(password, user.password_hash);
     if (!isValid) {
+      logger.security('auth', `Falha de login: senha inválida para ${email}`, { userId: user.id, req });
       return NextResponse.json(
         { success: false, error: 'E-mail ou senha incorretos' },
         { status: 401 }
       );
     }
+
+    logger.info('auth', `Login bem-sucedido: ${email} (${user.role})`, { userId: user.id, req });
 
     const token = createSessionToken({
       userId: user.id,

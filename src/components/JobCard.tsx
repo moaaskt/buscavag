@@ -247,7 +247,7 @@ export function JobCard({
               <button
                 type="button"
                 onClick={(e) => onDelete(job.id, e)}
-                title="Excluir vaga"
+                title="Ocultar vaga do feed"
                 className="p-1.5 rounded-lg text-zinc-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/30 transition-colors opacity-0 group-hover:opacity-100 focus:opacity-100"
               >
                 <Trash2 className="w-4 h-4" />

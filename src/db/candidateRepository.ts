@@ -351,6 +351,41 @@ export class CandidateRepository {
     return result.changes > 0;
   }
 
+  // --- Vagas Ocultadas (Multi-tenant) ---
+
+  hideJobs(userId: string, jobIds: string[]): { count: number } {
+    if (!jobIds || jobIds.length === 0) return { count: 0 };
+    const now = new Date().toISOString();
+    const insertStmt = db.prepare(`
+      INSERT OR IGNORE INTO user_hidden_jobs (user_id, job_id, created_at)
+      VALUES (?, ?, ?)
+    `);
+
+    const insertMany = db.transaction((ids: string[]) => {
+      let inserted = 0;
+      for (const id of ids) {
+        const res = insertStmt.run(userId, id, now);
+        if (res.changes > 0) inserted++;
+      }
+      return inserted;
+    });
+
+    const count = insertMany(jobIds);
+    return { count };
+  }
+
+  unhideJob(userId: string, jobId: string): boolean {
+    const stmt = db.prepare('DELETE FROM user_hidden_jobs WHERE user_id = ? AND job_id = ?');
+    const result = stmt.run(userId, jobId);
+    return result.changes > 0;
+  }
+
+  getHiddenJobIds(userId: string): string[] {
+    const stmt = db.prepare('SELECT job_id FROM user_hidden_jobs WHERE user_id = ?');
+    const rows = stmt.all(userId) as Array<{ job_id: string }>;
+    return rows.map((r) => r.job_id);
+  }
+
   // --- Match Perfeito & Recomendações de Vagas (Fase 38) ---
 
   getCandidateContext(userId: string): CandidateContext | null {

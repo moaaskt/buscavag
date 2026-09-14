@@ -73,3 +73,30 @@ export async function confirmPurge(): Promise<boolean> {
 
   return result.isConfirmed;
 }
+
+/**
+ * Notificação informativa / alerta com tema Buscavag.
+ */
+export async function showNotice(
+  title: string,
+  text: string,
+  icon: 'info' | 'warning' | 'error' | 'success' = 'info'
+): Promise<void> {
+  await Swal.fire({
+    title,
+    text,
+    icon,
+    confirmButtonText: 'Entendido',
+    background: '#18181b',
+    color: '#f4f4f5',
+    iconColor: icon === 'warning' ? '#f59e0b' : icon === 'error' ? '#f43f5e' : '#10b981',
+    customClass: {
+      popup:         'swal-buscavag-popup',
+      title:         'swal-buscavag-title',
+      htmlContainer: 'swal-buscavag-text',
+      confirmButton: 'swal-buscavag-confirm',
+    },
+    buttonsStyling: false,
+  });
+}
+

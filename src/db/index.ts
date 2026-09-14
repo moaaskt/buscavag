@@ -10,9 +10,20 @@ if (!fs.existsSync(dbDir)) {
   fs.mkdirSync(dbDir, { recursive: true });
 }
 
-export const db = new Database(dbPath);
+export const db = new Database(dbPath, { timeout: 10000 });
+
+try {
+  db.pragma('journal_mode = WAL');
+  db.pragma('busy_timeout = 10000');
+} catch (err) {
+  console.warn('[DB Pragma] Aviso ao configurar pragmas:', (err as Error).message);
+}
+
+let isInitialized = false;
 
 export function initDatabase() {
+  if (isInitialized) return;
+
   db.exec(`
     CREATE TABLE IF NOT EXISTS jobs (
       id TEXT PRIMARY KEY,
@@ -93,6 +104,27 @@ export function initDatabase() {
       FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
       FOREIGN KEY (job_id) REFERENCES jobs(id) ON DELETE CASCADE
     );
+
+    CREATE TABLE IF NOT EXISTS user_hidden_jobs (
+      user_id TEXT NOT NULL,
+      job_id TEXT NOT NULL,
+      created_at TEXT NOT NULL,
+      PRIMARY KEY (user_id, job_id),
+      FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+      FOREIGN KEY (job_id) REFERENCES jobs(id) ON DELETE CASCADE
+    );
+
+    CREATE TABLE IF NOT EXISTS system_logs (
+      id TEXT PRIMARY KEY,
+      timestamp TEXT NOT NULL,
+      level TEXT NOT NULL,
+      category TEXT NOT NULL,
+      message TEXT NOT NULL,
+      user_id TEXT,
+      metadata TEXT,
+      ip TEXT,
+      user_agent TEXT
+    );
   `);
 
   // Migração automática para bancos já existentes
@@ -148,8 +180,15 @@ export function initDatabase() {
       CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
       CREATE INDEX IF NOT EXISTS idx_resumes_user_id ON candidate_resumes(user_id);
       CREATE INDEX IF NOT EXISTS idx_saved_jobs_user ON user_saved_jobs(user_id);
+      CREATE INDEX IF NOT EXISTS idx_hidden_jobs_user ON user_hidden_jobs(user_id);
+      CREATE INDEX IF NOT EXISTS idx_system_logs_level ON system_logs(level);
+      CREATE INDEX IF NOT EXISTS idx_system_logs_category ON system_logs(category);
+      CREATE INDEX IF NOT EXISTS idx_system_logs_timestamp ON system_logs(timestamp);
+      CREATE INDEX IF NOT EXISTS idx_system_logs_user_id ON system_logs(user_id);
     `);
   } catch (err) {
     console.warn('[DB Migration] Aviso ao criar índices:', (err as Error).message);
   }
+
+  isInitialized = true;
 }

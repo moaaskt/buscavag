@@ -154,7 +154,7 @@ export default function KanbanBoardPage() {
             Kanban de Gestão de Candidaturas
           </h1>
           <p className="text-sm md:text-base text-zinc-600 dark:text-zinc-400 leading-relaxed">
-            Arraste e solte os cards entre as colunas para acompanhar seu progresso em cada processo seletivo.
+            Arraste e solte os cards entre as colunas para acompanhar seu progresso em cada processo seletivo. Suas vagas salvas ficam isoladas no seu perfil.
           </p>
         </div>
 

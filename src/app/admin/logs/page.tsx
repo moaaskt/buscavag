@@ -100,15 +100,15 @@ export default function LogsPage() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-zinc-800/80 pb-5">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-zinc-200 dark:border-zinc-800/80 pb-5">
         <div>
           <div className="flex items-center gap-2">
-            <Terminal className="w-5 h-5 text-emerald-400" />
-            <h1 className="text-xl md:text-2xl font-bold tracking-tight text-zinc-100">
+            <Terminal className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
+            <h1 className="text-xl md:text-2xl font-bold tracking-tight text-zinc-900 dark:text-zinc-100">
               Logs & Auditoria dos Scrapers
             </h1>
           </div>
-          <p className="text-xs md:text-sm text-zinc-400 font-mono mt-1">
+          <p className="text-xs md:text-sm text-zinc-600 dark:text-zinc-400 font-mono mt-1">
             Histórico detalhado de coletas, eventos, avisos e diagnóstico de erros.
           </p>
         </div>
@@ -116,14 +116,14 @@ export default function LogsPage() {
         {/* Action Controls */}
         <div className="flex items-center gap-2">
           {/* Alternador de visualização Logs / Ciclos */}
-          <div className="flex rounded-lg border border-zinc-800 bg-zinc-900/90 p-1 text-xs font-mono">
+          <div className="flex rounded-lg border border-zinc-200 dark:border-zinc-800 bg-zinc-100 dark:bg-zinc-900/90 p-1 text-xs font-mono shadow-sm">
             <button
               onClick={() => setActiveTab('logs')}
               className={cn(
                 'px-3 py-1 rounded-md transition-colors',
                 activeTab === 'logs'
-                  ? 'bg-zinc-800 text-zinc-100 font-semibold'
-                  : 'text-zinc-400 hover:text-zinc-200'
+                  ? 'bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 font-semibold shadow-sm'
+                  : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-800 dark:hover:text-zinc-200'
               )}
             >
               Logs ({filteredLogs.length})
@@ -133,8 +133,8 @@ export default function LogsPage() {
               className={cn(
                 'px-3 py-1 rounded-md transition-colors',
                 activeTab === 'runs'
-                  ? 'bg-zinc-800 text-zinc-100 font-semibold'
-                  : 'text-zinc-400 hover:text-zinc-200'
+                  ? 'bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 font-semibold shadow-sm'
+                  : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-800 dark:hover:text-zinc-200'
               )}
             >
               Ciclos ({runs.length})
@@ -144,7 +144,7 @@ export default function LogsPage() {
           <button
             onClick={fetchLogs}
             disabled={loading}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-zinc-800 bg-zinc-900 text-xs font-mono text-zinc-300 hover:bg-zinc-800 hover:text-zinc-100 transition-colors"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-xs font-mono text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800 hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors shadow-sm"
           >
             <RefreshCw className={cn('w-3.5 h-3.5', loading ? 'animate-spin text-emerald-400' : '')} />
             <span className="hidden sm:inline">Atualizar</span>
@@ -153,16 +153,16 @@ export default function LogsPage() {
       </div>
 
       {/* Filter Bar */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 bg-zinc-900/50 p-4 rounded-xl border border-zinc-800/80">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 bg-white dark:bg-zinc-900/50 p-4 rounded-xl border border-zinc-200 dark:border-zinc-800/80 shadow-sm">
         {/* Search */}
         <div className="relative">
-          <Search className="w-3.5 h-3.5 text-zinc-500 absolute left-3 top-1/2 -translate-y-1/2" />
+          <Search className="w-3.5 h-3.5 text-zinc-400 dark:text-zinc-500 absolute left-3 top-1/2 -translate-y-1/2" />
           <input
             type="text"
             placeholder="Buscar em mensagens ou stack trace..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-9 pr-3 py-1.5 text-xs font-mono bg-zinc-950/80 border border-zinc-800 rounded-lg text-zinc-200 placeholder-zinc-500 focus:outline-none focus:border-emerald-500 transition-colors"
+            className="w-full pl-9 pr-3 py-1.5 text-xs font-mono bg-zinc-50 dark:bg-zinc-950/80 border border-zinc-200 dark:border-zinc-800 rounded-lg text-zinc-900 dark:text-zinc-200 placeholder-zinc-400 dark:placeholder-zinc-500 focus:outline-none focus:border-emerald-500 transition-colors"
           />
         </div>
 
@@ -171,7 +171,7 @@ export default function LogsPage() {
           <select
             value={selectedLevel}
             onChange={(e) => setSelectedLevel(e.target.value as any)}
-            className="w-full px-3 py-1.5 text-xs font-mono bg-zinc-950/80 border border-zinc-800 rounded-lg text-zinc-200 focus:outline-none focus:border-emerald-500 transition-colors"
+            className="w-full px-3 py-1.5 text-xs font-mono bg-zinc-50 dark:bg-zinc-950/80 border border-zinc-200 dark:border-zinc-800 rounded-lg text-zinc-900 dark:text-zinc-200 focus:outline-none focus:border-emerald-500 transition-colors"
           >
             <option value="ALL">Severidade: Todos</option>
             <option value="ERROR">Apenas Erros (ERROR)</option>
@@ -185,7 +185,7 @@ export default function LogsPage() {
           <select
             value={selectedScraper}
             onChange={(e) => setSelectedScraper(e.target.value)}
-            className="w-full px-3 py-1.5 text-xs font-mono bg-zinc-950/80 border border-zinc-800 rounded-lg text-zinc-200 focus:outline-none focus:border-emerald-500 transition-colors"
+            className="w-full px-3 py-1.5 text-xs font-mono bg-zinc-50 dark:bg-zinc-950/80 border border-zinc-200 dark:border-zinc-800 rounded-lg text-zinc-900 dark:text-zinc-200 focus:outline-none focus:border-emerald-500 transition-colors"
           >
             <option value="ALL">Fonte: Todas as 24+ fontes</option>
             {allScrapers.map((s) => (
@@ -201,7 +201,7 @@ export default function LogsPage() {
           <select
             value={selectedPeriod}
             onChange={(e) => setSelectedPeriod(e.target.value)}
-            className="w-full px-3 py-1.5 text-xs font-mono bg-zinc-950/80 border border-zinc-800 rounded-lg text-zinc-200 focus:outline-none focus:border-emerald-500 transition-colors"
+            className="w-full px-3 py-1.5 text-xs font-mono bg-zinc-50 dark:bg-zinc-950/80 border border-zinc-200 dark:border-zinc-800 rounded-lg text-zinc-900 dark:text-zinc-200 focus:outline-none focus:border-emerald-500 transition-colors"
           >
             <option value="24h">Período: Últimas 24 horas</option>
             <option value="48h">Últimas 48 horas</option>
@@ -303,28 +303,28 @@ export default function LogsPage() {
             return (
               <div
                 key={run.runId}
-                className="p-4 rounded-xl border border-zinc-800 bg-zinc-900/60 flex flex-col justify-between space-y-3 font-mono text-xs"
+                className="p-4 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/60 shadow-sm flex flex-col justify-between space-y-3 font-mono text-xs"
               >
                 <div>
                   <div className="flex items-center justify-between">
-                    <span className="text-zinc-400">Ciclo ID:</span>
-                    <span className="text-emerald-400 font-semibold truncate max-w-[150px]">{run.runId}</span>
+                    <span className="text-zinc-500 dark:text-zinc-400">Ciclo ID:</span>
+                    <span className="text-emerald-600 dark:text-emerald-400 font-semibold truncate max-w-[150px]">{run.runId}</span>
                   </div>
                   <div className="text-[11px] text-zinc-500 mt-1">Iniciado em: {started}</div>
                 </div>
 
-                <div className="grid grid-cols-3 gap-2 py-2 border-y border-zinc-800/80 text-center">
+                <div className="grid grid-cols-3 gap-2 py-2 border-y border-zinc-200 dark:border-zinc-800/80 text-center">
                   <div>
                     <div className="text-zinc-500 text-[10px]">INFO</div>
-                    <div className="font-semibold text-zinc-200">{run.infoCount}</div>
+                    <div className="font-semibold text-zinc-800 dark:text-zinc-200">{run.infoCount}</div>
                   </div>
                   <div>
-                    <div className="text-amber-400 text-[10px]">WARN</div>
-                    <div className="font-semibold text-amber-300">{run.warnCount}</div>
+                    <div className="text-amber-500 dark:text-amber-400 text-[10px]">WARN</div>
+                    <div className="font-semibold text-amber-600 dark:text-amber-300">{run.warnCount}</div>
                   </div>
                   <div>
-                    <div className="text-rose-400 text-[10px]">ERROR</div>
-                    <div className="font-semibold text-rose-300">{run.errorCount}</div>
+                    <div className="text-rose-500 dark:text-rose-400 text-[10px]">ERROR</div>
+                    <div className="font-semibold text-rose-600 dark:text-rose-300">{run.errorCount}</div>
                   </div>
                 </div>
 

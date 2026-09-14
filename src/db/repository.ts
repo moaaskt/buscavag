@@ -251,6 +251,11 @@ export class JobRepository {
       }
     }
 
+    if (filters?.userId) {
+      sql += ' AND jobs.id NOT IN (SELECT job_id FROM user_hidden_jobs WHERE user_id = ?)';
+      params.push(filters.userId);
+    }
+
     sql += ' ORDER BY overall_score DESC, published_at DESC';
 
 

@@ -20,6 +20,7 @@ export async function POST(request: NextRequest) {
     const env = {
       ...process.env,
       ...(runId ? { SCRAPER_RUN_ID: runId } : {}),
+      PYTHONUNBUFFERED: '1',
     };
 
     // Spawn the scraper process detached so it runs in the background

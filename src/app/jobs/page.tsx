@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { ProcessedJob } from '@/types/job';
-import { confirmDelete } from '@/lib/alerts';
+import { confirmDelete, showNotice } from '@/lib/alerts';
 import { JobModal } from '@/components/JobModal';
 import { FloatingActionBar } from '@/components/FloatingActionBar';
 import { JobListHoverEffect } from '@/components/ui/card-hover-effect';
@@ -136,13 +136,13 @@ export default function JobsPage() {
     setSelectedIds(new Set());
   };
 
-  // Delete Individual
+  // Delete Individual / Hide (Multi-tenant)
   const handleDeleteJob = async (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
     const ok = await confirmDelete({
-      title: 'Excluir esta vaga?',
-      text: 'Esta ação não pode ser desfeita.',
-      confirmText: 'Sim, excluir',
+      title: 'Ocultar esta vaga?',
+      text: 'Esta oportunidade será removida do seu feed.',
+      confirmText: 'Sim, ocultar',
     });
     if (!ok) return;
 
@@ -152,6 +152,16 @@ export default function JobsPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ids: [id] }),
       });
+
+      if (res.status === 401) {
+        await showNotice(
+          'Autenticação Necessária',
+          'Faça login ou crie sua conta para ocultar vagas e personalizar seu feed.',
+          'warning'
+        );
+        return;
+      }
+
       if (res.ok) {
         setJobs((prev) => prev.filter((j) => j.id !== id));
         setSelectedIds((prev) => {
@@ -161,18 +171,18 @@ export default function JobsPage() {
         });
       }
     } catch (err) {
-      console.error('Erro ao excluir vaga:', err);
+      console.error('Erro ao ocultar vaga:', err);
     }
   };
 
-  // Bulk Delete
+  // Bulk Delete / Hide (Multi-tenant)
   const handleBulkDelete = async () => {
     const ids = Array.from(selectedIds);
     if (ids.length === 0) return;
     const ok = await confirmDelete({
-      title: `Excluir ${ids.length} ${ids.length === 1 ? 'vaga' : 'vagas'}?`,
-      text: `Você vai remover permanentemente ${ids.length} ${ids.length === 1 ? 'vaga selecionada' : 'vagas selecionadas'}. Esta ação não pode ser desfeita.`,
-      confirmText: `Sim, excluir ${ids.length === 1 ? 'vaga' : `${ids.length} vagas`}`,
+      title: `Ocultar ${ids.length} ${ids.length === 1 ? 'vaga' : 'vagas'}?`,
+      text: `Você vai remover do seu feed ${ids.length} ${ids.length === 1 ? 'vaga selecionada' : 'vagas selecionadas'}.`,
+      confirmText: `Sim, ocultar ${ids.length === 1 ? 'vaga' : `${ids.length} vagas`}`,
     });
     if (!ok) return;
 
@@ -183,12 +193,22 @@ export default function JobsPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ids }),
       });
+
+      if (res.status === 401) {
+        await showNotice(
+          'Autenticação Necessária',
+          'Faça login ou crie sua conta para gerenciar e ocultar vagas em lote.',
+          'warning'
+        );
+        return;
+      }
+
       if (res.ok) {
         setJobs((prev) => prev.filter((j) => !selectedIds.has(j.id)));
         setSelectedIds(new Set());
       }
     } catch (err) {
-      console.error('Erro ao excluir vagas em lote:', err);
+      console.error('Erro ao ocultar vagas em lote:', err);
     } finally {
       setIsDeleting(false);
     }
