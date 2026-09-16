@@ -9,6 +9,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { PlatformBadge } from '@/components/ui/PlatformBadge';
 
 interface JobCardProps {
   job: ProcessedJob;
@@ -71,9 +72,7 @@ export function JobCard({
                 {isSelected && <Check className="w-3 h-3 stroke-[3]" />}
               </button>
             )}
-            <span className="font-mono text-[10px] uppercase font-medium px-1.5 py-0.5 rounded bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 border border-zinc-200 dark:border-zinc-700/60 truncate max-w-[80px]">
-              {job.platform}
-            </span>
+            <PlatformBadge platform={job.platform} className="max-w-[100px]" />
           </div>
           <span className="font-mono text-xs font-semibold text-emerald-600 dark:text-emerald-400 shrink-0">
             {score}%
@@ -166,10 +165,7 @@ export function JobCard({
               <span className="text-sm md:text-base font-medium text-zinc-900 dark:text-zinc-100 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors truncate">
                 {job.title}
               </span>
-              {/* Neutral platform tag */}
-              <span className="font-mono text-[11px] px-2 py-0.5 rounded bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 border border-zinc-200 dark:border-zinc-700/60 uppercase shrink-0">
-                {job.platform}
-              </span>
+              <PlatformBadge platform={job.platform} />
               {/* Category tag */}
               {job.category && (
                 <span className="font-mono text-[11px] px-2 py-0.5 rounded bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 border border-zinc-200 dark:border-zinc-700/60 shrink-0">

@@ -17,7 +17,12 @@ import {
   MessageSquare,
   Copy,
   Check,
+  User,
+  DollarSign,
+  Send,
+  Briefcase
 } from 'lucide-react';
+import { PlatformBadge } from '@/components/ui/PlatformBadge';
 
 interface JobModalProps {
   job: ProcessedJob | null;
@@ -76,9 +81,7 @@ export function JobModal({ job, onClose, onStatusChange }: JobModalProps) {
 
           {/* Badges / Platform & Category */}
           <div className="flex flex-wrap items-center gap-2 pr-10">
-            <span className="font-mono text-[11px] px-2 py-0.5 rounded bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 border border-zinc-200 dark:border-zinc-700/60 uppercase font-medium">
-              {job.platform}
-            </span>
+            <PlatformBadge platform={job.platform} />
             {job.category && (
               <span className="font-mono text-[11px] px-2 py-0.5 rounded bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 border border-zinc-200 dark:border-zinc-700/60 font-medium">
                 {job.category}
@@ -92,7 +95,7 @@ export function JobModal({ job, onClose, onStatusChange }: JobModalProps) {
 
           {/* Title */}
           <h2 className="text-lg md:text-xl lg:text-2xl font-semibold text-zinc-900 dark:text-zinc-100 tracking-tight">
-            {job.title}
+            {job.extractedRole || job.title}
           </h2>
 
           {/* Meta Information */}
@@ -109,6 +112,24 @@ export function JobModal({ job, onClose, onStatusChange }: JobModalProps) {
               <Calendar className="w-4 h-4 text-zinc-400" />
               {publishedStr}
             </span>
+            {job.contractType && job.contractType !== 'Não informado' && (
+              <span className="flex items-center gap-1.5 text-zinc-700 dark:text-zinc-300">
+                <Briefcase className="w-4 h-4 text-zinc-400" />
+                {job.contractType}
+              </span>
+            )}
+            {job.salary && job.salary !== 'Não informado' && (
+              <span className="flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400 font-semibold">
+                <DollarSign className="w-4 h-4 text-emerald-500" />
+                {job.salary}
+              </span>
+            )}
+            {job.applicationChannel && job.applicationChannel !== 'Não informado' && (
+              <span className="flex items-center gap-1.5 text-zinc-700 dark:text-zinc-300">
+                <Send className="w-4 h-4 text-zinc-400" />
+                {job.applicationChannel}
+              </span>
+            )}
           </div>
         </div>
 
