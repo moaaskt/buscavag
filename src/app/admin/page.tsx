@@ -4,6 +4,8 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { ScraperTerminalModal } from '@/components/ScraperTerminalModal';
 import { DashboardStats } from '@/db/repository';
+import { PlatformDistribution } from '@/components/admin/PlatformDistribution';
+import { ScraperHealthMonitor } from '@/components/admin/ScraperHealthMonitor';
 import {
   ShieldAlert,
   Terminal,
@@ -181,6 +183,13 @@ export default function AdminDashboardPage() {
               </div>
             </section>
 
+            {/* Bloco: Monitor de Saúde dos Scrapers */}
+            <section className="bg-white dark:bg-zinc-900/60 border border-zinc-200 dark:border-zinc-800 rounded-xl overflow-hidden shadow-sm">
+              <div className="p-5">
+                <ScraperHealthMonitor />
+              </div>
+            </section>
+
           </div>
 
           {/* Coluna Direita: System Stats Overview */}
@@ -223,6 +232,17 @@ export default function AdminDashboardPage() {
                     <span className="font-mono font-medium">{Object.keys(stats?.platformCounts || {}).length}</span>
                   </div>
                 </div>
+              )}
+            </div>
+
+            {/* Platform Distribution Analytics */}
+            <div className="bg-white dark:bg-zinc-900/60 border border-zinc-200 dark:border-zinc-800 rounded-xl p-5 shadow-sm">
+              {loadingStats ? (
+                <div className="py-8 flex justify-center">
+                  <RefreshCw className="w-5 h-5 animate-spin text-zinc-400" />
+                </div>
+              ) : (
+                <PlatformDistribution platformCounts={stats?.platformCounts || {}} />
               )}
             </div>
 
