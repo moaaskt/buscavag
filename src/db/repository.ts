@@ -57,6 +57,10 @@ export class JobRepository {
     let gaps: string[] = [];
     let resumeTips = '';
     let aiReasoning = reasoning;
+    let extractedRole = '';
+    let contractType = '';
+    let applicationChannel = '';
+    let salary = '';
 
     if (typeof evalResultOrIsJunior === 'object' && evalResultOrIsJunior !== null) {
       isJunior = evalResultOrIsJunior.isJuniorFullStack;
@@ -68,6 +72,10 @@ export class JobRepository {
       gaps = evalResultOrIsJunior.gaps || [];
       resumeTips = evalResultOrIsJunior.resumeTips || '';
       aiReasoning = evalResultOrIsJunior.reasoning || '';
+      extractedRole = evalResultOrIsJunior.extractedRole || '';
+      contractType = evalResultOrIsJunior.contractType || '';
+      applicationChannel = evalResultOrIsJunior.applicationChannel || '';
+      salary = evalResultOrIsJunior.salary || '';
     } else {
       isJunior = Boolean(evalResultOrIsJunior);
       overallScore = scoreIa;
@@ -80,8 +88,9 @@ export class JobRepository {
       INSERT INTO jobs (
         id, url, title, company, platform, description, published_at, location,
         is_junior_fullstack, score_ia, overall_score, stack_score, seniority_score,
-        location_score, category, gaps, resume_tips, application_status, ai_reasoning, notified, created_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, ?)
+        location_score, category, gaps, resume_tips, application_status, ai_reasoning, notified, created_at,
+        extracted_role, contract_type, application_channel, salary
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, ?, ?, ?, ?, ?)
     `);
 
     stmt.run(
@@ -104,7 +113,11 @@ export class JobRepository {
       resumeTips,
       applicationStatus,
       aiReasoning,
-      createdAt.toISOString()
+      createdAt.toISOString(),
+      extractedRole,
+      contractType,
+      applicationChannel,
+      salary
     );
 
     return {
@@ -121,6 +134,10 @@ export class JobRepository {
       resumeTips,
       applicationStatus,
       aiReasoning,
+      extractedRole,
+      contractType,
+      applicationChannel,
+      salary,
       notified: false,
       createdAt,
     };
@@ -337,6 +354,10 @@ export class JobRepository {
       resumeTips: row.resume_tips || undefined,
       applicationStatus: row.user_status || ('user_status' in row ? 'pending' : (row.application_status || 'pending')),
       aiReasoning: row.ai_reasoning,
+      extractedRole: row.extracted_role || undefined,
+      contractType: row.contract_type || undefined,
+      applicationChannel: row.application_channel || undefined,
+      salary: row.salary || undefined,
       notified: Boolean(row.notified),
       createdAt: new Date(row.created_at),
     };
