@@ -40,6 +40,8 @@ export enum PlatformSource {
   RUNTALENT = 'runtalent',
   EMPREGARE = 'empregare',
   TRAMPOS = 'trampos',
+  // Comunidades & Redes Sociais
+  FACEBOOK_GROUPS = 'facebook_groups',
 }
 
 
