@@ -80,6 +80,7 @@ interface ResumeData {
 }
 
 import { UpgradeModal } from '@/components/UpgradeModal';
+import { PlatformBadge } from '@/components/ui/PlatformBadge';
 
 interface RecommendedJobItem {
   job: {
