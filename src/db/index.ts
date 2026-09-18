@@ -46,7 +46,11 @@ export function initDatabase() {
       application_status TEXT DEFAULT 'pending',
       ai_reasoning TEXT,
       notified INTEGER DEFAULT 0,
-      created_at TEXT NOT NULL
+      created_at TEXT NOT NULL,
+      extracted_role TEXT,
+      contract_type TEXT,
+      application_channel TEXT,
+      salary TEXT
     );
 
     CREATE TABLE IF NOT EXISTS scraper_logs (
@@ -139,6 +143,10 @@ export function initDatabase() {
       { name: 'gaps', type: 'TEXT' },
       { name: 'resume_tips', type: 'TEXT' },
       { name: 'application_status', type: "TEXT DEFAULT 'pending'" },
+      { name: 'extracted_role', type: 'TEXT' },
+      { name: 'contract_type', type: 'TEXT' },
+      { name: 'application_channel', type: 'TEXT' },
+      { name: 'salary', type: 'TEXT' },
     ];
 
     for (const col of jobColumnsToAdd) {

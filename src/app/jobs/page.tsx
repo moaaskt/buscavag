@@ -349,6 +349,7 @@ export default function JobsPage() {
               <optgroup label="Freelance & Projetos">
                 <option value="99freelas">99Freelas (Projetos &lt; 48h)</option>
                 <option value="workana">Workana (Projetos Tech)</option>
+                <option value="facebook_groups">Facebook Groups (Tech)</option>
               </optgroup>
               <optgroup label="Tech Especializadas">
                 <option value="geekhunter">GeekHunter</option>

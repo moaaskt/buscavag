@@ -38,6 +38,7 @@ export { SolidesScraper } from './solides.js';
 export { RunTalentScraper } from './runTalent.js';
 export { EmpregareScraper } from './empregare.js';
 export { TramposScraper } from './trampos.js';
+export { FacebookGroupsScraper } from './facebookGroups.js';
 
 import { JobScraper } from './base.js';
 import { GupyScraper } from './gupy.js';
@@ -74,6 +75,7 @@ import { SolidesScraper } from './solides.js';
 import { RunTalentScraper } from './runTalent.js';
 import { EmpregareScraper } from './empregare.js';
 import { TramposScraper } from './trampos.js';
+import { FacebookGroupsScraper } from './facebookGroups.js';
 
 import { RawJob } from '../types/job.js';
 import { TelegramNotifier } from '../services/telegramNotifier.js';
@@ -148,6 +150,8 @@ export class ScraperOrchestrator {
       // Freelance
       new Freelas99Scraper(),
       new WorkanaScraper(),
+      // Comunidades & Redes Sociais
+      new FacebookGroupsScraper(),
     ];
 
 

@@ -40,6 +40,8 @@ export enum PlatformSource {
   RUNTALENT = 'runtalent',
   EMPREGARE = 'empregare',
   TRAMPOS = 'trampos',
+  // Comunidades & Redes Sociais
+  FACEBOOK_GROUPS = 'facebook_groups',
 }
 
 
@@ -69,6 +71,10 @@ export const ProcessedJobSchema = RawJobSchema.extend({
   gaps: z.array(z.string()).optional(),
   resumeTips: z.string().optional(),
   aiReasoning: z.string().optional(),
+  extractedRole: z.string().optional(),
+  contractType: z.string().optional(),
+  applicationChannel: z.string().optional(),
+  salary: z.string().optional(),
   applicationStatus: z.enum(['pending', 'applied', 'interview', 'offer', 'rejected']).default('pending').optional(),
   notified: z.boolean().default(false),
   createdAt: z.date().default(() => new Date()),

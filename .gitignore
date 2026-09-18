@@ -15,3 +15,5 @@ __pycache__/
 .planning/
 AGENTS.md
 CLAUDE.md
+buscavag.db-shm
+buscavag.db-wal

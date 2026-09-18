@@ -13,6 +13,10 @@ export interface EvaluationResult {
   gaps: string[];
   resumeTips: string;
   reasoning: string;
+  extractedRole?: string;
+  contractType?: string;
+  applicationChannel?: string;
+  salary?: string;
 }
 
 export class HermesEvaluator {
@@ -59,8 +63,12 @@ Você é um recrutador técnico especialista avaliando vagas para o perfil de **
 - gaps: Liste apenas tecnologias essenciais da vaga que NÃO constam na stack de Moacir (ex: ["Kubernetes", "AWS", "Ruby", "Swift"]). Tecnologias de IoT, MQTT, ESP32, C++ básico NÃO são gaps, são pontos fortes. Se não houver lacunas relevantes, retorne [].
 - resumeTips: Dica concisa de até 2 frases de como Moacir pode adaptar seu currículo ou carta para esta vaga específica (destacando projetos Web ou IoT conforme a vaga).
 
-**CATEGORIZAÇÃO:**
+**CATEGORIZAÇÃO E EXTRAÇÃO ADICIONAL:**
 - category: Classifique estritamente em uma das opções: "Frontend", "Backend", "Full Stack", "DevOps", "Data", "Mobile", "IoT & Automação" ou "Other".
+- extractedRole: O cargo ou papel principal exigido (ex: "Desenvolvedor Backend Pleno", "Dev Frontend React"). Tente ser conciso.
+- contractType: Modelo de contrato explícito ou inferido (ex: "CLT", "PJ", "Freela", "Internacional", "Estágio" ou "Não informado").
+- applicationChannel: Canal de candidatura indicado (ex: "Email", "Link externo", "Mensagem Direta", "WhatsApp" ou "Não informado").
+- salary: O salário, range salarial ou valor hora (ex: "R$ 5.000", "$30/h", "R$ 10k - 15k" ou "Não informado").
 
 **Vaga a ser analisada:**
 - Título: ${job.title}
@@ -78,12 +86,21 @@ Responda APENAS em formato JSON no seguinte modelo:
   "category": "Frontend" | "Backend" | "Full Stack" | "DevOps" | "Data" | "Mobile" | "IoT & Automação" | "Other",
   "gaps": string[],
   "resumeTips": string,
-  "reasoning": "Justificativa clara em português indicando adequação de localização, senioridade e stack (incluindo IoT/Automação se aplicável)"
+  "reasoning": "Justificativa clara em português indicando adequação de localização, senioridade e stack (incluindo IoT/Automação se aplicável)",
+  "extractedRole": string,
+  "contractType": string,
+  "applicationChannel": string,
+  "salary": string
 }
 `;
 
+      let modelName = process.env.HERMES_MODEL || 'gemini-flash-latest';
+      if (modelName.includes('gpt')) {
+        modelName = 'gemini-flash-latest';
+      }
+
       const response = await this.client.models.generateContent({
-        model: process.env.HERMES_MODEL || 'gemini-flash-latest',
+        model: modelName,
         contents: prompt,
         config: {
           responseMimeType: 'application/json',
@@ -120,6 +137,10 @@ Responda APENAS em formato JSON no seguinte modelo:
           gaps: Array.isArray(parsed.gaps) ? parsed.gaps.map(String) : [],
           resumeTips: String(parsed.resumeTips || ''),
           reasoning,
+          extractedRole: parsed.extractedRole ? String(parsed.extractedRole) : job.title,
+          contractType: parsed.contractType ? String(parsed.contractType) : 'Não informado',
+          applicationChannel: parsed.applicationChannel ? String(parsed.applicationChannel) : 'Não informado',
+          salary: parsed.salary ? String(parsed.salary) : 'Não informado',
         };
       }
     } catch (err) {
@@ -287,6 +308,10 @@ Responda APENAS em formato JSON no seguinte modelo:
       gaps,
       resumeTips,
       reasoning,
+      extractedRole: job.title,
+      contractType: 'Não informado',
+      applicationChannel: 'Não informado',
+      salary: 'Não informado',
     };
   }
 }
