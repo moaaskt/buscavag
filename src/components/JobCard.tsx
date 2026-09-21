@@ -54,11 +54,13 @@ export function JobCard({
         className={`group cursor-pointer bg-white dark:bg-zinc-900/70 hover:bg-zinc-50 dark:hover:bg-zinc-800/80 p-3 rounded-xl border ${
           isSelected
             ? 'border-emerald-500/80 bg-emerald-50/20 dark:bg-emerald-950/10'
+            : job.isStrongMatch
+            ? 'border-emerald-500/40 dark:border-emerald-500/30'
             : 'border-zinc-200 dark:border-zinc-800/80'
         } shadow-sm transition-all flex flex-col gap-2 w-full min-w-0 relative`}
       >
         <div className="flex items-center justify-between gap-2 min-w-0">
-          <div className="flex items-center gap-1.5">
+          <div className="flex items-center gap-1.5 flex-wrap">
             {onToggleSelect && (
               <button
                 type="button"
@@ -73,6 +75,15 @@ export function JobCard({
               </button>
             )}
             <PlatformBadge platform={job.platform} className="max-w-[100px]" />
+            {job.isStrongMatch && (
+              <span
+                className="flex items-center gap-0.5 text-emerald-600 dark:text-emerald-400 font-semibold shrink-0 bg-emerald-50 dark:bg-emerald-950/40 px-1.5 py-0.5 rounded border border-emerald-200 dark:border-emerald-800/60 text-[9px]"
+                title="Super Match: Aderência ≥ 75%"
+              >
+                <Sparkles className="w-2.5 h-2.5" />
+                <span>Super Match</span>
+              </span>
+            )}
             {job.directContact && (
               <span
                 className="flex items-center gap-1 text-emerald-600 dark:text-emerald-400 font-semibold shrink-0 bg-emerald-50 dark:bg-emerald-950/40 px-1.5 py-0.5 rounded border border-emerald-200 dark:border-emerald-800/60 text-[9px]"
@@ -149,6 +160,8 @@ export function JobCard({
       className={`group cursor-pointer bg-white dark:bg-zinc-900/70 hover:bg-zinc-50 dark:hover:bg-zinc-800/80 p-4 md:p-5 rounded-xl border ${
         isSelected
           ? 'border-emerald-500/80 bg-emerald-50/20 dark:bg-emerald-950/10'
+          : job.isStrongMatch
+          ? 'border-emerald-500/40 dark:border-emerald-500/30'
           : 'border-zinc-200 dark:border-zinc-800/80'
       } shadow-sm transition-all flex flex-col gap-2.5 w-full min-w-0 relative`}
     >
@@ -175,6 +188,15 @@ export function JobCard({
                 {job.title}
               </span>
               <PlatformBadge platform={job.platform} />
+              {job.isStrongMatch && (
+                <span
+                  className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 shrink-0"
+                  title="Super Match: Aderência ≥ 75%"
+                >
+                  <Sparkles className="w-3 h-3" />
+                  Super Match
+                </span>
+              )}
               {/* Category tag */}
               {job.category && (
                 <span className="font-mono text-[11px] px-2 py-0.5 rounded bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 border border-zinc-200 dark:border-zinc-700/60 shrink-0">
