@@ -37,7 +37,7 @@ export async function runPipeline(customLogger?: ScraperLogger) {
   let approvedCount = 0;
   let blacklistFilteredCount = 0;
   let whitelistFilteredCount = 0;
-  let discardedLowScoreCount = 0;
+  let discardedNonTechCount = 0;
 
   for (const job of rawJobs) {
     if (isOlderThanDays(job.publishedAt, 5)) {
@@ -78,45 +78,41 @@ export async function runPipeline(customLogger?: ScraperLogger) {
       const evalResult = await evaluator.evaluate(job);
       evaluatedCount++;
 
-      // REGRA DE INGESTÃO ESTRITA (Fase 67):
-      // Vagas com overallScore <= 35% nunca devem poluir o banco de dados.
-      if (evalResult.overallScore <= 35) {
-        discardedLowScoreCount++;
-        const msg = `[DESCARTADA SCORE ≤ 35%] "${job.title}" (${job.company}) Score: ${evalResult.overallScore}/100 - Evitando poluição do DB`;
-        console.log(`   ${msg} (Stack: ${evalResult.stackScore} | Nível: ${evalResult.seniorityScore} | Local: ${evalResult.locationScore}) [${evalResult.category}] | ${evalResult.reasoning}`);
+      // REGRA DE INGESTÃO MULTI-TENANT (Fase 68):
+      // Descartar apenas se NÃO for vaga de tecnologia/software ou se for classificada como 'Other'
+      if (!evalResult.isTechSoftware || evalResult.category === 'Other') {
+        discardedNonTechCount++;
+        const msg = `[INGESTÃO DESCARTADA (NÃO-TECH)] "${job.title}" (${job.company}) - Categoria: ${evalResult.category} | ${evalResult.reasoning}`;
+        console.log(`   ${msg}`);
         logger.info(msg, {
           step: 'PROGRESS',
-          data: { title: job.title, company: job.company, score: evalResult.overallScore, category: evalResult.category, filter: 'score_threshold' },
+          data: { title: job.title, company: job.company, filter: 'non_tech', category: evalResult.category },
         });
         continue;
       }
 
-      if (evalResult.isJuniorFullStack) {
-        approvedCount++;
-        const msg = `[APROVADA JR] "${job.title}" (${job.company}) Score: ${evalResult.overallScore}/100`;
-        console.log(`   ${msg} (Stack: ${evalResult.stackScore} | Nível: ${evalResult.seniorityScore} | Local: ${evalResult.locationScore}) [${evalResult.category}] | ${evalResult.reasoning}`);
-        logger.info(msg, {
-          step: 'PROGRESS',
-          data: { title: job.title, company: job.company, score: evalResult.overallScore, category: evalResult.category },
-        });
-      } else {
-        const msg = `[REJEITADA] "${job.title}" (${job.company}) Score: ${evalResult.overallScore}/100`;
-        console.log(`   ${msg} (Stack: ${evalResult.stackScore} | Nível: ${evalResult.seniorityScore} | Local: ${evalResult.locationScore}) [${evalResult.category}] | ${evalResult.reasoning}`);
-      }
+      approvedCount++;
+      const topStacks = evalResult.techStack && evalResult.techStack.length > 0 ? evalResult.techStack.slice(0, 3).join(', ') : 'Gerais';
+      const msg = `[INGESTÃO APROVADA TECH] "${job.title}" (${job.company}) Nível: ${evalResult.requiredSeniority || 'Não especificado'} | Stacks: ${topStacks}`;
+      console.log(`   ${msg} [${evalResult.category}] | ${evalResult.reasoning}`);
+      logger.info(msg, {
+        step: 'PROGRESS',
+        data: { title: job.title, company: job.company, seniority: evalResult.requiredSeniority || 'Não especificado', category: evalResult.category },
+      });
 
-      // Inserir no banco de dados com análise enriquecida
+      // Inserir no banco de dados com análise enriquecida neutra
       repo.insert(job, evalResult);
     }
   }
 
-  const statsMsg = `Estatísticas do ciclo: ${rawJobs.length} coletadas, ${blacklistFilteredCount + whitelistFilteredCount} pré-filtradas, ${evaluatedCount} avaliadas, ${discardedLowScoreCount} descartadas por score ≤ 35%, ${approvedCount} aprovadas.`;
+  const statsMsg = `Estatísticas do ciclo: ${rawJobs.length} coletadas, ${blacklistFilteredCount + whitelistFilteredCount} pré-filtradas, ${evaluatedCount} avaliadas, ${discardedNonTechCount} descartadas por não-tech, ${approvedCount} aprovadas no DB.`;
   console.log(`\nEstatísticas do ciclo:`);
   console.log(`- Vagas totais coletadas: ${rawJobs.length}`);
   console.log(`- Descartadas por blacklist de cargo: ${blacklistFilteredCount}`);
   console.log(`- Descartadas por falta de termo tech: ${whitelistFilteredCount}`);
   console.log(`- Vagas novas avaliadas pela IA: ${evaluatedCount}`);
-  console.log(`- Vagas descartadas por Score ≤ 35%: ${discardedLowScoreCount}`);
-  console.log(`- Vagas aprovadas como Jr Fullstack: ${approvedCount}`);
+  console.log(`- Vagas descartadas por não serem de TI: ${discardedNonTechCount}`);
+  console.log(`- Vagas técnicas armazenadas no banco: ${approvedCount}`);
   logger.info(statsMsg, {
     step: 'PROGRESS',
     data: {
@@ -124,7 +120,7 @@ export async function runPipeline(customLogger?: ScraperLogger) {
       blacklistFiltered: blacklistFilteredCount,
       whitelistFiltered: whitelistFilteredCount,
       evaluated: evaluatedCount,
-      discardedLowScore: discardedLowScoreCount,
+      discardedNonTech: discardedNonTechCount,
       approved: approvedCount,
     },
   });
