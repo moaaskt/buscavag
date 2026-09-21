@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { ProcessedJob } from '@/types/job';
-import { ChevronRight, Building2, MapPin, Sparkles, Trash2, Check, ChevronDown } from 'lucide-react';
+import { ChevronRight, Building2, MapPin, Sparkles, Trash2, Check, ChevronDown, Mail } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -218,6 +218,15 @@ export function JobCard({
               <span className="truncate">{job.location || 'Remoto'}</span>
               <span>•</span>
               <span className="shrink-0">{publishedStr}</span>
+              {job.directContact && (
+                <>
+                  <span>•</span>
+                  <span className="flex items-center gap-1 text-emerald-600 dark:text-emerald-400 font-semibold shrink-0 bg-emerald-50 dark:bg-emerald-950/40 px-1.5 py-0.5 rounded border border-emerald-200 dark:border-emerald-800/60 text-[10px]">
+                    <Mail className="w-2.5 h-2.5" />
+                    <span>Contato Direto</span>
+                  </span>
+                </>
+              )}
             </div>
           </div>
         </div>

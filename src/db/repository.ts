@@ -32,8 +32,8 @@ export class JobRepository {
     initDatabase();
   }
 
-  public exists(url: string, company: string, title: string): boolean {
-    const id = generateJobHash(url, company, title);
+  public exists(url: string, company: string, title: string, platform?: string): boolean {
+    const id = generateJobHash(url, company, title, platform);
     const stmt = db.prepare('SELECT 1 FROM jobs WHERE id = ? OR url = ?');
     const result = stmt.get(id, url);
     return !!result;
@@ -45,7 +45,7 @@ export class JobRepository {
     scoreIa: number = 0,
     reasoning: string = ''
   ): ProcessedJob {
-    const id = generateJobHash(rawJob.url, rawJob.company, rawJob.title);
+    const id = generateJobHash(rawJob.url, rawJob.company, rawJob.title, rawJob.platform);
     const createdAt = new Date();
 
     let isJunior = false;
@@ -61,6 +61,7 @@ export class JobRepository {
     let contractType = '';
     let applicationChannel = '';
     let salary = '';
+    let directContact = '';
 
     if (typeof evalResultOrIsJunior === 'object' && evalResultOrIsJunior !== null) {
       isJunior = evalResultOrIsJunior.isJuniorFullStack;
@@ -76,6 +77,7 @@ export class JobRepository {
       contractType = evalResultOrIsJunior.contractType || '';
       applicationChannel = evalResultOrIsJunior.applicationChannel || '';
       salary = evalResultOrIsJunior.salary || '';
+      directContact = evalResultOrIsJunior.directContact || '';
     } else {
       isJunior = Boolean(evalResultOrIsJunior);
       overallScore = scoreIa;
@@ -89,8 +91,9 @@ export class JobRepository {
         id, url, title, company, platform, description, published_at, location,
         is_junior_fullstack, score_ia, overall_score, stack_score, seniority_score,
         location_score, category, gaps, resume_tips, application_status, ai_reasoning, notified, created_at,
-        extracted_role, contract_type, application_channel, salary
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, ?, ?, ?, ?, ?)
+        extracted_role, contract_type, application_channel, salary, direct_contact
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, ?, ?, ?, ?, ?, ?)
+      ON CONFLICT(id) DO NOTHING
     `);
 
     stmt.run(
@@ -117,7 +120,8 @@ export class JobRepository {
       extractedRole,
       contractType,
       applicationChannel,
-      salary
+      salary,
+      directContact
     );
 
     return {
@@ -138,6 +142,7 @@ export class JobRepository {
       contractType,
       applicationChannel,
       salary,
+      directContact: directContact || undefined,
       notified: false,
       createdAt,
     };
@@ -358,6 +363,7 @@ export class JobRepository {
       contractType: row.contract_type || undefined,
       applicationChannel: row.application_channel || undefined,
       salary: row.salary || undefined,
+      directContact: row.direct_contact || undefined,
       notified: Boolean(row.notified),
       createdAt: new Date(row.created_at),
     };

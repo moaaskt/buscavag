@@ -42,6 +42,7 @@ export enum PlatformSource {
   TRAMPOS = 'trampos',
   // Comunidades & Redes Sociais
   FACEBOOK_GROUPS = 'facebook_groups',
+  LINKEDIN_POSTS = 'linkedin_posts',
 }
 
 
@@ -74,6 +75,7 @@ export const ProcessedJobSchema = RawJobSchema.extend({
   extractedRole: z.string().optional(),
   contractType: z.string().optional(),
   applicationChannel: z.string().optional(),
+  directContact: z.string().optional(),
   salary: z.string().optional(),
   applicationStatus: z.enum(['pending', 'applied', 'interview', 'offer', 'rejected']).default('pending').optional(),
   notified: z.boolean().default(false),

@@ -69,7 +69,7 @@ export async function runPipeline(customLogger?: ScraperLogger) {
       continue;
     }
 
-    if (!repo.exists(job.url, job.company, job.title)) {
+    if (!repo.exists(job.url, job.company, job.title, job.platform)) {
       newJobsCount++;
 
       // 3. Avaliação semântica via Hermes Agent / IA

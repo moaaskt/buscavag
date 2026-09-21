@@ -39,6 +39,7 @@ export { RunTalentScraper } from './runTalent.js';
 export { EmpregareScraper } from './empregare.js';
 export { TramposScraper } from './trampos.js';
 export { FacebookGroupsScraper } from './facebookGroups.js';
+export { LinkedInPostsScraper } from './linkedinPosts.js';
 
 import { JobScraper } from './base.js';
 import { GupyScraper } from './gupy.js';
@@ -76,6 +77,7 @@ import { RunTalentScraper } from './runTalent.js';
 import { EmpregareScraper } from './empregare.js';
 import { TramposScraper } from './trampos.js';
 import { FacebookGroupsScraper } from './facebookGroups.js';
+import { LinkedInPostsScraper } from './linkedinPosts.js';
 
 import { RawJob } from '../types/job.js';
 import { TelegramNotifier } from '../services/telegramNotifier.js';
@@ -152,6 +154,7 @@ export class ScraperOrchestrator {
       new WorkanaScraper(),
       // Comunidades & Redes Sociais
       new FacebookGroupsScraper(),
+      new LinkedInPostsScraper(),
     ];
 
 
