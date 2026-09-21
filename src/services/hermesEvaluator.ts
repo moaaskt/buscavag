@@ -17,6 +17,7 @@ export interface EvaluationResult {
   contractType?: string;
   applicationChannel?: string;
   salary?: string;
+  directContact?: string;
 }
 
 export class HermesEvaluator {
@@ -67,8 +68,9 @@ Você é um recrutador técnico especialista avaliando vagas para o perfil de **
 - category: Classifique estritamente em uma das opções: "Frontend", "Backend", "Full Stack", "DevOps", "Data", "Mobile", "IoT & Automação" ou "Other".
 - extractedRole: O cargo ou papel principal exigido (ex: "Desenvolvedor Backend Pleno", "Dev Frontend React"). Tente ser conciso.
 - contractType: Modelo de contrato explícito ou inferido (ex: "CLT", "PJ", "Freela", "Internacional", "Estágio" ou "Não informado").
-- applicationChannel: Canal de candidatura indicado (ex: "Email", "Link externo", "Mensagem Direta", "WhatsApp" ou "Não informado").
+- applicationChannel: Canal de candidatura indicado (ex: "Email", "Link externo", "Mensagem Direta", "WhatsApp" ou "Não informado"). Se for link de ATS (Gupy, Greenhouse, etc.), guarde aqui.
 - salary: O salário, range salarial ou valor hora (ex: "R$ 5.000", "$30/h", "R$ 10k - 15k" ou "Não informado").
+- directContact: SOBERANIA DO CONTATO DIRETO! Se o post mencionar qualquer e-mail (ex: "vagas@empresa.com", "recrutamento@xyz.com") ou instrução direta de envio por DM ("enviar CV na DM", "me chame no privado"), extraia ESTREITAMENTE esse e-mail ou instrução aqui. O e-mail/DM tem 100% de prioridade sobre links de ATS. NUNCA preencha directContact com URLs de ATS (Gupy, Greenhouse, etc.). Se não houver e-mail nem instrução de DM, retorne string vazia "".
 
 **Vaga a ser analisada:**
 - Título: ${job.title}
@@ -90,7 +92,8 @@ Responda APENAS em formato JSON no seguinte modelo:
   "extractedRole": string,
   "contractType": string,
   "applicationChannel": string,
-  "salary": string
+  "salary": string,
+  "directContact": string
 }
 `;
 
@@ -141,6 +144,7 @@ Responda APENAS em formato JSON no seguinte modelo:
           contractType: parsed.contractType ? String(parsed.contractType) : 'Não informado',
           applicationChannel: parsed.applicationChannel ? String(parsed.applicationChannel) : 'Não informado',
           salary: parsed.salary ? String(parsed.salary) : 'Não informado',
+          directContact: parsed.directContact && String(parsed.directContact).trim() !== '' ? String(parsed.directContact).trim() : undefined,
         };
       }
     } catch (err) {
@@ -297,6 +301,11 @@ Responda APENAS em formato JSON no seguinte modelo:
       reasoning = `Aprovada via Heurística (${locationReason}): ${specNote}${hasJunior ? 'Nível Jr/Entry. ' : ''}${matchedStackCount} tecnologias compatíveis (${topTechs || 'Gerais'}).`;
     }
 
+    // 9. EXTRAÇÃO DE CONTATO DIRETO VIA REGEX (FALLBACK HEURÍSTICO)
+    const rawText = `${job.title} ${job.description}`;
+    const emailMatch = rawText.match(/[\w.-]+@[\w.-]+\.[a-z]{2,}/gi);
+    const directContact = emailMatch ? emailMatch[0] : undefined;
+
     return {
       isJuniorFullStack,
       overallScore,
@@ -312,6 +321,7 @@ Responda APENAS em formato JSON no seguinte modelo:
       contractType: 'Não informado',
       applicationChannel: 'Não informado',
       salary: 'Não informado',
+      directContact,
     };
   }
 }
