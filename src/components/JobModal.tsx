@@ -20,7 +20,8 @@ import {
   User,
   DollarSign,
   Send,
-  Briefcase
+  Briefcase,
+  Mail
 } from 'lucide-react';
 import { PlatformBadge } from '@/components/ui/PlatformBadge';
 
@@ -128,6 +129,12 @@ export function JobModal({ job, onClose, onStatusChange }: JobModalProps) {
               <span className="flex items-center gap-1.5 text-zinc-700 dark:text-zinc-300">
                 <Send className="w-4 h-4 text-zinc-400" />
                 {job.applicationChannel}
+              </span>
+            )}
+            {job.directContact && (
+              <span className="flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 font-medium text-xs border border-emerald-200 dark:border-emerald-800/60 shadow-sm">
+                <Mail className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+                <span>Contato Direto: <strong>{job.directContact}</strong></span>
               </span>
             )}
           </div>
@@ -336,6 +343,16 @@ export function JobModal({ job, onClose, onStatusChange }: JobModalProps) {
             >
               Fechar
             </button>
+
+            {job.directContact && job.directContact.includes('@') && (
+              <a
+                href={`mailto:${job.directContact}?subject=Candidatura: ${encodeURIComponent(job.title)}&body=Olá! Vi sua postagem sobre a oportunidade de ${encodeURIComponent(job.title)} e gostaria de apresentar meu perfil.`}
+                className="h-9 px-4 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs md:text-sm font-semibold transition-colors flex items-center gap-2 shadow-sm"
+              >
+                <Mail className="w-3.5 h-3.5" />
+                <span>Enviar E-mail</span>
+              </a>
+            )}
 
             <a
               href={job.url}
