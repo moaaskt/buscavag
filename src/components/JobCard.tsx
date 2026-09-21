@@ -73,6 +73,15 @@ export function JobCard({
               </button>
             )}
             <PlatformBadge platform={job.platform} className="max-w-[100px]" />
+            {job.directContact && (
+              <span
+                className="flex items-center gap-1 text-emerald-600 dark:text-emerald-400 font-semibold shrink-0 bg-emerald-50 dark:bg-emerald-950/40 px-1.5 py-0.5 rounded border border-emerald-200 dark:border-emerald-800/60 text-[9px]"
+                title={`Contato: ${job.directContact}`}
+              >
+                <Mail className="w-2.5 h-2.5" />
+                <span>Direto</span>
+              </span>
+            )}
           </div>
           <span className="font-mono text-xs font-semibold text-emerald-600 dark:text-emerald-400 shrink-0">
             {score}%

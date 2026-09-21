@@ -34,14 +34,27 @@ interface JobModalProps {
 export function JobModal({ job, onClose, onStatusChange }: JobModalProps) {
   const [descExpanded, setDescExpanded] = useState(false);
   const [copiedPitch, setCopiedPitch] = useState(false);
+  const [copiedEmail, setCopiedEmail] = useState(false);
 
   if (!job) return null;
 
   const handleCopyPitch = () => {
-    const pitch = `Olá, time de recrutamento da ${job.company}!\n\nMe interessei muito pela vaga de ${job.title}.\nPossuo sólida experiência no ecossistema Full Stack (TypeScript, React, Next.js, Node.js, Python e APIs), além de foco em entregas de qualidade e código limpo.\n\nLink da vaga: ${job.url}\n\nFico à disposição para uma conversa!`;
+    const isFeedPost = job.platform === 'linkedin_posts' || job.platform === 'facebook_groups';
+    const intro = isFeedPost
+      ? `Olá! Vi sua publicação no LinkedIn referente à vaga de ${job.title}.`
+      : `Olá, time de recrutamento da ${job.company}!\n\nMe interessei muito pela vaga de ${job.title}.`;
+
+    const pitch = `${intro}\nPossuo sólida experiência no ecossistema Full Stack (TypeScript, React, Next.js, Node.js e APIs), além de foco em entregas de qualidade e código limpo.\n\nLink da vaga: ${job.url}\n\nFico à disposição para uma conversa!`;
     navigator.clipboard.writeText(pitch);
     setCopiedPitch(true);
     setTimeout(() => setCopiedPitch(false), 2500);
+  };
+
+  const handleCopyEmail = () => {
+    if (!job.directContact) return;
+    navigator.clipboard.writeText(job.directContact);
+    setCopiedEmail(true);
+    setTimeout(() => setCopiedEmail(false), 2500);
   };
 
   const handleShareWhatsApp = () => {
@@ -345,13 +358,34 @@ export function JobModal({ job, onClose, onStatusChange }: JobModalProps) {
             </button>
 
             {job.directContact && job.directContact.includes('@') && (
-              <a
-                href={`mailto:${job.directContact}?subject=Candidatura: ${encodeURIComponent(job.title)}&body=Olá! Vi sua postagem sobre a oportunidade de ${encodeURIComponent(job.title)} e gostaria de apresentar meu perfil.`}
-                className="h-9 px-4 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs md:text-sm font-semibold transition-colors flex items-center gap-2 shadow-sm"
-              >
-                <Mail className="w-3.5 h-3.5" />
-                <span>Enviar E-mail</span>
-              </a>
+              <>
+                <button
+                  onClick={handleCopyEmail}
+                  type="button"
+                  className="h-9 px-3 rounded-lg text-xs font-medium border border-emerald-500/40 bg-emerald-50/50 dark:bg-emerald-950/20 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-100 dark:hover:bg-emerald-900/40 transition-colors flex items-center gap-1.5 shadow-sm"
+                  title={`Copiar e-mail ${job.directContact}`}
+                >
+                  {copiedEmail ? (
+                    <>
+                      <Check className="w-3.5 h-3.5 text-emerald-500" />
+                      <span className="text-emerald-600 dark:text-emerald-400 font-semibold">E-mail Copiado!</span>
+                    </>
+                  ) : (
+                    <>
+                      <Copy className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+                      <span>Copiar E-mail</span>
+                    </>
+                  )}
+                </button>
+
+                <a
+                  href={`mailto:${job.directContact}?subject=Candidatura: ${encodeURIComponent(job.title)}&body=Olá! Vi sua postagem sobre a oportunidade de ${encodeURIComponent(job.title)} e gostaria de apresentar meu perfil.`}
+                  className="h-9 px-4 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs md:text-sm font-semibold transition-colors flex items-center gap-2 shadow-sm"
+                >
+                  <Mail className="w-3.5 h-3.5" />
+                  <span>Enviar E-mail</span>
+                </a>
+              </>
             )}
 
             <a
