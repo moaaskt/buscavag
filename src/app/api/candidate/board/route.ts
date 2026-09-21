@@ -15,6 +15,7 @@ export async function GET(req: NextRequest) {
 
     // Mapear para o formato ProcessedJob esperado pelo Kanban
     const boardJobs: ProcessedJob[] = savedJobs.map((record) => {
+      const isStrongMatch = (record.job.overall_score ?? 0) >= 75;
       return {
         id: record.job.id,
         url: record.job.url,
@@ -26,6 +27,7 @@ export async function GET(req: NextRequest) {
         location: record.job.location || undefined,
         scoreIa: record.job.score_ia,
         overallScore: record.job.overall_score,
+        isStrongMatch,
         // Override do applicationStatus com o status específico do usuário (user_saved_jobs)
         applicationStatus: record.status as any,
         isJuniorFullStack: true, // required by ProcessedJob but irrelevant here

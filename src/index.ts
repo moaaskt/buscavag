@@ -37,6 +37,7 @@ export async function runPipeline(customLogger?: ScraperLogger) {
   let approvedCount = 0;
   let blacklistFilteredCount = 0;
   let whitelistFilteredCount = 0;
+  let discardedLowScoreCount = 0;
 
   for (const job of rawJobs) {
     if (isOlderThanDays(job.publishedAt, 5)) {
@@ -77,6 +78,19 @@ export async function runPipeline(customLogger?: ScraperLogger) {
       const evalResult = await evaluator.evaluate(job);
       evaluatedCount++;
 
+      // REGRA DE INGESTÃO ESTRITA (Fase 67):
+      // Vagas com overallScore <= 35% nunca devem poluir o banco de dados.
+      if (evalResult.overallScore <= 35) {
+        discardedLowScoreCount++;
+        const msg = `[DESCARTADA SCORE ≤ 35%] "${job.title}" (${job.company}) Score: ${evalResult.overallScore}/100 - Evitando poluição do DB`;
+        console.log(`   ${msg} (Stack: ${evalResult.stackScore} | Nível: ${evalResult.seniorityScore} | Local: ${evalResult.locationScore}) [${evalResult.category}] | ${evalResult.reasoning}`);
+        logger.info(msg, {
+          step: 'PROGRESS',
+          data: { title: job.title, company: job.company, score: evalResult.overallScore, category: evalResult.category, filter: 'score_threshold' },
+        });
+        continue;
+      }
+
       if (evalResult.isJuniorFullStack) {
         approvedCount++;
         const msg = `[APROVADA JR] "${job.title}" (${job.company}) Score: ${evalResult.overallScore}/100`;
@@ -95,12 +109,13 @@ export async function runPipeline(customLogger?: ScraperLogger) {
     }
   }
 
-  const statsMsg = `Estatísticas do ciclo: ${rawJobs.length} coletadas, ${blacklistFilteredCount + whitelistFilteredCount} filtradas, ${evaluatedCount} avaliadas, ${approvedCount} aprovadas.`;
+  const statsMsg = `Estatísticas do ciclo: ${rawJobs.length} coletadas, ${blacklistFilteredCount + whitelistFilteredCount} pré-filtradas, ${evaluatedCount} avaliadas, ${discardedLowScoreCount} descartadas por score ≤ 35%, ${approvedCount} aprovadas.`;
   console.log(`\nEstatísticas do ciclo:`);
   console.log(`- Vagas totais coletadas: ${rawJobs.length}`);
   console.log(`- Descartadas por blacklist de cargo: ${blacklistFilteredCount}`);
   console.log(`- Descartadas por falta de termo tech: ${whitelistFilteredCount}`);
   console.log(`- Vagas novas avaliadas pela IA: ${evaluatedCount}`);
+  console.log(`- Vagas descartadas por Score ≤ 35%: ${discardedLowScoreCount}`);
   console.log(`- Vagas aprovadas como Jr Fullstack: ${approvedCount}`);
   logger.info(statsMsg, {
     step: 'PROGRESS',
@@ -109,6 +124,7 @@ export async function runPipeline(customLogger?: ScraperLogger) {
       blacklistFiltered: blacklistFilteredCount,
       whitelistFiltered: whitelistFilteredCount,
       evaluated: evaluatedCount,
+      discardedLowScore: discardedLowScoreCount,
       approved: approvedCount,
     },
   });

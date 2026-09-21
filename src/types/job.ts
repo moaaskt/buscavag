@@ -68,6 +68,7 @@ export const ProcessedJobSchema = RawJobSchema.extend({
   stackScore: z.number().min(0).max(100).optional(),
   seniorityScore: z.number().min(0).max(100).optional(),
   locationScore: z.number().min(0).max(100).optional(),
+  isStrongMatch: z.boolean().optional(),
   category: z.string().optional(),
   gaps: z.array(z.string()).optional(),
   resumeTips: z.string().optional(),
