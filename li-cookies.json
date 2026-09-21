@@ -1,0 +1,32 @@
+[
+  {
+    "name": "li_at",
+    "value": "SEU_COOKIE_LI_AT_AQUI",
+    "domain": ".linkedin.com",
+    "path": "/",
+    "expires": -1,
+    "size": 140,
+    "httpOnly": true,
+    "secure": true,
+    "session": false,
+    "sameSite": "None",
+    "sameParty": false,
+    "sourceScheme": "Secure",
+    "sourcePort": 443
+  },
+  {
+    "name": "JSESSIONID",
+    "value": "\"ajax:XXXXXXXXXXXXXX\"",
+    "domain": ".linkedin.com",
+    "path": "/",
+    "expires": -1,
+    "size": 42,
+    "httpOnly": false,
+    "secure": true,
+    "session": true,
+    "sameSite": "None",
+    "sameParty": false,
+    "sourceScheme": "Secure",
+    "sourcePort": 443
+  }
+]
