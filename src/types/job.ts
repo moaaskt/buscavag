@@ -42,6 +42,7 @@ export enum PlatformSource {
   TRAMPOS = 'trampos',
   // Comunidades & Redes Sociais
   FACEBOOK_GROUPS = 'facebook_groups',
+  LINKEDIN_POSTS = 'linkedin_posts',
 }
 
 
