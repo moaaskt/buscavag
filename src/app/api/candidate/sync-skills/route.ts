@@ -8,6 +8,10 @@ const syncSchema = z.object({
   detectedRole: z.string().optional(),
   detectedSeniority: z.string().optional(),
   summary: z.string().optional(),
+  primaryStack: z.array(z.string()).optional(),
+  secondaryStack: z.array(z.string()).optional(),
+  workModel: z.string().nullable().optional(),
+  expectedSalary: z.string().nullable().optional(),
 });
 
 export async function POST(req: NextRequest) {
@@ -30,7 +34,11 @@ export async function POST(req: NextRequest) {
       parsed.data.skills,
       parsed.data.detectedRole,
       parsed.data.detectedSeniority,
-      parsed.data.summary
+      parsed.data.summary,
+      parsed.data.primaryStack,
+      parsed.data.secondaryStack,
+      parsed.data.workModel || undefined,
+      parsed.data.expectedSalary || undefined
     );
 
     return NextResponse.json({
