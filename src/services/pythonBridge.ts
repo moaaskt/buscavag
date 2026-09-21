@@ -34,6 +34,10 @@ export interface PythonCVAnalysisData {
   detected_seniority: string;
   hard_skills: string[];
   soft_skills: string[];
+  primary_stack: string[];
+  secondary_stack: string[];
+  work_model: string | null;
+  expected_salary: string | null;
   summary: string;
   strengths: string[];
   improvement_tips: string[];
