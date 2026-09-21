@@ -71,6 +71,7 @@ export function initDatabase() {
       name TEXT NOT NULL,
       tier TEXT DEFAULT 'free',
       role TEXT DEFAULT 'CANDIDATE',
+      onboarding_completed INTEGER DEFAULT 0,
       created_at TEXT NOT NULL,
       updated_at TEXT NOT NULL
     );
@@ -82,6 +83,8 @@ export function initDatabase() {
       expected_salary TEXT,
       preferred_work_models TEXT,
       skills TEXT,
+      primary_stack TEXT,
+      secondary_stack TEXT,
       bio TEXT,
       updated_at TEXT NOT NULL,
       FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
@@ -160,6 +163,21 @@ export function initDatabase() {
     const existingUserCols = (db.pragma('table_info(users)') as Array<{ name: string }>).map((col) => col.name);
     if (!existingUserCols.includes('role')) {
       db.exec(`ALTER TABLE users ADD COLUMN role TEXT DEFAULT 'CANDIDATE';`);
+    }
+    if (!existingUserCols.includes('onboarding_completed')) {
+      db.exec(`ALTER TABLE users ADD COLUMN onboarding_completed INTEGER DEFAULT 0;`);
+    }
+
+    const existingProfileCols = (db.pragma('table_info(candidate_profiles)') as Array<{ name: string }>).map((col) => col.name);
+    const profileColumnsToAdd: Array<{ name: string; type: string }> = [
+      { name: 'primary_stack', type: 'TEXT' },
+      { name: 'secondary_stack', type: 'TEXT' },
+    ];
+
+    for (const col of profileColumnsToAdd) {
+      if (!existingProfileCols.includes(col.name)) {
+        db.exec(`ALTER TABLE candidate_profiles ADD COLUMN ${col.name} ${col.type};`);
+      }
     }
 
     const existingResumeCols = (db.pragma('table_info(candidate_resumes)') as Array<{ name: string }>).map((col) => col.name);
