@@ -1,6 +1,7 @@
 import { GoogleGenAI } from '@google/genai';
 import { RawJob } from '../types/job.js';
 import { matchesWhitelist } from '../config/jobFilters.js';
+import { evaluateSeniorityDistance, parseSalary } from './candidateMatcher.js';
 
 export interface EvaluationResult {
   isJuniorFullStack: boolean;
@@ -53,11 +54,12 @@ Você é um recrutador técnico especialista avaliando vagas para o perfil de **
 1. **APROVAR REMOTO PRIMEIRO**: Se a vaga for **REMOTA** (contendo "remoto", "remote", "home office", "teletrabalho", "work from home", "anywhere" ou localização genérica "Brasil", "Brazil", "Portugal"), defina **locationScore = 100** independentemente da cidade indicada.
 2. **SE NÃO FOR REMOTA (PRESENCIAL / HÍBRIDO):**
    - Presencial ou Híbrido em **Florianópolis (SC)**, **Floripa**, **Palhoça (SC)** ou **São José (SC)**: locationScore = 100 (Aceitar todas na Grande Florianópolis). (Atenção: Rejeitar São José dos Campos/SP).
-   - Presencial ou Híbrido em qualquer outra cidade fora da Grande Florianópolis (ex: São Paulo, Curitiba, Belo Horizonte, etc.): locationScore = 0 (REJEITAR).
+   - Presencial ou Híbrido em qualquer outra cidade fora da Grande Florianópolis (ex: São Paulo, Curitiba, Belo Horizonte, etc.): locationScore = 0 (REJEITAR. Teto máximo de overallScore = 35).
 
-**REGRAS DE SENIORIDADE E ESCOPO:**
-- Junior / Entry Level / Trainee / Sem nível especificado: seniorityScore entre 80 e 100.
-- Pleno, Sênior, Sr, Lead, Tech Lead, Staff, Arquiteto: seniorityScore entre 0 e 20 (REJEITAR).
+**REGRAS DE SENIORIDADE E ESCOPO (MATRIZ ESTRITA):**
+- Junior / Entry Level / Trainee / Sem nível especificado: seniorityScore entre 80 e 100. Sem penalização.
+- Pleno: seniorityScore 45. Divergência moderada (teto máximo de overallScore = 60).
+- Sênior, Sr, Lead, Tech Lead, Staff, Especialista, Arquiteto: seniorityScore entre 0 e 15 (REJEITAR com Hard Block. Teto máximo absoluto de overallScore = 35).
 
 **REGRAS DE STACK E LACUNAS (GAPS):**
 - stackScore (0 a 100): Avalie a aderência com a stack de Moacir (Web Full Stack e/ou IoT/ESP32/Automação).
@@ -118,7 +120,15 @@ Responda APENAS em formato JSON no seguinte modelo:
         const stackScore = Math.min(100, Math.max(0, Number(parsed.stackScore) || 0));
         const seniorityScore = Math.min(100, Math.max(0, Number(parsed.seniorityScore) || 0));
         const locationScore = Math.min(100, Math.max(0, Number(parsed.locationScore ?? 100)));
-        let isApproved = Boolean(parsed.isJuniorFullStack) && overallScore >= matchThreshold && locationScore > 0;
+
+        // Trava de Hard Block: Vagas incompatíveis em senioridade ou localização nunca passam de 35%
+        if (seniorityScore <= 20 || locationScore === 0) {
+          overallScore = Math.min(overallScore, 35);
+        } else if (seniorityScore <= 50) {
+          overallScore = Math.min(overallScore, 60);
+        }
+
+        let isApproved = Boolean(parsed.isJuniorFullStack) && overallScore >= matchThreshold && locationScore > 0 && seniorityScore > 20;
         let reasoning = String(parsed.reasoning || 'Avaliação via Hermes AI');
 
         // Trava SCR-10: Se stackScore === 0 e nenhum termo tech no título, força score 0 e rejeição
@@ -194,19 +204,9 @@ Responda APENAS em formato JSON no seguinte modelo:
     }
 
 
-    // 3. FILTRO DE SENIORIDADE
-    const seniorKeywords = ['pleno', 'sênior', 'senior', 'sr.', 'sr ', 'lead', 'lider', 'líder', 'architect', 'arquiteto', 'staff', 'principal'];
-    const juniorKeywords = ['junior', 'júnior', 'jr', 'entry level', 'iniciante', 'trainee', 'associado', 'associate', 'estágio', 'estagio'];
-
-    const hasSenior = seniorKeywords.some((kw) => text.includes(kw));
-    const hasJunior = juniorKeywords.some((kw) => text.includes(kw));
-
-    let seniorityScore = 70;
-    if (hasSenior && !hasJunior) {
-      seniorityScore = 10;
-    } else if (hasJunior) {
-      seniorityScore = 100;
-    }
+    // 3. FILTRO DE SENIORIDADE (MATRIZ GRANULAR)
+    const seniorityEval = evaluateSeniorityDistance('Júnior', job.title, job.description);
+    const seniorityScore = seniorityEval.seniorityScore;
 
     // 4. STACK DO MOACIR NETO (WEB FULL STACK + IOT / HARDWARE / AUTOMAÇÃO)
     const targetStack = [
@@ -273,18 +273,23 @@ Responda APENAS em formato JSON no seguinte modelo:
       resumeTips = 'Destaque seus projetos full stack e capacidade de rápida adaptação técnica.';
     }
 
-    // 8. OVERALL SCORE PONDERADO
+    // 8. OVERALL SCORE PONDERADO COM TETOS ESTRITOS (CAPPING 35% / 60%)
     let overallScore = Math.round(
       (stackScore * 0.45) +
       (seniorityScore * 0.35) +
       (locationScore * 0.20)
     );
+
+    // Aplicação de Capping Rígido
     if (!isLocationAccepted) {
-      overallScore = Math.min(overallScore, 40);
+      overallScore = Math.min(overallScore, 35); // Teto eliminatório de localização cravado em 35%
+    }
+    if (seniorityEval.maxScoreCap < 100) {
+      overallScore = Math.min(overallScore, seniorityEval.maxScoreCap);
     }
     overallScore = Math.min(100, Math.max(0, overallScore));
 
-    let isJuniorFullStack = overallScore >= matchThreshold && isLocationAccepted && seniorityScore >= 40;
+    let isJuniorFullStack = overallScore >= matchThreshold && isLocationAccepted && !seniorityEval.isHardBlocked;
 
     let reasoning = '';
     const titleHasTech = matchesWhitelist(job.title).matched;
@@ -293,12 +298,14 @@ Responda APENAS em formato JSON no seguinte modelo:
       isJuniorFullStack = false;
       reasoning = 'Rejeitada via Heurística (Trava não-tech): Stack score zerado e título sem palavra-chave de tecnologia.';
     } else if (!isLocationAccepted) {
-      reasoning = `Rejeitada via Heurística: ${locationReason}.`;
-    } else if (hasSenior && !hasJunior) {
-      reasoning = 'Rejeitada via Heurística: Vaga com exigência de nível Pleno/Sênior/Lead.';
+      reasoning = `Rejeitada via Heurística: ${locationReason} (Teto 35%).`;
+    } else if (seniorityEval.isHardBlocked) {
+      reasoning = `Rejeitada via Heurística: ${seniorityEval.reason}.`;
+    } else if (seniorityEval.maxScoreCap === 60) {
+      reasoning = `Compatibilidade Parcial via Heurística: ${seniorityEval.reason}.`;
     } else {
       const specNote = category === 'IoT & Automação' ? 'Especialização em IoT/Automação detectada. ' : '';
-      reasoning = `Aprovada via Heurística (${locationReason}): ${specNote}${hasJunior ? 'Nível Jr/Entry. ' : ''}${matchedStackCount} tecnologias compatíveis (${topTechs || 'Gerais'}).`;
+      reasoning = `Aprovada via Heurística (${locationReason}): ${specNote}${seniorityEval.candidateLevel === 'junior' ? 'Nível Jr/Entry. ' : ''}${matchedStackCount} tecnologias compatíveis (${topTechs || 'Gerais'}).`;
     }
 
     // 9. EXTRAÇÃO DE CONTATO DIRETO VIA REGEX (FALLBACK HEURÍSTICO)
