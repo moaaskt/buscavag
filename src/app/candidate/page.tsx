@@ -170,6 +170,7 @@ export default function CandidateDashboardPage() {
   const [searchRec, setSearchRec] = useState<string>('');
   const [workModelRec, setWorkModelRec] = useState<string>('');
   const [matchStats, setMatchStats] = useState<MatchStatsData | null>(null);
+  const [onboardingRequired, setOnboardingRequired] = useState(false);
 
   // Saved Jobs State
   const [savedJobs, setSavedJobs] = useState<SavedJob[]>([]);
@@ -239,7 +240,14 @@ export default function CandidateDashboardPage() {
       const res = await fetch(`/api/candidate/recommended-jobs?${params.toString()}`);
       const data = await res.json();
 
+      if (res.status === 403 && data.error === 'onboarding_required') {
+        setOnboardingRequired(true);
+        setRecommendedJobs([]);
+        return;
+      }
+
       if (data.success) {
+        setOnboardingRequired(false);
         setRecommendedJobs(data.data || []);
       }
     } catch (err) {
@@ -739,7 +747,27 @@ export default function CandidateDashboardPage() {
               </div>
             )}
 
-            {/* Resumo Estatístico de Match */}
+            {/* Lock Screen de Onboarding */}
+            {onboardingRequired ? (
+              <div className="rounded-2xl border border-rose-200 dark:border-rose-900/50 bg-rose-50/50 dark:bg-rose-950/20 p-8 text-center backdrop-blur-xl shadow-inner mt-6 flex flex-col items-center">
+                <div className="h-16 w-16 rounded-full bg-rose-100 dark:bg-rose-900/40 flex items-center justify-center text-rose-500 mb-4 shadow-sm border border-rose-200 dark:border-rose-800">
+                  <ShieldAlert className="w-8 h-8" />
+                </div>
+                <h3 className="text-xl font-bold text-zinc-900 dark:text-zinc-100 mb-2">Onboarding Incompleto</h3>
+                <p className="text-sm text-zinc-600 dark:text-zinc-400 mb-6 max-w-md mx-auto">
+                  O nosso motor de IA opera em alta precisão. Para te recomendar vagas com exatidão, precisamos que você forneça seu nível de senioridade, cargo alvo e stack primária.
+                </p>
+                <button
+                  onClick={() => setActiveTab('resume')}
+                  className="rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-bold px-6 py-3 text-sm shadow-md shadow-rose-600/20 transition-all active:scale-95 flex items-center gap-2"
+                >
+                  <FileText className="w-4 h-4" />
+                  Ir para Meu Currículo & IA
+                </button>
+              </div>
+            ) : (
+              <>
+                {/* Resumo Estatístico de Match */}
             {matchStats && matchStats.totalAnalyzed > 0 && (
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div className="rounded-2xl border border-zinc-200 dark:border-zinc-800/80 bg-white dark:bg-zinc-900/50 p-5 backdrop-blur-xl shadow-sm">
@@ -1084,6 +1112,8 @@ export default function CandidateDashboardPage() {
                   );
                 })}
               </div>
+            )}
+            </>
             )}
           </div>
         )}

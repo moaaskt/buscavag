@@ -24,6 +24,10 @@ export async function GET(req: NextRequest) {
     const user = repo.getUserById(session.userId);
     const tier = user?.tier || session.tier || 'free';
 
+    if (!user || !user.onboarding_completed) {
+      return NextResponse.json({ success: false, error: 'onboarding_required' }, { status: 403 });
+    }
+
     const result = repo.getRecommendedJobs(session.userId, {
       minScore,
       search,

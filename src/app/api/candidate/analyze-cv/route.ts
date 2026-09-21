@@ -87,6 +87,10 @@ export async function POST(req: NextRequest) {
           'Destaque métricas e resultados concretos em cada experiência.',
           'Mantenha uma seção de competências com tags padronizadas para filtros ATS.'
         ],
+        primary_stack: ['TypeScript', 'React', 'Node.js'],
+        secondary_stack: ['PostgreSQL', 'Docker'],
+        work_model: 'híbrido',
+        expected_salary: '5000',
         source: 'local-fallback',
       };
     }
