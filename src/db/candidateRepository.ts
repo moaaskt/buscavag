@@ -389,7 +389,7 @@ export class CandidateRepository {
       FROM user_saved_jobs s
       JOIN jobs j ON s.job_id = j.id
       WHERE s.user_id = ?
-      ORDER BY s.created_at DESC
+      ORDER BY j.overall_score DESC, s.created_at DESC
     `);
 
     const rows = stmt.all(userId) as any[];
