@@ -50,7 +50,8 @@ export function initDatabase() {
       extracted_role TEXT,
       contract_type TEXT,
       application_channel TEXT,
-      salary TEXT
+      salary TEXT,
+      direct_contact TEXT
     );
 
     CREATE TABLE IF NOT EXISTS scraper_logs (
@@ -147,6 +148,7 @@ export function initDatabase() {
       { name: 'contract_type', type: 'TEXT' },
       { name: 'application_channel', type: 'TEXT' },
       { name: 'salary', type: 'TEXT' },
+      { name: 'direct_contact', type: 'TEXT' },
     ];
 
     for (const col of jobColumnsToAdd) {
