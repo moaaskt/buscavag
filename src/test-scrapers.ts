@@ -12,7 +12,7 @@ async function testAllScrapers() {
 
   let newJobsCount = 0;
   for (const job of jobs) {
-    if (!repo.exists(job.url, job.company, job.title)) {
+    if (!repo.exists(job.url, job.company, job.title, job.platform)) {
       newJobsCount++;
       console.log(`[NOVA VAGA] [${job.platform.toUpperCase()}] ${job.title} | ${job.company} | ${job.location || 'Local N/D'} | Publicado: ${job.publishedAt.toLocaleDateString()}`);
     } else {
