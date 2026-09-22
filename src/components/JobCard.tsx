@@ -10,6 +10,8 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { PlatformBadge } from '@/components/ui/PlatformBadge';
+import { getCategoryBadgeClass } from '@/lib/category-colors';
+import { ScoreBadge } from '@/components/ScoreBadge';
 
 interface JobCardProps {
   job: ProcessedJob;
@@ -94,9 +96,7 @@ export function JobCard({
               </span>
             )}
           </div>
-          <span className="font-mono text-xs font-semibold text-emerald-600 dark:text-emerald-400 shrink-0">
-            {score}%
-          </span>
+          <ScoreBadge score={score} size="sm" />
         </div>
 
         <div className="min-w-0">
@@ -199,7 +199,7 @@ export function JobCard({
               )}
               {/* Category tag */}
               {job.category && (
-                <span className="font-mono text-[11px] px-2 py-0.5 rounded bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 border border-zinc-200 dark:border-zinc-700/60 shrink-0">
+                <span className={`font-mono text-[11px] px-2 py-0.5 rounded border shrink-0 ${getCategoryBadgeClass(job.category)}`}>
                   {job.category}
                 </span>
               )}
@@ -264,13 +264,8 @@ export function JobCard({
 
         {/* Right: Scores & Actions */}
         <div className="flex items-center gap-4 shrink-0 pt-2 lg:pt-0 border-t lg:border-t-0 border-zinc-100 dark:border-zinc-800/60 justify-between lg:justify-end">
-          <div className="flex flex-col items-end">
-            <div className="flex items-baseline gap-1.5 font-mono text-xs">
-              <span className="text-zinc-400 dark:text-zinc-500">SCORE:</span>
-              <span className="text-sm font-semibold text-emerald-600 dark:text-emerald-400">
-                {score}%
-              </span>
-            </div>
+          <div className="flex flex-col items-end gap-1">
+            <ScoreBadge score={score} size="sm" />
             {job.stackScore !== undefined && (
               <span className="font-mono text-[11px] text-zinc-400 dark:text-zinc-500">
                 Stack: {job.stackScore}%

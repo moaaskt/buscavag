@@ -83,6 +83,7 @@ interface ResumeData {
 
 import { UpgradeModal } from '@/components/UpgradeModal';
 import { PlatformBadge } from '@/components/ui/PlatformBadge';
+import { ScoreBadge } from '@/components/ScoreBadge';
 import { JobModal } from '@/components/JobModal';
 import { ProcessedJob } from '@/types/job';
 
@@ -562,12 +563,7 @@ export default function CandidateDashboardPage() {
     return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
   };
 
-  const getScoreColor = (score: number) => {
-    if (score >= 85) return 'text-emerald-600 dark:text-emerald-400 border-emerald-500/40 bg-emerald-50 dark:bg-emerald-500/10 shadow-emerald-100 dark:shadow-emerald-950/40';
-    if (score >= 70) return 'text-teal-600 dark:text-teal-300 border-teal-500/40 bg-teal-50 dark:bg-teal-500/10 shadow-teal-100 dark:shadow-teal-950/40';
-    if (score >= 50) return 'text-amber-600 dark:text-amber-300 border-amber-500/40 bg-amber-50 dark:bg-amber-500/10 shadow-amber-100 dark:shadow-amber-950/40';
-    return 'text-zinc-500 dark:text-zinc-400 border-zinc-300 dark:border-zinc-700 bg-zinc-100 dark:bg-zinc-800/60 shadow-none';
-  };
+
 
   if (loading) {
     return (
@@ -751,7 +747,7 @@ export default function CandidateDashboardPage() {
           <div className="space-y-6">
             {/* Free Tier Pro Banner */}
             {user?.tier === 'free' && (
-              <div className="relative overflow-hidden rounded-2xl border border-amber-500/30 bg-gradient-to-r from-amber-500/10 via-yellow-500/5 to-emerald-500/10 p-5 backdrop-blur-xl flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div className="relative overflow-hidden rounded-xl border border-amber-500/30 bg-gradient-to-r from-amber-500/10 via-yellow-500/5 to-emerald-500/10 p-5 backdrop-blur-xl flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div className="flex items-start sm:items-center gap-3.5">
                   <div className="h-10 w-10 rounded-xl bg-amber-500/20 border border-amber-500/30 flex items-center justify-center text-amber-500 dark:text-amber-400 shrink-0 shadow-xs">
                     <Crown className="w-5 h-5" />
@@ -777,7 +773,7 @@ export default function CandidateDashboardPage() {
 
             {/* Lock Screen de Onboarding */}
             {onboardingRequired ? (
-              <div className="rounded-2xl border border-rose-200 dark:border-rose-900/50 bg-rose-50/50 dark:bg-rose-950/20 p-8 text-center backdrop-blur-xl shadow-inner mt-6 flex flex-col items-center">
+              <div className="rounded-xl border border-rose-200 dark:border-rose-900/50 bg-rose-50/50 dark:bg-rose-950/20 p-8 text-center backdrop-blur-xl shadow-inner mt-6 flex flex-col items-center">
                 <div className="h-16 w-16 rounded-full bg-rose-100 dark:bg-rose-900/40 flex items-center justify-center text-rose-500 mb-4 shadow-sm border border-rose-200 dark:border-rose-800">
                   <ShieldAlert className="w-8 h-8" />
                 </div>
@@ -798,7 +794,7 @@ export default function CandidateDashboardPage() {
                 {/* Resumo Estatístico de Match */}
             {matchStats && matchStats.totalAnalyzed > 0 && (
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <div className="rounded-2xl border border-zinc-200 dark:border-zinc-800/80 bg-white dark:bg-zinc-900/50 p-5 backdrop-blur-xl shadow-sm">
+                <div className="rounded-xl border border-zinc-200 dark:border-zinc-800/80 bg-white dark:bg-zinc-900/50 p-5 backdrop-blur-xl shadow-sm">
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-mono uppercase text-zinc-500 dark:text-zinc-400">Aderência Média</span>
                     <Sparkles className="w-4 h-4 text-emerald-500 dark:text-emerald-400" />
@@ -811,7 +807,7 @@ export default function CandidateDashboardPage() {
                   </p>
                 </div>
 
-                <div className="rounded-2xl border border-zinc-200 dark:border-zinc-800/80 bg-white dark:bg-zinc-900/50 p-5 backdrop-blur-xl shadow-sm">
+                <div className="rounded-xl border border-zinc-200 dark:border-zinc-800/80 bg-white dark:bg-zinc-900/50 p-5 backdrop-blur-xl shadow-sm">
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-mono uppercase text-zinc-500 dark:text-zinc-400">Super Match (&ge; 75%)</span>
                     <Flame className="w-4 h-4 text-amber-500 dark:text-amber-400" />
@@ -824,7 +820,7 @@ export default function CandidateDashboardPage() {
                   </p>
                 </div>
 
-                <div className="rounded-2xl border border-zinc-200 dark:border-zinc-800/80 bg-white dark:bg-zinc-900/50 p-5 backdrop-blur-xl shadow-sm">
+                <div className="rounded-xl border border-zinc-200 dark:border-zinc-800/80 bg-white dark:bg-zinc-900/50 p-5 backdrop-blur-xl shadow-sm">
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-mono uppercase text-zinc-500 dark:text-zinc-400">Top Competências</span>
                     <Award className="w-4 h-4 text-teal-500 dark:text-teal-400" />
@@ -841,7 +837,7 @@ export default function CandidateDashboardPage() {
             )}
 
             {/* Barra de Filtros Inteligentes */}
-            <div className="rounded-2xl border border-zinc-200 dark:border-zinc-800/80 bg-white dark:bg-zinc-900/50 p-5 backdrop-blur-xl shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div className="rounded-xl border border-zinc-200 dark:border-zinc-800/80 bg-white dark:bg-zinc-900/50 p-5 backdrop-blur-xl shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
               <div className="flex flex-wrap items-center gap-2">
                 <span className="text-xs font-mono text-zinc-500 dark:text-zinc-400 mr-1 flex items-center gap-1">
                   <SlidersHorizontal className="w-3.5 h-3.5" />
@@ -910,7 +906,7 @@ export default function CandidateDashboardPage() {
                 <span>Calculando algoritmo de match perfeito...</span>
               </div>
             ) : recommendedJobs.length === 0 ? (
-              <div className="py-16 text-center border border-zinc-200 dark:border-zinc-800/80 rounded-2xl bg-zinc-50 dark:bg-zinc-900/40 p-8">
+              <div className="py-16 text-center border border-zinc-200 dark:border-zinc-800/80 rounded-xl bg-zinc-50 dark:bg-zinc-900/40 p-8">
                 <Target className="w-12 h-12 text-zinc-400 dark:text-zinc-600 mx-auto mb-3" />
                 <h3 className="text-base font-semibold text-zinc-800 dark:text-zinc-200">Nenhuma vaga recomendada para este filtro</h3>
                 <p className="text-xs text-zinc-600 dark:text-zinc-400 mt-1.5 max-w-md mx-auto">
@@ -938,13 +934,12 @@ export default function CandidateDashboardPage() {
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                 {recommendedJobs.map((item) => {
-                  const scoreClass = getScoreColor(item.match.overallScore);
 
                   if (item.isLocked) {
                     return (
                       <div
                         key={item.job.id}
-                        className="relative overflow-hidden rounded-2xl border border-amber-500/30 bg-white/95 dark:bg-zinc-900/50 p-6 backdrop-blur-xl flex flex-col justify-between group shadow-sm dark:shadow-lg hover:border-amber-500/50 transition-all"
+                        className="relative overflow-hidden rounded-xl border border-amber-500/30 bg-white/95 dark:bg-zinc-900/50 p-6 backdrop-blur-xl flex flex-col justify-between group shadow-sm dark:shadow-lg hover:border-amber-500/50 transition-all"
                       >
                         {/* Header Bloqueado */}
                         <div className="flex items-start justify-between gap-3">
@@ -958,15 +953,7 @@ export default function CandidateDashboardPage() {
                             </span>
                           </div>
 
-                          <div
-                            className={cn(
-                              'flex items-center gap-1 rounded-xl border px-3 py-1 font-mono text-xs font-bold shadow-xs',
-                              scoreClass
-                            )}
-                          >
-                            <span>{item.match.overallScore}%</span>
-                            <span className="text-[10px] font-normal uppercase">Match</span>
-                          </div>
+                          <ScoreBadge score={item.match.overallScore} size="sm" shape="rect" />
                         </div>
 
                         {/* Detalhes com Efeito de Blur */}
@@ -1011,7 +998,7 @@ export default function CandidateDashboardPage() {
                   return (
                     <div
                       key={item.job.id}
-                      className="rounded-2xl border border-zinc-200 dark:border-zinc-800/80 bg-white dark:bg-zinc-900/50 p-6 backdrop-blur-xl hover:border-zinc-300 dark:hover:border-zinc-700 transition-all flex flex-col justify-between group shadow-sm dark:shadow-lg"
+                      className="rounded-xl border border-zinc-200 dark:border-zinc-800/80 bg-white dark:bg-zinc-900/50 p-6 backdrop-blur-xl hover:border-zinc-300 dark:hover:border-zinc-700 transition-all flex flex-col justify-between group shadow-sm dark:shadow-lg"
                     >
                       <div>
                         {/* Top Header Card */}
@@ -1029,15 +1016,7 @@ export default function CandidateDashboardPage() {
                           </div>
 
                           {/* Match Ring Badge */}
-                          <div
-                            className={cn(
-                              'flex items-center gap-1 rounded-xl border px-3 py-1 font-mono text-xs font-bold shadow-md',
-                              scoreClass
-                            )}
-                          >
-                            <span>{item.match.overallScore}%</span>
-                            <span className="text-[10px] font-normal uppercase">Match</span>
-                          </div>
+                          <ScoreBadge score={item.match.overallScore} size="sm" shape="rect" />
                         </div>
 
                         {/* Title & Company */}
@@ -1159,7 +1138,7 @@ export default function CandidateDashboardPage() {
 
         {/* Tab 1: Perfil Profissional */}
         {activeTab === 'profile' && (
-          <div className="rounded-2xl border border-zinc-200 dark:border-zinc-800/80 bg-white dark:bg-zinc-900/50 p-6 md:p-8 backdrop-blur-xl shadow-sm">
+          <div className="rounded-xl border border-zinc-200 dark:border-zinc-800/80 bg-white dark:bg-zinc-900/50 p-6 md:p-8 backdrop-blur-xl shadow-sm">
             <div className="mb-6">
               <h2 className="text-xl font-bold text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
                 <span>Preferências de Carreira & Stack</span>
@@ -1355,7 +1334,7 @@ export default function CandidateDashboardPage() {
         {/* Tab 2: Meu Currículo & Análise de IA */}
         {activeTab === 'resume' && (
           <div className="space-y-6">
-            <div className="rounded-2xl border border-zinc-200 dark:border-zinc-800/80 bg-white dark:bg-zinc-900/50 p-6 md:p-8 backdrop-blur-xl shadow-sm">
+            <div className="rounded-xl border border-zinc-200 dark:border-zinc-800/80 bg-white dark:bg-zinc-900/50 p-6 md:p-8 backdrop-blur-xl shadow-sm">
               <div className="mb-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
                   <h2 className="text-xl font-bold text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
@@ -1522,7 +1501,7 @@ export default function CandidateDashboardPage() {
 
             {/* Painel de Resultados da Análise de IA */}
             {resume?.ai_analysis && (
-              <div className="rounded-2xl border border-zinc-200 dark:border-zinc-800/80 bg-white dark:bg-zinc-900/50 p-6 md:p-8 backdrop-blur-xl space-y-6 shadow-sm">
+              <div className="rounded-xl border border-zinc-200 dark:border-zinc-800/80 bg-white dark:bg-zinc-900/50 p-6 md:p-8 backdrop-blur-xl space-y-6 shadow-sm">
                 <div className="flex flex-col md:flex-row md:items-center justify-between pb-4 border-b border-zinc-200 dark:border-zinc-800/80 gap-4">
                   <div>
                     <div className="flex items-center gap-2">
@@ -1653,7 +1632,7 @@ export default function CandidateDashboardPage() {
 
         {/* Tab 4: Vagas Salvas */}
         {activeTab === 'saved' && (
-          <div className="rounded-2xl border border-zinc-200 dark:border-zinc-800/80 bg-white dark:bg-zinc-900/50 p-6 md:p-8 backdrop-blur-xl shadow-sm">
+          <div className="rounded-xl border border-zinc-200 dark:border-zinc-800/80 bg-white dark:bg-zinc-900/50 p-6 md:p-8 backdrop-blur-xl shadow-sm">
             <div className="mb-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
               <div>
                 <h2 className="text-xl font-bold text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
@@ -1679,7 +1658,7 @@ export default function CandidateDashboardPage() {
                 <span>Carregando vagas salvas...</span>
               </div>
             ) : savedJobs.length === 0 ? (
-              <div className="py-16 text-center border border-zinc-200 dark:border-zinc-800/80 rounded-2xl bg-zinc-50 dark:bg-zinc-900/40 p-8">
+              <div className="py-16 text-center border border-zinc-200 dark:border-zinc-800/80 rounded-xl bg-zinc-50 dark:bg-zinc-900/40 p-8">
                 <Bookmark className="w-12 h-12 text-zinc-400 dark:text-zinc-600 mx-auto mb-3" />
                 <h3 className="text-base font-semibold text-zinc-800 dark:text-zinc-200">Nenhuma vaga salva ainda</h3>
                 <p className="text-xs text-zinc-600 dark:text-zinc-400 mt-1.5 max-w-sm mx-auto">
@@ -1697,7 +1676,7 @@ export default function CandidateDashboardPage() {
                 {savedJobs.map((item) => (
                   <div
                     key={item.job_id}
-                    className="rounded-2xl border border-zinc-200 dark:border-zinc-800/80 bg-white dark:bg-zinc-900/50 p-6 backdrop-blur-xl hover:border-zinc-300 dark:hover:border-zinc-700 shadow-sm hover:shadow-md transition-all flex flex-col justify-between group"
+                    className="rounded-xl border border-zinc-200 dark:border-zinc-800/80 bg-white dark:bg-zinc-900/50 p-6 backdrop-blur-xl hover:border-zinc-300 dark:hover:border-zinc-700 shadow-sm hover:shadow-md transition-all flex flex-col justify-between group"
                   >
                     <div>
                       <div className="flex items-start justify-between gap-2">

@@ -24,6 +24,8 @@ import {
   Mail
 } from 'lucide-react';
 import { PlatformBadge } from '@/components/ui/PlatformBadge';
+import { getCategoryBadgeClass } from '@/lib/category-colors';
+import { ScoreBadge } from '@/components/ScoreBadge';
 import { generatePitch, PitchCandidateContext } from '@/lib/pitchGenerator';
 
 export interface CandidateProfileProps {
@@ -132,14 +134,11 @@ export function JobModal({ job, onClose, onStatusChange, candidateProfile }: Job
           <div className="flex flex-wrap items-center gap-2 pr-10">
             <PlatformBadge platform={job.platform} />
             {job.category && (
-              <span className="font-mono text-[11px] px-2 py-0.5 rounded bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 border border-zinc-200 dark:border-zinc-700/60 font-medium">
+              <span className={`font-mono text-[11px] px-2 py-0.5 rounded border font-medium ${getCategoryBadgeClass(job.category)}`}>
                 {job.category}
               </span>
             )}
-            <span className="font-mono text-[11px] font-semibold text-emerald-600 dark:text-emerald-400 flex items-center gap-1.5 pl-1">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-              SCORE: {overallScore}%
-            </span>
+            <ScoreBadge score={overallScore} size="sm" />
           </div>
 
           {/* Title */}
