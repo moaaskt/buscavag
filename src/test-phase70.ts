@@ -5,6 +5,8 @@ import { NextRequest } from 'next/server';
 import {
   validateAuthSecretSecurity,
   DEFAULT_AUTH_SECRET,
+  getAuthSecret,
+  resetAuthSecretCache,
   createSessionToken,
   SESSION_COOKIE_NAME,
 } from './lib/auth';
@@ -66,6 +68,38 @@ async function runPhase70Tests() {
   const testUndefined = validateAuthSecretSecurity(undefined, 'test');
   assert.strictEqual(testUndefined, DEFAULT_AUTH_SECRET, 'Deve utilizar fallback seguro em test');
   console.log('  ✅ [PASS] development/test com fallback default permitido');
+
+  // 1.6 Runtime getAuthSecret() com simulação de ambiente
+  const originalEnv = { ...process.env };
+  try {
+    // Simula runtime de produção sem secret
+    (process.env as any).NODE_ENV = 'production';
+    delete process.env.AUTH_SECRET;
+    resetAuthSecretCache();
+    assert.throws(
+      () => getAuthSecret(),
+      (err: Error) => err.message.includes('AUTH_SECRET environment variable is missing'),
+      'getAuthSecret deve lançar erro fatal em runtime de produção se ausente'
+    );
+
+    // Simula runtime de produção com secret fraco
+    process.env.AUTH_SECRET = 'curto';
+    resetAuthSecretCache();
+    assert.throws(
+      () => getAuthSecret(),
+      (err: Error) => err.message.includes('must have at least 32 characters'),
+      'getAuthSecret deve lançar erro fatal em runtime de produção se < 32 chars'
+    );
+
+    // Simula runtime de produção com secret forte
+    process.env.AUTH_SECRET = strongSecret;
+    resetAuthSecretCache();
+    assert.strictEqual(getAuthSecret(), strongSecret, 'getAuthSecret deve retornar chave forte em produção');
+  } finally {
+    process.env = originalEnv;
+    resetAuthSecretCache();
+  }
+  console.log('  ✅ [PASS] Runtime getAuthSecret() validado em todos os cenários com cache');
 
   // ==========================================
   // BLOCO 2: CONCORRÊNCIA E COOLDOWN (REQ-09)
