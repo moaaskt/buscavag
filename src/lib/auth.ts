@@ -2,7 +2,35 @@ import crypto from 'crypto';
 import { cookies } from 'next/headers';
 import { NextRequest } from 'next/server';
 
-const AUTH_SECRET = process.env.AUTH_SECRET || 'buscavag-secret-key-candidate-portal-2026-secure-auth';
+export const DEFAULT_AUTH_SECRET = 'buscavag-secret-key-candidate-portal-2026-secure-auth';
+
+/**
+ * Validação estrita de segurança do AUTH_SECRET (REQ-07).
+ * Em ambiente de produção (NODE_ENV=production), a aplicação bloqueia fatalmente
+ * a inicialização se AUTH_SECRET estiver ausente, usar a chave padrão ou tiver menos de 32 caracteres.
+ * Em development ou test, utiliza o segredo fornecido ou o fallback local para DX.
+ */
+export function validateAuthSecretSecurity(
+  secret: string | undefined = process.env.AUTH_SECRET,
+  nodeEnv: string | undefined = process.env.NODE_ENV
+): string {
+  const isProd = nodeEnv === 'production';
+  if (isProd) {
+    if (!secret || secret.trim() === '') {
+      throw new Error('🚨 [FATAL_SECURITY] AUTH_SECRET environment variable is missing in production!');
+    }
+    if (secret === DEFAULT_AUTH_SECRET) {
+      throw new Error('🚨 [FATAL_SECURITY] AUTH_SECRET cannot use the default hardcoded secret in production!');
+    }
+    if (secret.length < 32) {
+      throw new Error(`🚨 [FATAL_SECURITY] AUTH_SECRET must have at least 32 characters in production! (Found ${secret.length})`);
+    }
+    return secret;
+  }
+  return secret || DEFAULT_AUTH_SECRET;
+}
+
+const AUTH_SECRET = validateAuthSecretSecurity();
 export const SESSION_COOKIE_NAME = 'buscavag_session';
 
 export interface UserSession {
