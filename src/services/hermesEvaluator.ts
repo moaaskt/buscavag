@@ -4,21 +4,27 @@ import { matchesWhitelist } from '../config/jobFilters.js';
 import { evaluateSeniorityDistance, parseSalary } from './candidateMatcher.js';
 
 export interface EvaluationResult {
-  isJuniorFullStack: boolean;
-  overallScore: number;
-  score?: number; // Mantido para retrocompatibilidade
-  stackScore: number;
-  seniorityScore: number;
-  locationScore: number;
+  isTechSoftware?: boolean;
+  requiredSeniority?: string;
+  techStack?: string[];
+  workModel?: string;
+  location?: string;
+  salary?: string;
   category: string;
-  gaps: string[];
-  resumeTips: string;
-  reasoning: string;
   extractedRole?: string;
   contractType?: string;
   applicationChannel?: string;
-  salary?: string;
   directContact?: string;
+  reasoning: string;
+  // Campos mantidos para retrocompatibilidade
+  isJuniorFullStack: boolean;
+  overallScore: number;
+  score?: number;
+  stackScore: number;
+  seniorityScore: number;
+  locationScore: number;
+  gaps: string[];
+  resumeTips: string;
 }
 
 export class HermesEvaluator {
@@ -35,67 +41,69 @@ export class HermesEvaluator {
   }
 
   public async evaluate(job: RawJob): Promise<EvaluationResult> {
-    const matchThreshold = Number(process.env.MATCH_THRESHOLD) || 55;
-
     if (!this.client) {
       return this.evaluateHeuristic(job);
     }
 
     try {
       const prompt = `
-Você é um recrutador técnico especialista avaliando vagas para o perfil de **Moacir Neto** (Dev Full Stack Junior & Especialista IoT / Automação Residencial).
+Você é um classificador e analisador técnico de alta precisão especializado no mercado de Tecnologia da Informação e Engenharia de Software.
+Sua missão é extrair metadados neutros, precisos e objetivos da vaga anunciada para abastecer uma plataforma de empregos multi-candidato.
 
-**Perfil de Moacir Neto:**
-- **Nível:** Junior / Entry Level / Trainee / Sem especificação de nível.
-- **Stack Principal Web & Backend:** Node.js, TypeScript, PHP (Laravel / CodeIgniter), NestJS, Express, React, Next.js, JavaScript, Python, Golang, Tailwind CSS, Bootstrap, MySQL, PostgreSQL, Supabase, Docker, REST APIs.
-- **Especialização em IoT, Hardware & Automação:** Microcontroladores ESP32, ESP8266, Arduino, Raspberry Pi, MQTT, Home Assistant, ESPHome, C/C++ para embarcados, sensores/atuadores, automação residencial e integração hardware-web via WebSockets e APIs.
+DIRETRIZES FUNDAMENTAIS:
+1. VALIDAÇÃO DE ESCOPO TECH (isTechSoftware):
+   - Defina isTechSoftware = true SE E SOMENTE SE a oportunidade for estritamente do setor técnico de tecnologia/software:
+     • Desenvolvimento / Engenharia de Software (Full Stack, Backend, Frontend, Mobile, Web, Embarcados/IoT, etc.)
+     • Engenharia / Ciência de Dados, BI, Analytics, Inteligência Artificial / ML
+     • DevOps, SRE, Cloud, Infraestrutura de TI, Redes, Administração de Sistemas
+     • QA, Testes de Software, Automação de Qualidade
+     • Segurança da Informação, CyberSec, AppSec
+     • Produto e Design Tech (Product Manager Tech, Product Owner Tech, UI/UX Designer)
+   - ATENÇÃO ESTREITA ANTI-FALSO-POSITIVO:
+     Defina isTechSoftware = false explicitamente para funções NÃO-técnicas, MESMO QUE anunciadas por empresas de tecnologia, SaaS ou startups:
+     • Vendas B2B, SDR, BDR, Inside Sales, Executivo de Contas, Comercial, Vendedor
+     • Recrutador, Tech Recruiter, Headhunter, Talent Acquisition, RH, Departamento Pessoal
+     • Financeiro, Contabilidade, Fiscal, Jurídico, Compliance, Administrativo, Secretariado
+     • Suporte Nível 1 / Atendimento ao Cliente / SAC / Help Desk operacional
+     • Marketing Digital operacional, Social Media, Copywriter, Redator
+     • Cargos operacionais gerais (motorista, balconista, estoquista, ajudante)
 
-**REGRAS DE LOCALIZAÇÃO E MODELO DE TRABALHO (ESTRITO E PRIORITÁRIO):**
-1. **APROVAR REMOTO PRIMEIRO**: Se a vaga for **REMOTA** (contendo "remoto", "remote", "home office", "teletrabalho", "work from home", "anywhere" ou localização genérica "Brasil", "Brazil", "Portugal"), defina **locationScore = 100** independentemente da cidade indicada.
-2. **SE NÃO FOR REMOTA (PRESENCIAL / HÍBRIDO):**
-   - Presencial ou Híbrido em **Florianópolis (SC)**, **Floripa**, **Palhoça (SC)** ou **São José (SC)**: locationScore = 100 (Aceitar todas na Grande Florianópolis). (Atenção: Rejeitar São José dos Campos/SP).
-   - Presencial ou Híbrido em qualquer outra cidade fora da Grande Florianópolis (ex: São Paulo, Curitiba, Belo Horizonte, etc.): locationScore = 0 (REJEITAR. Teto máximo de overallScore = 35).
+2. CATEGORIZAÇÃO TÉCNICA (category):
+   - Classifique estritamente em: "Frontend", "Backend", "Full Stack", "DevOps", "Data", "Mobile", "QA", "IoT & Embarcados", "Security", "Product & UI/UX" ou "Other" (se isTechSoftware for false).
 
-**REGRAS DE SENIORIDADE E ESCOPO (MATRIZ ESTRITA):**
-- Junior / Entry Level / Trainee / Sem nível especificado: seniorityScore entre 80 e 100. Sem penalização.
-- Pleno: seniorityScore 45. Divergência moderada (teto máximo de overallScore = 60).
-- Sênior, Sr, Lead, Tech Lead, Staff, Especialista, Arquiteto: seniorityScore entre 0 e 15 (REJEITAR com Hard Block. Teto máximo absoluto de overallScore = 35).
+3. NÍVEL DE SENIORIDADE REQUERIDO (requiredSeniority):
+   - Classifique estritamente em: "Estágio", "Júnior", "Pleno", "Sênior", "Especialista / Tech Lead" ou "Não especificado".
 
-**REGRAS DE STACK E LACUNAS (GAPS):**
-- stackScore (0 a 100): Avalie a aderência com a stack de Moacir (Web Full Stack e/ou IoT/ESP32/Automação).
-- gaps: Liste apenas tecnologias essenciais da vaga que NÃO constam na stack de Moacir (ex: ["Kubernetes", "AWS", "Ruby", "Swift"]). Tecnologias de IoT, MQTT, ESP32, C++ básico NÃO são gaps, são pontos fortes. Se não houver lacunas relevantes, retorne [].
-- resumeTips: Dica concisa de até 2 frases de como Moacir pode adaptar seu currículo ou carta para esta vaga específica (destacando projetos Web ou IoT conforme a vaga).
+4. TECH STACK (techStack):
+   - Array com as tecnologias, linguagens, frameworks, bibliotecas, bancos e ferramentas de TI citadas no texto.
 
-**CATEGORIZAÇÃO E EXTRAÇÃO ADICIONAL:**
-- category: Classifique estritamente em uma das opções: "Frontend", "Backend", "Full Stack", "DevOps", "Data", "Mobile", "IoT & Automação" ou "Other".
-- extractedRole: O cargo ou papel principal exigido (ex: "Desenvolvedor Backend Pleno", "Dev Frontend React"). Tente ser conciso.
-- contractType: Modelo de contrato explícito ou inferido (ex: "CLT", "PJ", "Freela", "Internacional", "Estágio" ou "Não informado").
-- applicationChannel: Canal de candidatura indicado (ex: "Email", "Link externo", "Mensagem Direta", "WhatsApp" ou "Não informado"). Se for link de ATS (Gupy, Greenhouse, etc.), guarde aqui.
-- salary: O salário, range salarial ou valor hora (ex: "R$ 5.000", "$30/h", "R$ 10k - 15k" ou "Não informado").
-- directContact: SOBERANIA DO CONTATO DIRETO! Se o post mencionar qualquer e-mail (ex: "vagas@empresa.com", "recrutamento@xyz.com") ou instrução direta de envio por DM ("enviar CV na DM", "me chame no privado"), extraia ESTREITAMENTE esse e-mail ou instrução aqui. O e-mail/DM tem 100% de prioridade sobre links de ATS. NUNCA preencha directContact com URLs de ATS (Gupy, Greenhouse, etc.). Se não houver e-mail nem instrução de DM, retorne string vazia "".
+5. MODELO DE TRABALHO & LOCALIZAÇÃO:
+   - workModel: "Remoto", "Híbrido", "Presencial" ou "Não informado".
+   - location: Cidade e Estado identificados (ou "Remoto", "Brasil", etc.).
 
-**Vaga a ser analisada:**
+6. SOBERANIA DO CONTATO DIRETO (directContact):
+   - Se houver e-mail de contato direto ou instrução de envio por DM/privado, extraia estritamente esse e-mail ou instrução. NUNCA insira URLs de ATS (Gupy, Greenhouse, etc.). Se não houver, retorne string vazia "".
+
+Vaga a ser analisada:
 - Título: ${job.title}
 - Empresa: ${job.company}
 - Localização indicada: ${job.location || 'Não informada'}
 - Descrição: ${job.description}
 
-Responda APENAS em formato JSON no seguinte modelo:
+Responda APENAS em formato JSON no seguinte formato:
 {
-  "isJuniorFullStack": boolean,
-  "overallScore": number,
-  "stackScore": number,
-  "seniorityScore": number,
-  "locationScore": number,
-  "category": "Frontend" | "Backend" | "Full Stack" | "DevOps" | "Data" | "Mobile" | "IoT & Automação" | "Other",
-  "gaps": string[],
-  "resumeTips": string,
-  "reasoning": "Justificativa clara em português indicando adequação de localização, senioridade e stack (incluindo IoT/Automação se aplicável)",
+  "isTechSoftware": boolean,
+  "category": "Frontend" | "Backend" | "Full Stack" | "DevOps" | "Data" | "Mobile" | "QA" | "IoT & Embarcados" | "Security" | "Product & UI/UX" | "Other",
   "extractedRole": string,
+  "requiredSeniority": "Estágio" | "Júnior" | "Pleno" | "Sênior" | "Especialista / Tech Lead" | "Não especificado",
+  "techStack": string[],
+  "workModel": "Remoto" | "Híbrido" | "Presencial" | "Não informado",
+  "location": string,
   "contractType": string,
   "applicationChannel": string,
   "salary": string,
-  "directContact": string
+  "directContact": string,
+  "reasoning": "Resumo analítico neutro e objetivo de 1 a 2 frases da oportunidade técnica."
 }
 `;
 
@@ -113,222 +121,189 @@ Responda APENAS em formato JSON no seguinte modelo:
         },
       });
 
-        const content = response.text;
+      const content = response.text;
       if (content) {
         const parsed = JSON.parse(content);
-        let overallScore = Math.min(100, Math.max(0, Number(parsed.overallScore ?? parsed.score) || 0));
-        const stackScore = Math.min(100, Math.max(0, Number(parsed.stackScore) || 0));
-        const seniorityScore = Math.min(100, Math.max(0, Number(parsed.seniorityScore) || 0));
-        const locationScore = Math.min(100, Math.max(0, Number(parsed.locationScore ?? 100)));
+        const isTechSoftware = Boolean(parsed.isTechSoftware);
+        const category = isTechSoftware ? String(parsed.category || 'Full Stack') : 'Other';
+        const requiredSeniority = String(parsed.requiredSeniority || 'Não especificado');
+        const techStack = Array.isArray(parsed.techStack) ? parsed.techStack.map(String) : [];
+        const workModel = String(parsed.workModel || 'Não informado');
+        const locationStr = parsed.location ? String(parsed.location) : job.location || 'Não informada';
+        const salary = parsed.salary ? String(parsed.salary) : 'Não informado';
+        const reasoning = String(parsed.reasoning || (isTechSoftware ? 'Vaga técnica avaliada via Hermes IA' : 'Vaga fora do escopo de TI'));
 
-        // Trava de Hard Block: Vagas incompatíveis em senioridade ou localização nunca passam de 35%
-        if (seniorityScore <= 20 || locationScore === 0) {
-          overallScore = Math.min(overallScore, 35);
-        } else if (seniorityScore <= 50) {
-          overallScore = Math.min(overallScore, 60);
-        }
+        const isJuniorFullStack = isTechSoftware && (
+          requiredSeniority.toLowerCase().includes('júnior') ||
+          requiredSeniority.toLowerCase().includes('junior') ||
+          requiredSeniority.toLowerCase().includes('estágio') ||
+          requiredSeniority.toLowerCase().includes('estagio') ||
+          requiredSeniority.toLowerCase().includes('não especificado')
+        );
 
-        let isApproved = Boolean(parsed.isJuniorFullStack) && overallScore >= matchThreshold && locationScore > 0 && seniorityScore > 20;
-        let reasoning = String(parsed.reasoning || 'Avaliação via Hermes AI');
-
-        // Trava SCR-10: Se stackScore === 0 e nenhum termo tech no título, força score 0 e rejeição
-        const titleHasTech = matchesWhitelist(job.title).matched;
-        if (stackScore === 0 && !titleHasTech) {
-          overallScore = 0;
-          isApproved = false;
-          reasoning = `Rejeitada (Trava não-tech): Stack score zerado e título sem palavra-chave de tecnologia.`;
-        }
+        const overallScore = isTechSoftware ? 90 : 0;
 
         return {
-          isJuniorFullStack: isApproved,
-          overallScore,
-          score: overallScore,
-          stackScore,
-          seniorityScore,
-          locationScore,
-          category: String(parsed.category || 'Full Stack'),
-          gaps: Array.isArray(parsed.gaps) ? parsed.gaps.map(String) : [],
-          resumeTips: String(parsed.resumeTips || ''),
-          reasoning,
+          isTechSoftware,
+          requiredSeniority,
+          techStack,
+          workModel,
+          location: locationStr,
+          salary,
+          category,
           extractedRole: parsed.extractedRole ? String(parsed.extractedRole) : job.title,
           contractType: parsed.contractType ? String(parsed.contractType) : 'Não informado',
           applicationChannel: parsed.applicationChannel ? String(parsed.applicationChannel) : 'Não informado',
-          salary: parsed.salary ? String(parsed.salary) : 'Não informado',
           directContact: parsed.directContact && String(parsed.directContact).trim() !== '' ? String(parsed.directContact).trim() : undefined,
+          reasoning,
+          isJuniorFullStack,
+          overallScore,
+          score: overallScore,
+          stackScore: techStack.length > 0 ? 80 : 50,
+          seniorityScore: 80,
+          locationScore: workModel.toLowerCase().includes('remoto') ? 100 : 70,
+          gaps: [],
+          resumeTips: '',
         };
       }
     } catch (err) {
-      console.warn(`[HermesEvaluator] Erro na API do Hermes/OpenAI para vaga "${job.title}". Usando fallback de heurística:`, (err as Error).message);
+      console.warn(`[HermesEvaluator] Erro na API Gemini para "${job.title}". Usando fallback heurístico:`, (err as Error).message);
     }
 
     return this.evaluateHeuristic(job);
   }
 
   public evaluateHeuristic(job: RawJob): EvaluationResult {
-    const matchThreshold = Number(process.env.MATCH_THRESHOLD) || 55;
     const text = `${job.title} ${job.description}`.toLowerCase();
-    const location = (job.location || '').toLowerCase();
     const titleLower = job.title.toLowerCase();
 
-    // 1. DETECÇÃO PRIORITÁRIA DE TRABALHO REMOTO
-    const remoteKeywords = ['remoto', 'remote', 'home office', 'teletrabalho', 'work from home', 'anywhere'];
-    const isGenericCountry = location === 'brasil' || location === 'brazil' || location === 'portugal' || location === 'remoto';
-    const isRemote = remoteKeywords.some((kw) => location.includes(kw) || titleLower.includes(kw) || text.includes(kw)) || isGenericCountry;
+    // 1. FILTRO ANTI-FALSO-POSITIVO (NÃO-TECH / SUPORTE / VENDAS / RH)
+    const nonTechPatterns = [
+      /\b(sdr|bdr|inside sales|vendedor|vendedora|vendas|comercial|telemarketing|atendente|recepcionista)\b/i,
+      /\b(recrutador|recrutadora|tech recruiter|talent acquisition|recursos humanos|analista de rh)\b/i,
+      /\b(contador|contadora|contabilidade|fiscal|financeiro|secretariado|auxiliar administrativo)\b/i,
+      /\b(motorista|balconista|estoquista|almoxarife|operador de caixa)\b/i,
+      /\b(suporte n[ií]vel 1|helpdesk|help desk|sac)\b/i,
+    ];
 
-    let isLocationAccepted = false;
-    let locationScore = 0;
-    let locationReason = '';
+    const isNonTech = nonTechPatterns.some((pattern) => pattern.test(titleLower));
 
-    if (isRemote) {
-      isLocationAccepted = true;
-      locationScore = 100;
-      locationReason = 'Modelo Remoto';
-    } else {
-      // 2. REGRA PARA PRESENCIAL / HÍBRIDO (GRANDE FLORIANÓPOLIS)
-      const isHybrid = location.includes('híbrido') || location.includes('hibrido') || text.includes('híbrido') || text.includes('hibrido');
-      const isSaoJoseCampos = location.includes('dos campos') || location.includes('sjc') || location.includes('sp');
-      const isSaoJose = (location.includes('são josé') || location.includes('sao jose')) && !isSaoJoseCampos;
-      const isPalhoca = location.includes('palhoça') || location.includes('palhoca');
-      const isFlorianopolis = location.includes('florianópolis') || location.includes('florianopolis') || location.includes('floripa');
+    // Validação tech mínima
+    const hasWhitelistTerm = matchesWhitelist(job.title).matched;
+    const isTechSoftware = !isNonTech && (hasWhitelistTerm || /desenvolvedor|developer|engenheiro de software|programador|frontend|backend|full\s*stack|devops|data|analista de dados/i.test(text));
 
-      if (isPalhoca || isSaoJose || isFlorianopolis) {
-        isLocationAccepted = true;
-        locationScore = 100;
-        const cityName = isFlorianopolis ? 'Florianópolis (SC)' : isPalhoca ? 'Palhoça (SC)' : 'São José (SC)';
-        locationReason = `${isHybrid ? 'Híbrido' : 'Presencial'} em ${cityName}`;
+    // 2. DETECÇÃO DE SENIORIDADE
+    let requiredSeniority = 'Não especificado';
+    if (/\b(est[aá]gio|estagi[aá]rio|intern|trainee)\b/i.test(titleLower)) {
+      requiredSeniority = 'Estágio';
+    } else if (/\b(j[uú]nior|jr|entry level|iniciante)\b/i.test(titleLower)) {
+      requiredSeniority = 'Júnior';
+    } else if (/\b(pleno|mid|pl)\b/i.test(titleLower)) {
+      requiredSeniority = 'Pleno';
+    } else if (/\b(s[eê]nior|sr|senior)\b/i.test(titleLower)) {
+      requiredSeniority = 'Sênior';
+    } else if (/\b(lead|tech lead|especialista|specialist|architect|arquiteto|staff|principal)\b/i.test(titleLower)) {
+      requiredSeniority = 'Especialista / Tech Lead';
+    } else if (/\b(s[eê]nior|sr|senior)\b/i.test(text)) {
+      requiredSeniority = 'Sênior';
+    } else if (/\b(pleno|mid)\b/i.test(text)) {
+      requiredSeniority = 'Pleno';
+    } else if (/\b(j[uú]nior|jr)\b/i.test(text)) {
+      requiredSeniority = 'Júnior';
+    }
+
+    // 3. CATEGORIZAÇÃO
+    let category = 'Other';
+    if (isTechSoftware) {
+      if (/esp32|esp8266|arduino|raspberry|iot|mqtt|home assistant|embarcados|automa[cç][aã]o/i.test(text)) {
+        category = 'IoT & Embarcados';
+      } else if (/react native|flutter|mobile|android|ios|swift|kotlin/i.test(text)) {
+        category = 'Mobile';
+      } else if (/devops|sre|cloud|kubernetes|docker|terraform|infraestrutura|sysadmin/i.test(text)) {
+        category = 'DevOps';
+      } else if (/dados|data engineer|data science|analytics|bi|machine learning|ia\b/i.test(text)) {
+        category = 'Data';
+      } else if (/qa|qualidade de software|testes|tester|cypress|selenium/i.test(text)) {
+        category = 'QA';
+      } else if (/security|seguran[cç]a|cybersec|pentest/i.test(text)) {
+        category = 'Security';
+      } else if (/product manager|product owner|ui\/ux|ux designer|ui designer/i.test(text)) {
+        category = 'Product & UI/UX';
+      } else if (/frontend|front-end|front end/i.test(text) && !/backend|back-end/i.test(text)) {
+        category = 'Frontend';
+      } else if (/backend|back-end|back end/i.test(text) && !/frontend|front-end/i.test(text)) {
+        category = 'Backend';
       } else {
-        isLocationAccepted = false;
-        locationScore = 0;
-        locationReason = `Presencial/híbrido fora da Grande Florianópolis (${job.location || 'Externo'})`;
+        category = 'Full Stack';
       }
     }
 
-
-    // 3. FILTRO DE SENIORIDADE (MATRIZ GRANULAR)
-    const seniorityEval = evaluateSeniorityDistance('Júnior', job.title, job.description);
-    const seniorityScore = seniorityEval.seniorityScore;
-
-    // 4. STACK DO MOACIR NETO (WEB FULL STACK + IOT / HARDWARE / AUTOMAÇÃO)
-    const targetStack = [
-      // Web / Backend / Frontend
-      'node', 'nodejs', 'typescript', 'php', 'laravel', 'codeigniter',
-      'nestjs', 'express', 'react', 'next', 'nextjs', 'javascript', 'js', 'ts',
-      'python', 'golang', 'go', 'tailwind', 'bootstrap', 'mysql', 'postgres', 'postgresql', 'supabase', 'docker', 'rest', 'sql',
-      // IoT / Embarcados / Automação
-      'esp32', 'esp8266', 'arduino', 'raspberry', 'iot', 'mqtt', 'home assistant', 'esphome', 'automacao', 'automação', 'embarcados', 'firmware', 'c++', 'c/c++'
+    // 4. EXTRAÇÃO DE STACKS TÉCNICAS
+    const commonTechs = [
+      'javascript', 'typescript', 'node.js', 'react', 'next.js', 'vue', 'angular',
+      'python', 'django', 'flask', 'fastapi', 'java', 'spring', 'c#', '.net',
+      'php', 'laravel', 'golang', 'ruby', 'rails', 'rust', 'c++', 'c',
+      'sql', 'postgresql', 'mysql', 'mongodb', 'redis', 'graphql',
+      'docker', 'kubernetes', 'aws', 'gcp', 'azure', 'git', 'linux',
+      'esp32', 'arduino', 'mqtt', 'flutter', 'react native'
     ];
-    const rejectedStack = ['cobol', 'swift', 'objective-c'];
 
-    const matchedStackList = targetStack.filter((tech) => text.includes(tech));
-    const matchedStackCount = matchedStackList.length;
-    const hasRejectedOnly = rejectedStack.some((tech) => text.includes(tech)) && matchedStackCount === 0;
-
-    let stackScore = Math.min(100, Math.round(matchedStackCount * 18));
-    if (hasRejectedOnly) {
-      stackScore = 10;
+    const techStack: string[] = [];
+    for (const tech of commonTechs) {
+      const escaped = tech.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const regex = new RegExp(`(?<![a-zA-Z0-9_-])${escaped}(?![a-zA-Z0-9_-])`, 'i');
+      if (regex.test(text)) {
+        techStack.push(tech);
+      }
     }
 
-    // 5. CATEGORIZAÇÃO
-    let category = 'Full Stack';
-    const isIotMatch = text.includes('esp32') || text.includes('esp8266') || text.includes('arduino') || text.includes('raspberry') || text.includes('iot') || text.includes('mqtt') || text.includes('home assistant') || text.includes('embarcados') || text.includes('automação') || text.includes('automacao');
-
-    if (isIotMatch) {
-      category = 'IoT & Automação';
-    } else if (text.includes('react native') || text.includes('flutter') || text.includes('mobile') || text.includes('android') || text.includes('ios')) {
-      category = 'Mobile';
-    } else if (text.includes('devops') || text.includes('sre') || text.includes('cloud') || text.includes('kubernetes') || text.includes('infra')) {
-      category = 'DevOps';
-    } else if (text.includes('dados') || text.includes('data engineer') || text.includes('data science') || text.includes('analytics')) {
-      category = 'Data';
-    } else if (
-      (text.includes('frontend') || text.includes('front-end') || text.includes('front end')) &&
-      !text.includes('backend') && !text.includes('back-end')
-    ) {
-      category = 'Frontend';
-    } else if (
-      (text.includes('backend') || text.includes('back-end') || text.includes('back end')) &&
-      !text.includes('frontend') && !text.includes('front-end')
-    ) {
-      category = 'Backend';
+    // 5. MODELO DE TRABALHO
+    let workModel = 'Presencial';
+    if (/remoto|remote|home office|teletrabalho|anywhere/i.test(text) || /remoto|home office/i.test(job.location || '')) {
+      workModel = 'Remoto';
+    } else if (/h[ií]brido|hybrid/i.test(text) || /h[ií]brido/i.test(job.location || '')) {
+      workModel = 'Híbrido';
     }
 
-    // 6. DETECÇÃO DE GAPS
-    const potentialGaps = [
-      'aws', 'gcp', 'azure', 'kubernetes', 'graphql', 'c#', '.net', 'ruby', 'rails', 'java',
-      'spring', 'angular', 'vue', 'mongodb', 'redis', 'kafka', 'rabbitmq', 'elixir'
-    ];
-    const gaps = potentialGaps.filter((tech) => {
-      const regex = new RegExp(`\\b${tech.replace('+', '\\+')}\\b`, 'i');
-      return regex.test(text);
-    });
+    // 6. EXTRAÇÃO DE SALÁRIO & CONTATO DIRETO
+    const salary = parseSalary(job.description ? job.description.match(/(?:r\$|sal[áa]rio:?)\s*[\d.,k\s-]+/i)?.[0] : null);
+    const salaryStr = salary ? `R$ ${salary.min}${salary.max !== salary.min ? ` - R$ ${salary.max}` : ''}` : 'Não informado';
 
-    // 7. DICAS DE CURRÍCULO
-    const topTechs = matchedStackList.slice(0, 3).map((t) => t.toUpperCase()).join(', ');
-    let resumeTips = '';
-    if (category === 'IoT & Automação') {
-      resumeTips = 'Destaque seus projetos práticos com microcontroladores (ESP32/Arduino), integrações MQTT e automação com Home Assistant.';
-    } else if (topTechs) {
-      resumeTips = `Destaque no topo do currículo sua experiência com ${topTechs} e mencione projetos práticos desenvolvidos com essas tecnologias.`;
-    } else {
-      resumeTips = 'Destaque seus projetos full stack e capacidade de rápida adaptação técnica.';
-    }
-
-    // 8. OVERALL SCORE PONDERADO COM TETOS ESTRITOS (CAPPING 35% / 60%)
-    let overallScore = Math.round(
-      (stackScore * 0.45) +
-      (seniorityScore * 0.35) +
-      (locationScore * 0.20)
-    );
-
-    // Aplicação de Capping Rígido
-    if (!isLocationAccepted) {
-      overallScore = Math.min(overallScore, 35); // Teto eliminatório de localização cravado em 35%
-    }
-    if (seniorityEval.maxScoreCap < 100) {
-      overallScore = Math.min(overallScore, seniorityEval.maxScoreCap);
-    }
-    overallScore = Math.min(100, Math.max(0, overallScore));
-
-    let isJuniorFullStack = overallScore >= matchThreshold && isLocationAccepted && !seniorityEval.isHardBlocked;
-
-    let reasoning = '';
-    const titleHasTech = matchesWhitelist(job.title).matched;
-    if (stackScore === 0 && !titleHasTech) {
-      overallScore = 0;
-      isJuniorFullStack = false;
-      reasoning = 'Rejeitada via Heurística (Trava não-tech): Stack score zerado e título sem palavra-chave de tecnologia.';
-    } else if (!isLocationAccepted) {
-      reasoning = `Rejeitada via Heurística: ${locationReason} (Teto 35%).`;
-    } else if (seniorityEval.isHardBlocked) {
-      reasoning = `Rejeitada via Heurística: ${seniorityEval.reason}.`;
-    } else if (seniorityEval.maxScoreCap === 60) {
-      reasoning = `Compatibilidade Parcial via Heurística: ${seniorityEval.reason}.`;
-    } else {
-      const specNote = category === 'IoT & Automação' ? 'Especialização em IoT/Automação detectada. ' : '';
-      reasoning = `Aprovada via Heurística (${locationReason}): ${specNote}${seniorityEval.candidateLevel === 'junior' ? 'Nível Jr/Entry. ' : ''}${matchedStackCount} tecnologias compatíveis (${topTechs || 'Gerais'}).`;
-    }
-
-    // 9. EXTRAÇÃO DE CONTATO DIRETO VIA REGEX (FALLBACK HEURÍSTICO)
     const rawText = `${job.title} ${job.description}`;
     const emailMatch = rawText.match(/[\w.-]+@[\w.-]+\.[a-z]{2,}/gi);
     const directContact = emailMatch ? emailMatch[0] : undefined;
 
+    const isJuniorFullStack = isTechSoftware && (requiredSeniority === 'Júnior' || requiredSeniority === 'Estágio' || requiredSeniority === 'Não especificado');
+    const overallScore = isTechSoftware ? 85 : 0;
+
+    let reasoning = '';
+    if (!isTechSoftware) {
+      reasoning = `Rejeitada via Heurística: Oportunidade não classificada como desenvolvimento ou tecnologia (${job.title}).`;
+    } else {
+      reasoning = `Aprovada via Heurística: Vaga técnica de ${category} (Nível: ${requiredSeniority}, Modelo: ${workModel}). ${techStack.length} tecnologias detectadas.`;
+    }
+
     return {
-      isJuniorFullStack,
-      overallScore,
-      score: overallScore,
-      stackScore,
-      seniorityScore,
-      locationScore,
+      isTechSoftware,
+      requiredSeniority,
+      techStack,
+      workModel,
+      location: job.location || 'Não informada',
+      salary: salaryStr,
       category,
-      gaps,
-      resumeTips,
-      reasoning,
       extractedRole: job.title,
       contractType: 'Não informado',
       applicationChannel: 'Não informado',
-      salary: 'Não informado',
       directContact,
+      reasoning,
+      isJuniorFullStack,
+      overallScore,
+      score: overallScore,
+      stackScore: techStack.length > 0 ? 80 : 50,
+      seniorityScore: 80,
+      locationScore: workModel === 'Remoto' ? 100 : 70,
+      gaps: [],
+      resumeTips: '',
     };
   }
 }

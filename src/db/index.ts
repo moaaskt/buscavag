@@ -51,7 +51,11 @@ export function initDatabase() {
       contract_type TEXT,
       application_channel TEXT,
       salary TEXT,
-      direct_contact TEXT
+      direct_contact TEXT,
+      required_seniority TEXT,
+      tech_stack TEXT,
+      work_model TEXT,
+      is_tech_software INTEGER DEFAULT 1
     );
 
     CREATE TABLE IF NOT EXISTS scraper_logs (
@@ -152,6 +156,10 @@ export function initDatabase() {
       { name: 'application_channel', type: 'TEXT' },
       { name: 'salary', type: 'TEXT' },
       { name: 'direct_contact', type: 'TEXT' },
+      { name: 'required_seniority', type: 'TEXT' },
+      { name: 'tech_stack', type: 'TEXT' },
+      { name: 'work_model', type: 'TEXT' },
+      { name: 'is_tech_software', type: 'INTEGER DEFAULT 1' },
     ];
 
     for (const col of jobColumnsToAdd) {

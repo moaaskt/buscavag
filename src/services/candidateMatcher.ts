@@ -390,7 +390,7 @@ export class CandidateMatcher {
     // 1. Avaliação de Senioridade (20% do peso total) + Matriz de Distância & Capping
     const seniorityEvaluation = evaluateSeniorityDistance(
       candidate.seniority,
-      job.title || '',
+      job.required_seniority || job.requiredSeniority || job.title || '',
       job.description || ''
     );
     const seniorityScore = seniorityEvaluation.seniorityScore;
@@ -401,6 +401,32 @@ export class CandidateMatcher {
     const candidateSkillsLower = (candidate.skills || []).map((s) => s.trim().toLowerCase());
     const matchedSkillsSet = new Set<string>();
     const missingSkillsSet = new Set<string>();
+
+    // Aproveitar stacks pré-computadas na ingestão pelo Hermes se disponíveis
+    let precomputedStacks: string[] = [];
+    if (Array.isArray(job.techStack)) {
+      precomputedStacks = job.techStack;
+    } else if (Array.isArray(job.tech_stack)) {
+      precomputedStacks = job.tech_stack;
+    } else if (typeof job.tech_stack === 'string') {
+      try {
+        precomputedStacks = JSON.parse(job.tech_stack);
+      } catch {
+        precomputedStacks = [];
+      }
+    }
+
+    for (const tech of precomputedStacks) {
+      const techLower = tech.trim().toLowerCase();
+      if (!techLower) continue;
+      const candidateHasTech = candidateSkillsLower.some((cSkill) => cSkill.includes(techLower) || techLower.includes(cSkill));
+      const formatted = tech.charAt(0).toUpperCase() + tech.slice(1);
+      if (candidateHasTech) {
+        matchedSkillsSet.add(formatted);
+      } else {
+        missingSkillsSet.add(formatted);
+      }
+    }
 
     for (const tech of KNOWN_TECH_LIST) {
       const patterns = TECH_SYNONYMS[tech] || [tech];
@@ -486,9 +512,12 @@ export class CandidateMatcher {
     const isRemoteJob = /(remoto|remote|home office|teletrabalho|qualquer lugar|anywhere|brasil)/i.test(jobLocation) ||
                         /(remoto|remote|home office)/i.test(jobTitle);
 
-    const prefersRemote = candidate.preferredWorkModels.includes('Remoto');
-    const prefersHybrid = candidate.preferredWorkModels.includes('Híbrido');
-    const prefersPresential = candidate.preferredWorkModels.includes('Presencial');
+    const preferredModels = Array.isArray(candidate.preferredWorkModels) && candidate.preferredWorkModels.length > 0
+      ? candidate.preferredWorkModels
+      : ['Remoto', 'Híbrido', 'Presencial'];
+    const prefersRemote = preferredModels.some((m) => /remoto/i.test(m));
+    const prefersHybrid = preferredModels.some((m) => /h[ií]brido/i.test(m));
+    const prefersPresential = preferredModels.some((m) => /presencial/i.test(m));
 
     if (isRemoteJob && prefersRemote) {
       locationScore = 100;

@@ -62,6 +62,10 @@ export class JobRepository {
     let applicationChannel = '';
     let salary = '';
     let directContact = '';
+    let requiredSeniority = '';
+    let techStack: string[] = [];
+    let workModel = '';
+    let isTechSoftware = 1;
 
     if (typeof evalResultOrIsJunior === 'object' && evalResultOrIsJunior !== null) {
       isJunior = evalResultOrIsJunior.isJuniorFullStack;
@@ -78,6 +82,10 @@ export class JobRepository {
       applicationChannel = evalResultOrIsJunior.applicationChannel || '';
       salary = evalResultOrIsJunior.salary || '';
       directContact = evalResultOrIsJunior.directContact || '';
+      requiredSeniority = evalResultOrIsJunior.requiredSeniority || '';
+      techStack = evalResultOrIsJunior.techStack || [];
+      workModel = evalResultOrIsJunior.workModel || '';
+      isTechSoftware = evalResultOrIsJunior.isTechSoftware !== false ? 1 : 0;
     } else {
       isJunior = Boolean(evalResultOrIsJunior);
       overallScore = scoreIa;
@@ -91,8 +99,9 @@ export class JobRepository {
         id, url, title, company, platform, description, published_at, location,
         is_junior_fullstack, score_ia, overall_score, stack_score, seniority_score,
         location_score, category, gaps, resume_tips, application_status, ai_reasoning, notified, created_at,
-        extracted_role, contract_type, application_channel, salary, direct_contact
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, ?, ?, ?, ?, ?, ?)
+        extracted_role, contract_type, application_channel, salary, direct_contact,
+        required_seniority, tech_stack, work_model, is_tech_software
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       ON CONFLICT(id) DO NOTHING
     `);
 
@@ -121,7 +130,11 @@ export class JobRepository {
       contractType,
       applicationChannel,
       salary,
-      directContact
+      directContact,
+      requiredSeniority,
+      JSON.stringify(techStack),
+      workModel,
+      isTechSoftware
     );
 
     return {
@@ -143,6 +156,10 @@ export class JobRepository {
       applicationChannel,
       salary,
       directContact: directContact || undefined,
+      requiredSeniority: requiredSeniority || undefined,
+      techStack,
+      workModel: workModel || undefined,
+      isTechSoftware: Boolean(isTechSoftware),
       notified: false,
       createdAt,
     };
@@ -364,6 +381,16 @@ export class JobRepository {
       applicationChannel: row.application_channel || undefined,
       salary: row.salary || undefined,
       directContact: row.direct_contact || undefined,
+      requiredSeniority: row.required_seniority || undefined,
+      techStack: (() => {
+        try {
+          return row.tech_stack ? (typeof row.tech_stack === 'string' ? JSON.parse(row.tech_stack) : row.tech_stack) : [];
+        } catch {
+          return [];
+        }
+      })(),
+      workModel: row.work_model || undefined,
+      isTechSoftware: Boolean(row.is_tech_software ?? 1),
       notified: Boolean(row.notified),
       createdAt: new Date(row.created_at),
     };

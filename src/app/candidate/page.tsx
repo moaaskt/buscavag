@@ -63,6 +63,8 @@ interface CVAnalysisData {
   detected_seniority: string;
   hard_skills: string[];
   soft_skills: string[];
+  primary_stack?: string[];
+  secondary_stack?: string[];
   summary: string;
   strengths: string[];
   improvement_tips: string[];
@@ -81,6 +83,8 @@ interface ResumeData {
 
 import { UpgradeModal } from '@/components/UpgradeModal';
 import { PlatformBadge } from '@/components/ui/PlatformBadge';
+import { JobModal } from '@/components/JobModal';
+import { ProcessedJob } from '@/types/job';
 
 interface RecommendedJobItem {
   job: {
@@ -171,6 +175,30 @@ export default function CandidateDashboardPage() {
   const [workModelRec, setWorkModelRec] = useState<string>('');
   const [matchStats, setMatchStats] = useState<MatchStatsData | null>(null);
   const [onboardingRequired, setOnboardingRequired] = useState(false);
+  const [selectedJobModal, setSelectedJobModal] = useState<ProcessedJob | null>(null);
+
+  const toProcessedJob = (raw: any, match?: any): ProcessedJob => ({
+    id: raw.id,
+    title: raw.title,
+    company: raw.company,
+    platform: raw.platform,
+    url: raw.url,
+    description: raw.description || '',
+    publishedAt: new Date(raw.published_at || raw.publishedAt || Date.now()),
+    location: raw.location || undefined,
+    isJuniorFullStack: true,
+    scoreIa: match?.overallScore ?? raw.score_ia ?? raw.overall_score ?? 0,
+    overallScore: match?.overallScore ?? raw.overall_score ?? raw.score_ia ?? 0,
+    stackScore: match?.stackScore,
+    seniorityScore: match?.seniorityScore,
+    locationScore: match?.locationScore,
+    isStrongMatch: match?.isStrongMatch,
+    aiReasoning: match?.matchReasoning || raw.ai_reasoning,
+    directContact: raw.direct_contact || raw.directContact,
+    applicationStatus: raw.status || 'pending',
+    notified: false,
+    createdAt: new Date(),
+  });
 
   // Saved Jobs State
   const [savedJobs, setSavedJobs] = useState<SavedJob[]>([]);
@@ -1083,7 +1111,7 @@ export default function CandidateDashboardPage() {
                       </div>
 
                       {/* Card Footer Actions */}
-                      <div className="mt-5 pt-3 border-t border-zinc-200 dark:border-zinc-800/80 flex items-center justify-between gap-2">
+                      <div className="mt-5 pt-3 border-t border-zinc-200 dark:border-zinc-800/80 flex items-center justify-between gap-2 flex-wrap">
                         <button
                           type="button"
                           onClick={() => handleToggleJob(item.job.id, 'saved')}
@@ -1098,15 +1126,26 @@ export default function CandidateDashboardPage() {
                           <span>{item.isSaved ? 'Salva' : 'Salvar Vaga'}</span>
                         </button>
 
-                        <a
-                          href={item.job.url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-zinc-950 font-semibold px-4 py-1.5 text-xs transition-colors shadow-md shadow-emerald-950/30"
-                        >
-                          <span>Acessar Vaga</span>
-                          <ExternalLink className="w-3.5 h-3.5" />
-                        </a>
+                        <div className="flex items-center gap-2">
+                          <button
+                            type="button"
+                            onClick={() => setSelectedJobModal(toProcessedJob(item.job, item.match))}
+                            className="inline-flex items-center gap-1.5 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 hover:bg-zinc-100 dark:hover:bg-zinc-700 px-3 py-1.5 text-xs font-medium text-zinc-700 dark:text-zinc-200 transition-colors shadow-2xs"
+                          >
+                            <Sparkles className="w-3.5 h-3.5 text-emerald-500" />
+                            <span>Pitch & Detalhes</span>
+                          </button>
+
+                          <a
+                            href={item.job.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-zinc-950 font-semibold px-3.5 py-1.5 text-xs transition-colors shadow-md shadow-emerald-950/30"
+                          >
+                            <span>Acessar</span>
+                            <ExternalLink className="w-3.5 h-3.5" />
+                          </a>
+                        </div>
                       </div>
                     </div>
                   );
@@ -1695,20 +1734,31 @@ export default function CandidateDashboardPage() {
                       </div>
                     </div>
 
-                    <div className="mt-5 pt-3 border-t border-zinc-200 dark:border-zinc-800/80 flex items-center justify-between gap-2">
+                    <div className="mt-5 pt-3 border-t border-zinc-200 dark:border-zinc-800/80 flex items-center justify-between gap-2 flex-wrap">
                       <span className="inline-flex items-center gap-1 rounded-md border border-emerald-500/30 bg-emerald-50 dark:bg-emerald-500/10 px-2 py-0.5 text-xs font-mono font-semibold text-emerald-700 dark:text-emerald-400">
                         Score IA: {item.job.score_ia || item.job.overall_score || 0}%
                       </span>
 
-                      <a
-                        href={item.job.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-zinc-950 font-semibold px-3.5 py-1.5 text-xs transition-colors shadow-xs"
-                      >
-                        <span>Acessar Vaga</span>
-                        <ExternalLink className="w-3.5 h-3.5" />
-                      </a>
+                      <div className="flex items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={() => setSelectedJobModal(toProcessedJob(item.job))}
+                          className="inline-flex items-center gap-1.5 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 hover:bg-zinc-100 dark:hover:bg-zinc-700 px-3 py-1.5 text-xs font-medium text-zinc-700 dark:text-zinc-200 transition-colors shadow-2xs"
+                        >
+                          <Sparkles className="w-3.5 h-3.5 text-emerald-500" />
+                          <span>Pitch & Detalhes</span>
+                        </button>
+
+                        <a
+                          href={item.job.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-zinc-950 font-semibold px-3.5 py-1.5 text-xs transition-colors shadow-xs"
+                        >
+                          <span>Acessar</span>
+                          <ExternalLink className="w-3.5 h-3.5" />
+                        </a>
+                      </div>
                     </div>
                   </div>
                 ))}
@@ -1726,6 +1776,23 @@ export default function CandidateDashboardPage() {
           fetchSavedJobs();
         }}
       />
+
+      {/* Modal de Detalhes da Vaga & Pitch Personalizado */}
+      {selectedJobModal && (
+        <JobModal
+          job={selectedJobModal}
+          onClose={() => setSelectedJobModal(null)}
+          candidateProfile={{
+            name: user?.name,
+            target_role: profile.target_role,
+            primary_stack: resume?.ai_analysis?.primary_stack || [],
+            skills: profile.skills,
+          }}
+          onStatusChange={(jobId, newStatus) => {
+            handleToggleJob(jobId, newStatus);
+          }}
+        />
+      )}
     </div>
   );
 }

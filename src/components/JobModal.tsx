@@ -24,27 +24,62 @@ import {
   Mail
 } from 'lucide-react';
 import { PlatformBadge } from '@/components/ui/PlatformBadge';
+import { generatePitch, PitchCandidateContext } from '@/lib/pitchGenerator';
+
+export interface CandidateProfileProps {
+  name?: string | null;
+  target_role?: string | null;
+  targetRole?: string | null;
+  primary_stack?: string[] | null;
+  primaryStack?: string[] | null;
+  skills?: string[] | null;
+}
 
 interface JobModalProps {
   job: ProcessedJob | null;
   onClose: () => void;
   onStatusChange?: (id: string, newStatus: string) => void;
+  candidateProfile?: CandidateProfileProps | null;
 }
 
-export function JobModal({ job, onClose, onStatusChange }: JobModalProps) {
+export function JobModal({ job, onClose, onStatusChange, candidateProfile }: JobModalProps) {
   const [descExpanded, setDescExpanded] = useState(false);
   const [copiedPitch, setCopiedPitch] = useState(false);
   const [copiedEmail, setCopiedEmail] = useState(false);
+  const [profile, setProfile] = useState<CandidateProfileProps | null>(candidateProfile || null);
+
+  React.useEffect(() => {
+    if (candidateProfile) {
+      setProfile(candidateProfile);
+      return;
+    }
+
+    let isMounted = true;
+    fetch('/api/candidate/profile')
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (isMounted && data?.success && data?.profile) {
+          setProfile(data.profile);
+        }
+      })
+      .catch(() => {
+        // Fallback transparente: se visitante anônimo ou falhar, mantém profile como null
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [candidateProfile]);
 
   if (!job) return null;
 
   const handleCopyPitch = () => {
-    const isFeedPost = job.platform === 'linkedin_posts' || job.platform === 'facebook_groups';
-    const intro = isFeedPost
-      ? `Olá! Vi sua publicação no LinkedIn referente à vaga de ${job.title}.`
-      : `Olá, time de recrutamento da ${job.company}!\n\nMe interessei muito pela vaga de ${job.title}.`;
-
-    const pitch = `${intro}\nPossuo sólida experiência no ecossistema Full Stack (TypeScript, React, Next.js, Node.js e APIs), além de foco em entregas de qualidade e código limpo.\n\nLink da vaga: ${job.url}\n\nFico à disposição para uma conversa!`;
+    const pitch = generatePitch(job, {
+      name: profile?.name,
+      targetRole: profile?.target_role || profile?.targetRole,
+      primaryStack: profile?.primary_stack || profile?.primaryStack,
+      skills: profile?.skills,
+    });
     navigator.clipboard.writeText(pitch);
     setCopiedPitch(true);
     setTimeout(() => setCopiedPitch(false), 2500);
@@ -324,17 +359,25 @@ export function JobModal({ job, onClose, onStatusChange }: JobModalProps) {
               onClick={handleCopyPitch}
               type="button"
               className="h-9 px-3 rounded-lg text-xs font-medium border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors flex items-center gap-1.5 shadow-sm"
-              title="Copiar carta de apresentação para esta vaga"
+              title={
+                Boolean(profile?.primary_stack?.length || profile?.primaryStack?.length || profile?.skills?.length)
+                  ? `Copiar pitch personalizado com suas stacks (${(profile?.primary_stack || profile?.primaryStack || profile?.skills)?.slice(0, 3).join(', ')})`
+                  : 'Copiar mensagem de apresentação para esta vaga'
+              }
             >
               {copiedPitch ? (
                 <>
                   <Check className="w-3.5 h-3.5 text-emerald-500" />
-                  <span className="text-emerald-600 dark:text-emerald-400 font-semibold">Copiado!</span>
+                  <span className="text-emerald-600 dark:text-emerald-400 font-semibold">Pitch Copiado!</span>
                 </>
               ) : (
                 <>
-                  <Copy className="w-3.5 h-3.5 text-zinc-500 dark:text-zinc-400" />
-                  <span>Copiar Carta</span>
+                  {Boolean(profile?.primary_stack?.length || profile?.primaryStack?.length || profile?.skills?.length) ? (
+                    <Sparkles className="w-3.5 h-3.5 text-emerald-500" />
+                  ) : (
+                    <Copy className="w-3.5 h-3.5 text-zinc-500 dark:text-zinc-400" />
+                  )}
+                  <span>Copiar Pitch</span>
                 </>
               )}
             </button>
