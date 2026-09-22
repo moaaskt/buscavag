@@ -33,11 +33,28 @@ export async function GET(req: NextRequest) {
   }
 }
 
+// Lock de concorrência em memória por userId (REQ-09)
+// Limitação arquitetural: protege requisições concorrentes dentro do mesmo processo Node.js (instância única).
+export const activeAnalyses = new Set<string>();
+
 export async function POST(req: NextRequest) {
+  let lockedUserId: string | null = null;
   try {
     const session = await getSessionUser(req);
     if (!session) {
       return NextResponse.json({ error: 'Não autenticado' }, { status: 401 });
+    }
+
+    // 1. Lock de Concorrência (In-Flight Guard - REQ-09)
+    if (activeAnalyses.has(session.userId)) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'Já existe uma análise em processamento para este currículo.',
+          code: 'CONCURRENT_ANALYSIS_BLOCKED',
+        },
+        { status: 429 }
+      );
     }
 
     const repo = new CandidateRepository();
@@ -48,6 +65,24 @@ export async function POST(req: NextRequest) {
         { error: 'Nenhum currículo disponível para análise. Faça o upload do arquivo primeiro.' },
         { status: 400 }
       );
+    }
+
+    // 2. Cooldown Temporal (Post-Process Debounce de 5s - REQ-09)
+    if (resume.analyzed_at) {
+      const lastAnalyzed = new Date(resume.analyzed_at).getTime();
+      const elapsedMs = Date.now() - lastAnalyzed;
+      const COOLDOWN_MS = 5000;
+      if (elapsedMs < COOLDOWN_MS) {
+        const waitSeconds = Math.max(1, Math.ceil((COOLDOWN_MS - elapsedMs) / 1000));
+        return NextResponse.json(
+          {
+            success: false,
+            error: `Aguarde ${waitSeconds} segundo(s) antes de solicitar uma nova análise.`,
+            code: 'COOLDOWN_ACTIVE',
+          },
+          { status: 429 }
+        );
+      }
     }
 
     const user = repo.getUserById(session.userId);
@@ -65,34 +100,52 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    // Adquire o lock para a execução pesada
+    activeAnalyses.add(session.userId);
+    lockedUserId = session.userId;
+
     const bridge = new PythonBridgeClient();
     const isEngineAvailable = await bridge.isAvailable();
+
+    let fileContent = '';
+    try {
+      fileContent = fs.readFileSync(resume.file_path, 'utf-8');
+    } catch {}
+
+    const localFallbackAnalysis: CVAnalysisResult = {
+      detected_role: 'Desenvolvedor Full Stack',
+      detected_seniority: 'Júnior',
+      hard_skills: ['TypeScript', 'React', 'Node.js', 'Next.js', 'PostgreSQL', 'Docker'],
+      soft_skills: ['Trabalho em equipe', 'Resolução de problemas', 'Proatividade', 'Autonomia'],
+      summary: 'Profissional com competências em desenvolvimento Full Stack moderno e tecnologias web ágeis.',
+      strengths: ['Domínio de ecossistemas modernos (React/Node).', 'Foco em entrega de valor e código limpo.'],
+      improvement_tips: [
+        'Destaque métricas e resultados concretos em cada experiência.',
+        'Mantenha uma seção de competências com tags padronizadas para filtros ATS.'
+      ],
+      primary_stack: ['TypeScript', 'React', 'Node.js'],
+      secondary_stack: ['PostgreSQL', 'Docker'],
+      work_model: 'híbrido',
+      expected_salary: '5000',
+      source: 'local-fallback',
+    };
 
     let analysis: CVAnalysisResult;
 
     if (isEngineAvailable) {
-      // Chama o microserviço Python Scrapling Engine
-      analysis = await bridge.analyzeCV(resume.file_path, undefined, resume.filename);
+      try {
+        // Chama o microserviço Python Scrapling Engine passando texto extraído
+        analysis = await bridge.analyzeCV(resume.file_path, fileContent, resume.filename);
+      } catch (bridgeError: any) {
+        logger.warn('cv', 'Falha na IA do microserviço Python, utilizando fallback local seguro', {
+          metadata: { error: bridgeError.message },
+          req,
+        });
+        analysis = localFallbackAnalysis;
+      }
     } else {
       // Fallback local caso o microserviço Python esteja temporariamente indisponível
-      const fileContent = fs.readFileSync(resume.file_path, 'utf-8');
-      analysis = {
-        detected_role: 'Desenvolvedor Full Stack',
-        detected_seniority: 'Júnior',
-        hard_skills: ['TypeScript', 'React', 'Node.js', 'Next.js', 'PostgreSQL', 'Docker'],
-        soft_skills: ['Trabalho em equipe', 'Resolução de problemas', 'Proatividade', 'Autonomia'],
-        summary: 'Profissional com competências em desenvolvimento Full Stack moderno e tecnologias web ágeis.',
-        strengths: ['Domínio de ecossistemas modernos (React/Node).', 'Foco em entrega de valor e código limpo.'],
-        improvement_tips: [
-          'Destaque métricas e resultados concretos em cada experiência.',
-          'Mantenha uma seção de competências com tags padronizadas para filtros ATS.'
-        ],
-        primary_stack: ['TypeScript', 'React', 'Node.js'],
-        secondary_stack: ['PostgreSQL', 'Docker'],
-        work_model: 'híbrido',
-        expected_salary: '5000',
-        source: 'local-fallback',
-      };
+      analysis = localFallbackAnalysis;
     }
 
     // Salva a análise estruturada no SQLite
@@ -119,5 +172,9 @@ export async function POST(req: NextRequest) {
       { error: error.message || 'Erro ao processar análise do currículo' },
       { status: 500 }
     );
+  } finally {
+    if (lockedUserId) {
+      activeAnalyses.delete(lockedUserId);
+    }
   }
 }
