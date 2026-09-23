@@ -30,7 +30,26 @@ export function validateAuthSecretSecurity(
   return secret || DEFAULT_AUTH_SECRET;
 }
 
-const AUTH_SECRET = validateAuthSecretSecurity();
+let cachedSecret: string | null = null;
+
+/**
+ * Obtém e valida o AUTH_SECRET sob demanda no runtime.
+ * Garante que a compilação/build estático do Next.js não quebre por ausência de variáveis de runtime,
+ * mas qualquer operação criptográfica ou inicialização de servidor valide rigorosamente a chave.
+ */
+export function getAuthSecret(): string {
+  if (cachedSecret) return cachedSecret;
+  cachedSecret = validateAuthSecretSecurity(process.env.AUTH_SECRET, process.env.NODE_ENV);
+  return cachedSecret;
+}
+
+/**
+ * Permite limpar o cache do segredo (utilizado em testes unitários).
+ */
+export function resetAuthSecretCache(): void {
+  cachedSecret = null;
+}
+
 export const SESSION_COOKIE_NAME = 'buscavag_session';
 
 export interface UserSession {
@@ -76,7 +95,8 @@ export function createSessionToken(payload: UserSession): string {
   const b64Body = Buffer.from(JSON.stringify(body)).toString('base64url');
   const data = `${b64Header}.${b64Body}`;
 
-  const signature = crypto.createHmac('sha256', AUTH_SECRET).update(data).digest('base64url');
+  const secret = getAuthSecret();
+  const signature = crypto.createHmac('sha256', secret).update(data).digest('base64url');
   return `${data}.${signature}`;
 }
 
@@ -91,7 +111,8 @@ export function verifySessionToken(token: string): UserSession | null {
     const [b64Header, b64Body, signature] = parts;
     const data = `${b64Header}.${b64Body}`;
 
-    const expectedSignature = crypto.createHmac('sha256', AUTH_SECRET).update(data).digest('base64url');
+    const secret = getAuthSecret();
+    const expectedSignature = crypto.createHmac('sha256', secret).update(data).digest('base64url');
     if (signature !== expectedSignature) return null;
 
     const payload = JSON.parse(Buffer.from(b64Body, 'base64url').toString('utf-8'));
