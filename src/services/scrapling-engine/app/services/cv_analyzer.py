@@ -8,10 +8,12 @@ import httpx
 logger = logging.getLogger("scrapling-engine.cv_analyzer")
 
 # Lista base de tecnologias conhecidas para extração heurística e enriquecimento
+# Nota: 'C' foi removido da lista base para evitar falsos-positivos de marcadores (ex: c), c/) ou hífens.
+# A captura de 'C' é feita exclusivamente via regex de contexto estrito (REGEX_C_LANG).
 TECH_KEYWORDS = [
     "TypeScript", "JavaScript", "React", "Next.js", "Node.js", "NestJS", "Express",
     "Python", "FastAPI", "Django", "Flask", "PHP", "Laravel", "Golang", "Java", "Spring Boot",
-    "C#", ".NET", "C++", "C", "Rust", "Ruby", "Rails",
+    "C#", ".NET", "C++", "Rust", "Ruby", "Rails",
     "HTML", "HTML5", "CSS", "CSS3", "Tailwind CSS", "Bootstrap", "Sass", "Styled Components",
     "Vue.js", "Angular", "Svelte", "Redux", "Zustand", "GraphQL", "REST APIs", "gRPC", "WebSockets",
     "PostgreSQL", "MySQL", "MongoDB", "SQLite", "Redis", "Supabase", "Firebase", "Prisma", "TypeORM",
@@ -21,10 +23,72 @@ TECH_KEYWORDS = [
     "Machine Learning", "IA", "LLM", "Pandas", "NumPy", "Scikit-Learn", "PyTorch", "TensorFlow"
 ]
 
+# Regex rigorosa para capturar a linguagem C apenas em contextos inequívocos de programação
+REGEX_C_LANG = r"\b(linguagem c|ansi c|c/c\+\+|c \/ c\+\+|c e c\+\+|c\+\+/c|desenvolvedor c|programação em c)\b"
+
 SOFT_SKILLS_KEYWORDS = [
     "Comunicação assertiva", "Trabalho em equipe", "Resolução de problemas", "Pensamento crítico",
     "Autonomia", "Gestão de tempo", "Adaptabilidade", "Proatividade", "Liderança", "Metodologias Ágeis (Scrum/Kanban)"
 ]
+
+
+def sanitize_analysis_output(data: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Higieniza o objeto JSON retornado pela IA ou heurística:
+    - Remove falsos-positivos de letras únicas soltas (ex: 'c', 'a', 'b', 'e').
+    - Garante que primary_stack e secondary_stack contenham apenas itens válidos presentes em hard_skills.
+    - Remove duplicatas mantendo a caixa original.
+    """
+    if not isinstance(data, dict):
+        return data
+
+    raw_hard = data.get("hard_skills") or []
+    cleaned_hard: List[str] = []
+
+    # Proíbe letras isoladas únicas de 1 caractere, exceto tecnologias de 1 letra conhecidas como 'R' (com boundary)
+    # 'C' só é mantida se explicitamente limpa e em maiúscula proveniente de contexto real C
+    for skill in raw_hard:
+        if not isinstance(skill, str):
+            continue
+        trimmed = skill.strip()
+        if not trimmed:
+            continue
+        # Se for letra única solta minúscula ou marcador ruído, ignora (preserva 'C' maiúsculo para a linguagem C)
+        if len(trimmed) == 1 and trimmed != "C" and trimmed.lower() in ['c', 'a', 'b', 'd', 'e', 'f', 'g', 'i', 'o', 'u', 'x', 'y', 'z']:
+            continue
+        if trimmed not in cleaned_hard:
+            cleaned_hard.append(trimmed)
+
+    raw_primary = data.get("primary_stack") or []
+    cleaned_primary: List[str] = []
+    for skill in raw_primary:
+        if isinstance(skill, str):
+            trimmed = skill.strip()
+            if len(trimmed) == 1 and trimmed != "C" and trimmed.lower() in ['c', 'a', 'b', 'd', 'e', 'f', 'g', 'i', 'o', 'u', 'x', 'y', 'z']:
+                continue
+            if trimmed and trimmed not in cleaned_primary:
+                cleaned_primary.append(trimmed)
+
+    raw_secondary = data.get("secondary_stack") or []
+    cleaned_secondary: List[str] = []
+    for skill in raw_secondary:
+        if isinstance(skill, str):
+            trimmed = skill.strip()
+            if len(trimmed) == 1 and trimmed != "C" and trimmed.lower() in ['c', 'a', 'b', 'd', 'e', 'f', 'g', 'i', 'o', 'u', 'x', 'y', 'z']:
+                continue
+            if trimmed and trimmed not in cleaned_secondary:
+                cleaned_secondary.append(trimmed)
+
+    # Garante que primary_stack e secondary_stack estejam refletidos em hard_skills
+    for skill in cleaned_primary + cleaned_secondary:
+        if skill not in cleaned_hard:
+            cleaned_hard.append(skill)
+
+    data["hard_skills"] = cleaned_hard
+    data["primary_stack"] = cleaned_primary[:5]
+    data["secondary_stack"] = [s for s in cleaned_secondary if s not in cleaned_primary]
+
+    return data
 
 
 def heuristic_cv_analysis(cv_text: str) -> Dict[str, Any]:
@@ -41,6 +105,11 @@ def heuristic_cv_analysis(cv_text: str) -> Dict[str, Any]:
         pattern = r"(?<!\w)" + re.escape(tech.lower()) + r"(?!\w)"
         if re.search(pattern, lower_text):
             detected_hard_skills.append(tech)
+
+    # Captura contextual estrita da linguagem C
+    if re.search(REGEX_C_LANG, lower_text):
+        if "C" not in detected_hard_skills:
+            detected_hard_skills.append("C")
 
     # 2. Identificar Soft Skills
     detected_soft_skills: List[str] = []
@@ -107,7 +176,7 @@ def heuristic_cv_analysis(cv_text: str) -> Dict[str, Any]:
         "Mantenha uma seção destacada de 'Habilidades Técnicas' organizada por categorias (Frontend, Backend, Bancos, Ferramentas) para facilitar a leitura por robôs ATS."
     ]
 
-    return {
+    res = {
         "detected_role": detected_role,
         "detected_seniority": seniority,
         "hard_skills": detected_hard_skills,
@@ -121,6 +190,7 @@ def heuristic_cv_analysis(cv_text: str) -> Dict[str, Any]:
         "improvement_tips": improvement_tips,
         "source": "heuristic-engine",
     }
+    return sanitize_analysis_output(res)
 
 
 async def analyze_cv_with_gemini(cv_text: str, api_key: str) -> Optional[Dict[str, Any]]:
@@ -137,8 +207,12 @@ Currículo do Candidato:
 {cv_text[:8000]}
 \"\"\"
 
-Instruções de Saída:
-Retorne APENAS um objeto JSON válido no seguinte formato exato (sem formatação markdown extra fora do json):
+Instruções Estritas de Validação e Anti-Falso-Positivo:
+1. NÃO inclua a linguagem "C" na lista de hard_skills, primary_stack ou secondary_stack a menos que o currículo mencione EXPLICITAMENTE "Linguagem C", "ANSI C" ou "C/C++". Ignore marcadores de lista como "c)", abreviações como "c/" (com/como) ou qualquer letra solta.
+2. Identifique com máxima fidelidade todas as tecnologias reais e explícitas (ex: Node.js, React, TypeScript, PHP, Python, Docker, etc.).
+3. Retorne APENAS um objeto JSON válido no seguinte formato exato (sem markdown em volta do json):
+
+Format:
 {{
   "detected_role": "Cargo principal inferido (ex: Desenvolvedor Full Stack, Dev Frontend, Engenheiro de Software)",
   "detected_seniority": "Estágio" ou "Júnior" ou "Pleno" ou "Sênior" ou "Especialista / Tech Lead",
@@ -177,7 +251,7 @@ Retorne APENAS um objeto JSON válido no seguinte formato exato (sem formataçã
                 candidate_content = data["candidates"][0]["content"]["parts"][0]["text"]
                 parsed = json.loads(candidate_content)
                 parsed["source"] = "gemini-2.5-flash"
-                return parsed
+                return sanitize_analysis_output(parsed)
             else:
                 # Tenta fallback para gemini-1.5-flash se 2.5 não responder
                 fallback_url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={api_key}"
@@ -187,7 +261,7 @@ Retorne APENAS um objeto JSON válido no seguinte formato exato (sem formataçã
                     candidate_content = data["candidates"][0]["content"]["parts"][0]["text"]
                     parsed = json.loads(candidate_content)
                     parsed["source"] = "gemini-1.5-flash"
-                    return parsed
+                    return sanitize_analysis_output(parsed)
                 else:
                     logger.warning(f"Gemini API returned status {res.status_code}: {res.text}")
                     return None
@@ -210,3 +284,4 @@ async def analyze_cv_document(cv_text: str) -> Dict[str, Any]:
 
     # Fallback automático
     return heuristic_cv_analysis(cv_text)
+
