@@ -18,15 +18,31 @@ except ImportError:
 
 
 def clean_extracted_text(text: str) -> str:
-    """Normaliza quebras de linha e remove espaços redundantes mantendo legibilidade."""
+    """Normaliza quebras de linha, une hífens de final de linha e remove ruídos mantendo legibilidade."""
     if not text:
         return ""
     # Remove caracteres nulos e de controle
     text = text.replace("\x00", " ")
+    
+    # 1. Une palavras divididas por hífen no final da linha (ex: "desenvol-\n vimento" -> "desenvolvimento")
+    text = re.sub(r"(\b[a-zA-Záéíóúãõâêîôûç]+)-\s*[\r\n]+\s*([a-zA-Záéíóúãõâêîôûç]+\b)", r"\1\2", text)
+
+    # 2. Une quebras internas de termos tecnológicos conhecidos
+    # Node.\njs -> Node.js
+    text = re.sub(r"\bNode\.\s*[\r\n]+\s*js\b", "Node.js", text, flags=re.IGNORECASE)
+    # C\n++ ou C\n# -> C++ / C#
+    text = re.sub(r"\bC\s*[\r\n]+\s*(\+\+|\#)", r"C\1", text)
+    # React\nNative -> React Native
+    text = re.sub(r"\bReact\s*[\r\n]+\s*Native\b", "React Native", text, flags=re.IGNORECASE)
+    # Vue\n.js / Next\n.js / Svelte\nKit
+    text = re.sub(r"\b(Vue|Next)\.\s*[\r\n]+\s*js\b", r"\1.js", text, flags=re.IGNORECASE)
+
     # Normaliza quebras de linha múltiplas
     text = re.sub(r"\r\n|\r", "\n", text)
-    # Remove espaços excessivos em cada linha
+    
+    # Remove espaços excessivos em cada linha mantendo indentação básica
     lines = [re.sub(r"[ \t]+", " ", line).strip() for line in text.split("\n")]
+    
     # Remove sequências excessivas de linhas vazias
     cleaned_lines = []
     empty_count = 0
@@ -38,6 +54,7 @@ def clean_extracted_text(text: str) -> str:
         else:
             empty_count = 0
             cleaned_lines.append(line)
+            
     return "\n".join(cleaned_lines).strip()
 
 
