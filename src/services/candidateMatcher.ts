@@ -328,13 +328,19 @@ function normalizeGeo(str: string): string {
     .trim();
 }
 
+const BRAZILIAN_UFS = [
+  'AC','AL','AM','AP','BA','CE','DF','ES','GO','MA','MG','MS','MT',
+  'PA','PB','PE','PI','PR','RJ','RN','RO','RR','RS','SC','SE','SP','TO'
+] as const;
+
 /**
  * Avalia compatibilidade geográfica entre candidato e vaga.
  *
  * Regras:
  * - Vaga remota ou candidato sem cidade → neutro (sem cap‐geográfico).
+ * - Vaga presencial com localização não informada/omitida → neutro (score 70, sem teto).
  * - Vaga presencial/híbrida + candidato COM cidade:
- *   • Mesma cidade (ou estado + cidade na string da vaga) → score 100, sem teto.
+ *   • Mesma cidade (mesmo sem UF explícita, se não conflitante) → score 100, sem teto.
  *   • Mesmo estado, cidade diferente → score 55, teto 70.
  *   • Estado diferente → score 15, teto 35 (Hard Block).
  */
@@ -343,15 +349,19 @@ export function evaluateGeographicCompatibility(
   candidateState: string | null | undefined,
   jobLocation: string | null | undefined,
   jobWorkModel: string | null | undefined,
-  candidatePreferredModels: string[]
+  candidatePreferredModels: string[],
+  jobTitle?: string | null // I-02: incluso para detectar "Desenvolvedor Remoto" no título
 ): GeoCompatibilityResult {
   const jobLoc = (jobLocation || '').toLowerCase();
   const workModel = (jobWorkModel || '').toLowerCase();
+  const jobTitleLower = (jobTitle || '').toLowerCase();
 
   // 1. Vaga remota → sem impacto geográfico (preserva comportamento anterior)
+  // I-02: verifica jobTitle além de location e workModel
   const isRemote =
     /remoto|remote|home office|teletrabalho|qualquer lugar|anywhere|brasil/i.test(jobLoc) ||
-    /remoto|remote|home office/i.test(workModel);
+    /remoto|remote|home office/i.test(workModel) ||
+    /remoto|remote|home office/i.test(jobTitleLower);
 
   if (isRemote) {
     const prefersRemote = candidatePreferredModels.some((m) => /remoto/i.test(m));
@@ -378,7 +388,22 @@ export function evaluateGeographicCompatibility(
     };
   }
 
-  // 2b. Candidato aceita presencial/híbrido mas não tem cidade cadastrada: neutro
+  // 2b. Vaga presencial/híbrida sem localização especificada ou omitida: neutro (REQ-01 / W-01.2)
+  const isJobLocMissing =
+    !jobLocation ||
+    jobLocation.trim().length === 0 ||
+    /^(n[aã]o informad[oa]?|a combinar|indefinid[oa]?|a definir)$/i.test(jobLocation.trim());
+
+  if (isJobLocMissing) {
+    return {
+      locationScore: 70,
+      locationCap: 100,
+      isGeoHardBlocked: false,
+      geoReason: 'Vaga presencial com localização não informada: pontuação neutra (sem penalização)',
+    };
+  }
+
+  // 2c. Candidato aceita presencial/híbrido mas não tem cidade cadastrada: neutro
   const hasCity = Boolean(candidateCity && candidateCity.trim().length > 0);
   const hasState = Boolean(candidateState && candidateState.trim().length > 0);
 
@@ -391,20 +416,38 @@ export function evaluateGeographicCompatibility(
     };
   }
 
-  // 2c. Candidato TEM cidade/estado: comparar com a vaga
+  // 2d. Candidato TEM cidade/estado: comparar com a vaga
   const normJobLoc = normalizeGeo(jobLoc);
   const normCandCity = candidateCity ? normalizeGeo(candidateCity) : '';
   const normCandState = candidateState ? normalizeGeo(candidateState) : '';
   // UF em upper para busca na string (ex: "SC", "SP")
   const candStateUpper = (candidateState || '').toUpperCase().trim();
+  const jobLocUpper = (jobLocation || '').toUpperCase();
 
   // Checa se estado do candidato aparece na string da vaga
   const stateInJob =
-    (candStateUpper.length === 2 && new RegExp(`\\b${candStateUpper}\\b`).test((jobLocation || '').toUpperCase())) ||
+    (candStateUpper.length === 2 && new RegExp(`\\b${candStateUpper}\\b`).test(jobLocUpper)) ||
     (normCandState.length > 2 && normJobLoc.includes(normCandState));
 
-  // Checa se cidade do candidato aparece na string da vaga
-  const cityInJob = normCandCity.length > 0 && normJobLoc.includes(normCandCity);
+  // Match de palavra inteira da cidade do candidato na localização da vaga
+  const cityWordMatch = normCandCity.length > 0 && (() => {
+    const escaped = normCandCity.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    return new RegExp(`\\b${escaped}\\b`).test(normJobLoc);
+  })();
+
+  // Previne colisão semântica de prefixo: ex: candidato em "Rio" (RJ) vs vaga em "Rio Grande do Sul" / "Rio Grande do Norte"
+  const isPrefixCollision =
+    normCandCity === 'rio' && /\brio\s+grande\s+do\b/i.test(normJobLoc);
+
+  // Checa se a vaga cita explicitamente OUTRA UF brasileira diferente do candidato
+  const hasConflictingUf =
+    candStateUpper.length === 2 &&
+    BRAZILIAN_UFS.some((uf) => uf !== candStateUpper && new RegExp(`\\b${uf}\\b`).test(jobLocUpper));
+
+  // W-01.1 / REQ-02: Cidade da vaga bate quando:
+  // 1. A cidade do candidato bate por palavra inteira e não colide com prefixo de estado;
+  // 2. E ou o estado do candidato bate, ou a vaga não cita nenhum estado conflitante (ex: vaga só diz "Florianópolis" ou "Curitiba").
+  const cityInJob = cityWordMatch && !isPrefixCollision && (stateInJob || !hasConflictingUf);
 
   if (cityInJob) {
     // Mesma cidade → score perfeito
@@ -645,7 +688,8 @@ export class CandidateMatcher {
       candidate.state,
       job.location || '',
       job.work_model || job.workModel || '',
-      preferredModels
+      preferredModels,
+      job.title || '' // I-02: jobTitle para detectar "Desenvolvedor Remoto"
     );
     const locationScore = geoEval.locationScore;
     const locationCap = geoEval.locationCap;

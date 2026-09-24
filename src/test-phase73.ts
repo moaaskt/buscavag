@@ -181,6 +181,48 @@ test('T10 — Vaga presencial SP + candidato Florianópolis/SC: Hard Block geogr
   assert(result.blockReason != null && result.blockReason.includes('Hard Block'), 'blockReason com mensagem de hard block');
 });
 
+// ─── Testes de regressão dos fixes do Code Review ────────────────────────────
+
+console.log('\n🔧 [Phase 73 — Code Review Fixes]\n');
+
+test('T11 — W-01: "Rio" NÃO deve bater em "Rio Grande do Sul" (word boundary)', () => {
+  // Candidato em "Rio" aceita presencial. Vaga em "Rio Grande do Sul, RS" NÃO é mesma cidade.
+  const result = evaluateGeographicCompatibility(
+    'Rio', 'RJ',
+    'Rio Grande do Sul, RS — Presencial',
+    'Presencial',
+    ['Presencial']
+  );
+  // RJ ≠ RS → Hard Block geográfico (não score 100 de "mesma cidade")
+  assertEqual(result.isGeoHardBlocked, true, 'deve ser Hard Block, não falso-positivo de cidade');
+  assert(result.locationScore <= 35, `locationScore deve ser <= 35, foi ${result.locationScore}`);
+});
+
+test('T12 — I-02: "Remoto" no jobTitle detecta vaga remota (regressão restaurada)', () => {
+  // Vaga com "Remoto" no título mas location em SP → deve ser tratada como remota
+  const result = evaluateGeographicCompatibility(
+    'Florianópolis', 'SC',
+    'São Paulo, SP',  // location indica SP
+    '',               // workModel vazio
+    ['Remoto'],
+    'Desenvolvedor Full Stack Remoto' // título diz "Remoto"
+  );
+  assertEqual(result.isGeoHardBlocked, false, 'não deve ser Hard Block por regressão I-02');
+  assertEqual(result.locationCap, 100, 'sem teto geográfico para vaga remota');
+});
+
+test('T13 — I-02: "Home Office" no jobTitle também é detectado como remoto', () => {
+  const result = evaluateGeographicCompatibility(
+    'Curitiba', 'PR',
+    'Belo Horizonte, MG',
+    '',
+    ['Presencial', 'Híbrido'],
+    'Engenheiro de Software — Home Office'
+  );
+  assertEqual(result.isGeoHardBlocked, false, 'Home Office no título detectado como remoto');
+  assertEqual(result.locationCap, 100, 'sem teto geográfico');
+});
+
 // ─── Resultado Final ──────────────────────────────────────────────────────────
 
 console.log(`\n${'─'.repeat(50)}`);
