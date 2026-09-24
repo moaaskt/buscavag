@@ -10,6 +10,8 @@ const profileSchema = z.object({
   preferred_work_models: z.array(z.string()).optional(),
   skills: z.array(z.string()).optional(),
   bio: z.string().max(2000).optional().nullable(),
+  city: z.string().max(100).optional().nullable(),
+  state: z.string().max(2).optional().nullable(),
 });
 
 export async function GET(req: NextRequest) {
