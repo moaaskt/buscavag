@@ -92,10 +92,10 @@ export class CandidateRepository {
 
     stmt.run(user.id, user.email.toLowerCase().trim(), user.password_hash, user.name.trim(), tier, role, 0, now, now);
 
-    // Inicializa perfil vazio
+    // Inicializa perfil vazio (W-03: inclui city/state explicitamente para consistência)
     const profileStmt = db.prepare(`
-      INSERT OR IGNORE INTO candidate_profiles (user_id, target_role, seniority, expected_salary, preferred_work_models, skills, primary_stack, secondary_stack, bio, updated_at)
-      VALUES (?, '', 'Júnior', '', '[]', '[]', '[]', '[]', '', ?)
+      INSERT OR IGNORE INTO candidate_profiles (user_id, target_role, seniority, expected_salary, preferred_work_models, skills, primary_stack, secondary_stack, bio, city, state, updated_at)
+      VALUES (?, '', 'Júnior', '', '[]', '[]', '[]', '[]', '', NULL, NULL, ?)
     `);
     profileStmt.run(user.id, now);
 
