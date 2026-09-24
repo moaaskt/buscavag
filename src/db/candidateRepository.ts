@@ -23,6 +23,8 @@ export interface CandidateProfile {
   primary_stack: string[];
   secondary_stack: string[];
   bio: string | null;
+  city: string | null;
+  state: string | null;
   updated_at: string;
 }
 
@@ -208,6 +210,8 @@ export class CandidateRepository {
       primary_stack: primaryStack,
       secondary_stack: secondaryStack,
       bio: row.bio || null,
+      city: row.city || null,
+      state: row.state || null,
       updated_at: row.updated_at,
     };
   }
@@ -224,10 +228,12 @@ export class CandidateRepository {
     const primary_stack = JSON.stringify(data.primary_stack || existing?.primary_stack || []);
     const secondary_stack = JSON.stringify(data.secondary_stack || existing?.secondary_stack || []);
     const bio = data.bio !== undefined ? data.bio : existing?.bio || '';
+    const city = data.city !== undefined ? data.city : existing?.city || null;
+    const state = data.state !== undefined ? data.state : existing?.state || null;
 
     const stmt = db.prepare(`
-      INSERT INTO candidate_profiles (user_id, target_role, seniority, expected_salary, preferred_work_models, skills, primary_stack, secondary_stack, bio, updated_at)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      INSERT INTO candidate_profiles (user_id, target_role, seniority, expected_salary, preferred_work_models, skills, primary_stack, secondary_stack, bio, city, state, updated_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       ON CONFLICT(user_id) DO UPDATE SET
         target_role = excluded.target_role,
         seniority = excluded.seniority,
@@ -237,10 +243,12 @@ export class CandidateRepository {
         primary_stack = excluded.primary_stack,
         secondary_stack = excluded.secondary_stack,
         bio = excluded.bio,
+        city = excluded.city,
+        state = excluded.state,
         updated_at = excluded.updated_at
     `);
 
-    stmt.run(userId, target_role, seniority, expected_salary, preferred_work_models, skills, primary_stack, secondary_stack, bio, now);
+    stmt.run(userId, target_role, seniority, expected_salary, preferred_work_models, skills, primary_stack, secondary_stack, bio, city, state, now);
 
     // Sincroniza e unifica status de onboarding (REQ-05)
     this.isOnboardingComplete(userId);
@@ -514,6 +522,8 @@ export class CandidateRepository {
       preferredWorkModels,
       skills: combinedSkills,
       bio: profile?.bio || resume?.ai_analysis?.summary || null,
+      city: profile?.city || null,
+      state: profile?.state || null,
     };
   }
 
