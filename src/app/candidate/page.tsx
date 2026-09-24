@@ -56,6 +56,8 @@ interface ProfileData {
   preferred_work_models: string[];
   skills: string[];
   bio: string | null;
+  city: string | null;
+  state: string | null;
 }
 
 interface CVAnalysisData {
@@ -154,6 +156,8 @@ export default function CandidateDashboardPage() {
     preferred_work_models: ['Remoto'],
     skills: [],
     bio: '',
+    city: null,
+    state: null,
   });
   const [skillInput, setSkillInput] = useState('');
   const [savingProfile, setSavingProfile] = useState(false);
@@ -234,6 +238,8 @@ export default function CandidateDashboardPage() {
           preferred_work_models: data.profile.preferred_work_models || ['Remoto'],
           skills: data.profile.skills || [],
           bio: data.profile.bio || '',
+          city: data.profile.city || null,
+          state: data.profile.state || null,
         });
       }
       if (data.resume) {
@@ -495,6 +501,8 @@ export default function CandidateDashboardPage() {
             preferred_work_models: data.profile.preferred_work_models || profile.preferred_work_models,
             skills: data.profile.skills || profile.skills,
             bio: data.profile.bio || profile.bio,
+            city: data.profile.city ?? profile.city,
+            state: data.profile.state ?? profile.state,
           });
         }
         setSyncFeedback('Habilidades sincronizadas com o seu perfil com sucesso!');
@@ -1218,7 +1226,7 @@ export default function CandidateDashboardPage() {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-mono text-zinc-700 dark:text-zinc-300 mb-2">
+                   <label className="block text-xs font-mono text-zinc-700 dark:text-zinc-300 mb-2">
                     Modelos de Trabalho Preferidos
                   </label>
                   <div className="flex flex-wrap gap-2 pt-1">
@@ -1240,6 +1248,46 @@ export default function CandidateDashboardPage() {
                         </button>
                       );
                     })}
+                  </div>
+
+                  {/* Dica contextual: cidade recomendada para modelos presenciais */}
+                  {(profile.preferred_work_models.includes('Presencial') || profile.preferred_work_models.includes('Híbrido')) &&
+                    !profile.city && (
+                    <p className="mt-2 text-xs text-amber-600 dark:text-amber-400 flex items-center gap-1.5">
+                      <span aria-hidden="true">💡</span>
+                      Adicione sua cidade abaixo para um match geográfico mais preciso em vagas presenciais.
+                    </p>
+                  )}
+                </div>
+
+                {/* Campo de Localização Geográfica */}
+                <div className="grid grid-cols-3 gap-3">
+                  <div className="col-span-2">
+                    <label className="block text-xs font-mono text-zinc-700 dark:text-zinc-300 mb-2">
+                      Cidade (para vagas presenciais/híbridas)
+                    </label>
+                    <input
+                      type="text"
+                      value={profile.city || ''}
+                      onChange={(e) => setProfile({ ...profile, city: e.target.value || null })}
+                      placeholder="Ex: Florianópolis"
+                      className="w-full rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950/80 px-3 py-2.5 text-sm text-zinc-900 dark:text-zinc-100 placeholder-zinc-400 dark:placeholder-zinc-500 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 transition-colors shadow-xs"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-mono text-zinc-700 dark:text-zinc-300 mb-2">
+                      Estado (UF)
+                    </label>
+                    <select
+                      value={profile.state || ''}
+                      onChange={(e) => setProfile({ ...profile, state: e.target.value || null })}
+                      className="w-full rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950/80 px-3 py-2.5 text-sm text-zinc-900 dark:text-zinc-100 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 transition-colors shadow-xs"
+                    >
+                      <option value="">UF</option>
+                      {['AC','AL','AM','AP','BA','CE','DF','ES','GO','MA','MG','MS','MT','PA','PB','PE','PI','PR','RJ','RN','RO','RR','RS','SC','SE','SP','TO'].map((uf) => (
+                        <option key={uf} value={uf}>{uf}</option>
+                      ))}
+                    </select>
                   </div>
                 </div>
               </div>
