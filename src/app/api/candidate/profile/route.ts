@@ -3,19 +3,26 @@ import { z } from 'zod';
 import { getSessionUser } from '@/lib/auth';
 import { CandidateRepository } from '@/db/candidateRepository';
 
-const VALID_UFS = ['AC','AL','AM','AP','BA','CE','DF','ES','GO','MA','MG','MS','MT',
+export const VALID_UFS = ['AC','AL','AM','AP','BA','CE','DF','ES','GO','MA','MG','MS','MT',
                    'PA','PB','PE','PI','PR','RJ','RN','RO','RR','RS','SC','SE','SP','TO'] as const;
 
-const profileSchema = z.object({
-  target_role: z.string().max(100).optional().nullable(),
-  seniority: z.string().max(50).optional().nullable(),
-  expected_salary: z.string().max(50).optional().nullable(),
+export const profileSchema = z.object({
+  target_role: z.string().max(100).optional().nullable()
+    .transform((v) => v?.trim() || null),
+  seniority: z.string().max(50).optional().nullable()
+    .transform((v) => v?.trim() || null),
+  expected_salary: z.string().max(50).optional().nullable()
+    .transform((v) => v?.trim() || null),
   preferred_work_models: z.array(z.string()).optional(),
   skills: z.array(z.string()).optional(),
-  bio: z.string().max(2000).optional().nullable(),
+  bio: z.string().max(2000).optional().nullable()
+    .transform((v) => v?.trim() || null),
   city: z.string().max(100).optional().nullable()
     .transform((v) => v?.trim() || null), // I-04: sanitiza espaços antes de persistir
-  state: z.enum(VALID_UFS).optional().nullable(),
+  state: z.preprocess(
+    (val) => (typeof val === 'string' && val.trim() === '' ? null : val),
+    z.enum(VALID_UFS).optional().nullable()
+  ), // I-06 / REQ-04: tolera strings vazias e com apenas espaços convertendo para null
 });
 
 export async function GET(req: NextRequest) {
