@@ -23,6 +23,8 @@ export interface CandidateProfile {
   primary_stack: string[];
   secondary_stack: string[];
   bio: string | null;
+  city: string | null;
+  state: string | null;
   updated_at: string;
 }
 
@@ -136,6 +138,36 @@ export class CandidateRepository {
     return info.changes > 0;
   }
 
+  /**
+   * Avalia e unifica a verificação de onboarding do candidato (REQ-04).
+   * Retorna true se já marcado no banco ou se o perfil contém os dados essenciais
+   * (target_role, seniority e pelo menos 1 competência técnica).
+   * Se os dados essenciais estiverem completos, sincroniza users.onboarding_completed = 1 automaticamente.
+   */
+  isOnboardingComplete(userId: string): boolean {
+    const user = this.getUserById(userId);
+    if (!user) return false;
+
+    if (user.onboarding_completed === 1) {
+      return true;
+    }
+
+    const profile = this.getProfile(userId);
+    if (!profile) return false;
+
+    const hasRole = Boolean(profile.target_role && profile.target_role.trim().length > 0);
+    const hasSeniority = Boolean(profile.seniority && profile.seniority.trim().length > 0);
+    const totalSkills = (profile.skills?.length || 0) + (profile.primary_stack?.length || 0) + (profile.secondary_stack?.length || 0);
+    const hasSkills = totalSkills > 0;
+
+    if (hasRole && hasSeniority && hasSkills) {
+      this.updateOnboardingStatus(userId, true);
+      return true;
+    }
+
+    return false;
+  }
+
   // --- Perfil do Candidato ---
 
   getProfile(userId: string): CandidateProfile | null {
@@ -178,6 +210,8 @@ export class CandidateRepository {
       primary_stack: primaryStack,
       secondary_stack: secondaryStack,
       bio: row.bio || null,
+      city: row.city || null,
+      state: row.state || null,
       updated_at: row.updated_at,
     };
   }
@@ -194,10 +228,12 @@ export class CandidateRepository {
     const primary_stack = JSON.stringify(data.primary_stack || existing?.primary_stack || []);
     const secondary_stack = JSON.stringify(data.secondary_stack || existing?.secondary_stack || []);
     const bio = data.bio !== undefined ? data.bio : existing?.bio || '';
+    const city = data.city !== undefined ? data.city : existing?.city || null;
+    const state = data.state !== undefined ? data.state : existing?.state || null;
 
     const stmt = db.prepare(`
-      INSERT INTO candidate_profiles (user_id, target_role, seniority, expected_salary, preferred_work_models, skills, primary_stack, secondary_stack, bio, updated_at)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      INSERT INTO candidate_profiles (user_id, target_role, seniority, expected_salary, preferred_work_models, skills, primary_stack, secondary_stack, bio, city, state, updated_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       ON CONFLICT(user_id) DO UPDATE SET
         target_role = excluded.target_role,
         seniority = excluded.seniority,
@@ -207,10 +243,15 @@ export class CandidateRepository {
         primary_stack = excluded.primary_stack,
         secondary_stack = excluded.secondary_stack,
         bio = excluded.bio,
+        city = excluded.city,
+        state = excluded.state,
         updated_at = excluded.updated_at
     `);
 
-    stmt.run(userId, target_role, seniority, expected_salary, preferred_work_models, skills, primary_stack, secondary_stack, bio, now);
+    stmt.run(userId, target_role, seniority, expected_salary, preferred_work_models, skills, primary_stack, secondary_stack, bio, city, state, now);
+
+    // Sincroniza e unifica status de onboarding (REQ-05)
+    this.isOnboardingComplete(userId);
 
     return this.getProfile(userId)!;
   }
@@ -481,6 +522,8 @@ export class CandidateRepository {
       preferredWorkModels,
       skills: combinedSkills,
       bio: profile?.bio || resume?.ai_analysis?.summary || null,
+      city: profile?.city || null,
+      state: profile?.state || null,
     };
   }
 

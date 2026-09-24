@@ -90,6 +90,8 @@ export function initDatabase() {
       primary_stack TEXT,
       secondary_stack TEXT,
       bio TEXT,
+      city TEXT,
+      state TEXT,
       updated_at TEXT NOT NULL,
       FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
     );
@@ -180,6 +182,8 @@ export function initDatabase() {
     const profileColumnsToAdd: Array<{ name: string; type: string }> = [
       { name: 'primary_stack', type: 'TEXT' },
       { name: 'secondary_stack', type: 'TEXT' },
+      { name: 'city', type: 'TEXT' },
+      { name: 'state', type: 'TEXT' },
     ];
 
     for (const col of profileColumnsToAdd) {

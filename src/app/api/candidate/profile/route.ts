@@ -10,6 +10,8 @@ const profileSchema = z.object({
   preferred_work_models: z.array(z.string()).optional(),
   skills: z.array(z.string()).optional(),
   bio: z.string().max(2000).optional().nullable(),
+  city: z.string().max(100).optional().nullable(),
+  state: z.string().max(2).optional().nullable(),
 });
 
 export async function GET(req: NextRequest) {
@@ -45,8 +47,9 @@ export async function PUT(req: NextRequest) {
 
     const repo = new CandidateRepository();
     const updated = repo.upsertProfile(session.userId, parsed.data);
+    const onboardingCompleted = repo.isOnboardingComplete(session.userId);
 
-    return NextResponse.json({ success: true, profile: updated });
+    return NextResponse.json({ success: true, profile: updated, onboardingCompleted });
   } catch (error) {
     console.error('Error in PUT /api/candidate/profile:', error);
     return NextResponse.json({ error: 'Erro ao atualizar perfil' }, { status: 500 });
