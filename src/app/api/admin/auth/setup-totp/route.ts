@@ -10,6 +10,7 @@ import {
 } from '@/lib/totp';
 import {
   createAdminSessionToken,
+  getAdminSessionUser,
   ADMIN_SESSION_COOKIE_NAME,
   ADMIN_SESSION_TTL_SECONDS,
 } from '@/lib/admin-auth';
@@ -38,6 +39,17 @@ export async function GET(req: NextRequest) {
         { success: false, error: 'Administrador não encontrado' },
         { status: 404 }
       );
+    }
+
+    // Se o 2FA já estiver configurado, exige sessão autenticada do próprio admin
+    if (admin.totp_enabled === 1) {
+      const sessionData = await getAdminSessionUser(req);
+      if (!sessionData || sessionData.user.id !== admin.id) {
+        return NextResponse.json(
+          { success: false, error: '2FA já configurado. Reconfiguração exige sessão autenticada.' },
+          { status: 403 }
+        );
+      }
     }
 
     const secret = generateTotpSecret();
@@ -82,6 +94,17 @@ export async function POST(req: NextRequest) {
         { success: false, error: 'Administrador não encontrado' },
         { status: 404 }
       );
+    }
+
+    // Se o 2FA já estiver configurado, exige sessão autenticada do próprio admin
+    if (admin.totp_enabled === 1) {
+      const sessionData = await getAdminSessionUser(req);
+      if (!sessionData || sessionData.user.id !== admin.id) {
+        return NextResponse.json(
+          { success: false, error: '2FA já configurado. Reconfiguração exige sessão autenticada.' },
+          { status: 403 }
+        );
+      }
     }
 
     const isValid = verifyTotpToken(totpCode, secret);

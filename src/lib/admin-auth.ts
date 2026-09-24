@@ -95,7 +95,12 @@ export function verifyAdminSessionToken(token: string): AdminSessionPayload | nu
 
     const secret = getAdminAuthSecret();
     const expectedSignature = crypto.createHmac('sha256', secret).update(data).digest('base64url');
-    if (signature !== expectedSignature) return null;
+
+    const sigBuf = Buffer.from(signature);
+    const expBuf = Buffer.from(expectedSignature);
+    if (sigBuf.length !== expBuf.length || !crypto.timingSafeEqual(sigBuf, expBuf)) {
+      return null;
+    }
 
     const payload = JSON.parse(Buffer.from(b64Body, 'base64url').toString('utf-8'));
     const now = Math.floor(Date.now() / 1000);
