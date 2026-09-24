@@ -23,8 +23,9 @@ export async function GET(req: NextRequest) {
     const repo = new CandidateRepository();
     const user = repo.getUserById(session.userId);
     const tier = user?.tier || session.tier || 'free';
+    const isCompleted = repo.isOnboardingComplete(session.userId);
 
-    if (!user || !user.onboarding_completed) {
+    if (!user || !isCompleted) {
       return NextResponse.json({ success: false, error: 'onboarding_required' }, { status: 403 });
     }
 
