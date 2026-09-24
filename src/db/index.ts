@@ -168,6 +168,21 @@ export function initDatabase() {
       value TEXT NOT NULL,
       updated_at TEXT NOT NULL
     );
+
+    CREATE TABLE IF NOT EXISTS logs (
+      id TEXT PRIMARY KEY,
+      tipo TEXT NOT NULL,
+      nivel TEXT NOT NULL,
+      origem TEXT NOT NULL,
+      mensagem TEXT NOT NULL,
+      metadata TEXT,
+      created_at TEXT NOT NULL
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_logs_tipo ON logs(tipo);
+    CREATE INDEX IF NOT EXISTS idx_logs_nivel ON logs(nivel);
+    CREATE INDEX IF NOT EXISTS idx_logs_origem ON logs(origem);
+    CREATE INDEX IF NOT EXISTS idx_logs_created_at ON logs(created_at DESC);
   `);
 
   // Migração automática para bancos já existentes
