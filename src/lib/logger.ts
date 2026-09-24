@@ -2,13 +2,15 @@ import crypto from 'crypto';
 import { db, initDatabase } from '@/db';
 
 export type LogLevel = 'info' | 'warn' | 'error' | 'security';
-export type LogCategory = 'auth' | 'jobs' | 'cv' | 'scraper' | 'billing' | 'system' | 'security';
+export type LogCategory = 'auth' | 'admin-auth' | 'jobs' | 'cv' | 'scraper' | 'billing' | 'system' | 'security' | 'mensageria';
 
 export interface LogContext {
   userId?: string | null;
+  user_id?: string | null;
   metadata?: Record<string, any> | null;
   ip?: string | null;
   userAgent?: string | null;
+  user_agent?: string | null;
   req?: Request | { headers: Headers | Record<string, string | string[] | undefined> } | null;
 }
 
@@ -61,8 +63,8 @@ class SystemLogger {
 
     const { ip: reqIp, userAgent: reqUserAgent } = extractRequestInfo(context?.req);
     const ip = context?.ip || reqIp;
-    const userAgent = context?.userAgent || reqUserAgent;
-    const userId = context?.userId || null;
+    const userAgent = context?.userAgent || context?.user_agent || reqUserAgent;
+    const userId = context?.userId || context?.user_id || null;
     const metadataStr = context?.metadata ? JSON.stringify(context.metadata) : null;
 
     // Log no console com formatação clara
