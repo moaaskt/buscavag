@@ -136,6 +136,36 @@ export class CandidateRepository {
     return info.changes > 0;
   }
 
+  /**
+   * Avalia e unifica a verificação de onboarding do candidato (REQ-04).
+   * Retorna true se já marcado no banco ou se o perfil contém os dados essenciais
+   * (target_role, seniority e pelo menos 1 competência técnica).
+   * Se os dados essenciais estiverem completos, sincroniza users.onboarding_completed = 1 automaticamente.
+   */
+  isOnboardingComplete(userId: string): boolean {
+    const user = this.getUserById(userId);
+    if (!user) return false;
+
+    if (user.onboarding_completed === 1) {
+      return true;
+    }
+
+    const profile = this.getProfile(userId);
+    if (!profile) return false;
+
+    const hasRole = Boolean(profile.target_role && profile.target_role.trim().length > 0);
+    const hasSeniority = Boolean(profile.seniority && profile.seniority.trim().length > 0);
+    const totalSkills = (profile.skills?.length || 0) + (profile.primary_stack?.length || 0) + (profile.secondary_stack?.length || 0);
+    const hasSkills = totalSkills > 0;
+
+    if (hasRole && hasSeniority && hasSkills) {
+      this.updateOnboardingStatus(userId, true);
+      return true;
+    }
+
+    return false;
+  }
+
   // --- Perfil do Candidato ---
 
   getProfile(userId: string): CandidateProfile | null {
@@ -211,6 +241,9 @@ export class CandidateRepository {
     `);
 
     stmt.run(userId, target_role, seniority, expected_salary, preferred_work_models, skills, primary_stack, secondary_stack, bio, now);
+
+    // Sincroniza e unifica status de onboarding (REQ-05)
+    this.isOnboardingComplete(userId);
 
     return this.getProfile(userId)!;
   }
