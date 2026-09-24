@@ -1226,7 +1226,7 @@ export default function CandidateDashboardPage() {
                 </div>
 
                 <div>
-                   <label className="block text-xs font-mono text-zinc-700 dark:text-zinc-300 mb-2">
+                  <label className="block text-xs font-mono text-zinc-700 dark:text-zinc-300 mb-2">
                     Modelos de Trabalho Preferidos
                   </label>
                   <div className="flex flex-wrap gap-2 pt-1">
