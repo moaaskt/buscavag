@@ -343,15 +343,19 @@ export function evaluateGeographicCompatibility(
   candidateState: string | null | undefined,
   jobLocation: string | null | undefined,
   jobWorkModel: string | null | undefined,
-  candidatePreferredModels: string[]
+  candidatePreferredModels: string[],
+  jobTitle?: string | null // I-02: incluso para detectar "Desenvolvedor Remoto" no título
 ): GeoCompatibilityResult {
   const jobLoc = (jobLocation || '').toLowerCase();
   const workModel = (jobWorkModel || '').toLowerCase();
+  const jobTitleLower = (jobTitle || '').toLowerCase();
 
   // 1. Vaga remota → sem impacto geográfico (preserva comportamento anterior)
+  // I-02: verifica jobTitle além de location e workModel
   const isRemote =
     /remoto|remote|home office|teletrabalho|qualquer lugar|anywhere|brasil/i.test(jobLoc) ||
-    /remoto|remote|home office/i.test(workModel);
+    /remoto|remote|home office/i.test(workModel) ||
+    /remoto|remote|home office/i.test(jobTitleLower);
 
   if (isRemote) {
     const prefersRemote = candidatePreferredModels.some((m) => /remoto/i.test(m));
@@ -403,8 +407,13 @@ export function evaluateGeographicCompatibility(
     (candStateUpper.length === 2 && new RegExp(`\\b${candStateUpper}\\b`).test((jobLocation || '').toUpperCase())) ||
     (normCandState.length > 2 && normJobLoc.includes(normCandState));
 
-  // Checa se cidade do candidato aparece na string da vaga
-  const cityInJob = normCandCity.length > 0 && normJobLoc.includes(normCandCity);
+  // W-01: cidade só conta como "match" quando o ESTADO também bate.
+  // Elimina falso-positivo semântico: "Rio" (RJ) em "Rio Grande do Sul, RS" ≠ mesma cidade.
+  // Word boundary sozinho não resolve porque "Rio" é palavra completa em "Rio Grande do Sul".
+  const cityInJob = stateInJob && normCandCity.length > 0 && (() => {
+    const escaped = normCandCity.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    return new RegExp(`\\b${escaped}\\b`).test(normJobLoc);
+  })();
 
   if (cityInJob) {
     // Mesma cidade → score perfeito
@@ -645,7 +654,8 @@ export class CandidateMatcher {
       candidate.state,
       job.location || '',
       job.work_model || job.workModel || '',
-      preferredModels
+      preferredModels,
+      job.title || '' // I-02: jobTitle para detectar "Desenvolvedor Remoto"
     );
     const locationScore = geoEval.locationScore;
     const locationCap = geoEval.locationCap;
