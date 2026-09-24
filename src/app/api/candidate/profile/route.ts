@@ -45,8 +45,9 @@ export async function PUT(req: NextRequest) {
 
     const repo = new CandidateRepository();
     const updated = repo.upsertProfile(session.userId, parsed.data);
+    const onboardingCompleted = repo.isOnboardingComplete(session.userId);
 
-    return NextResponse.json({ success: true, profile: updated });
+    return NextResponse.json({ success: true, profile: updated, onboardingCompleted });
   } catch (error) {
     console.error('Error in PUT /api/candidate/profile:', error);
     return NextResponse.json({ error: 'Erro ao atualizar perfil' }, { status: 500 });
