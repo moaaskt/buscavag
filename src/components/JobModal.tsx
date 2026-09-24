@@ -189,13 +189,13 @@ export function JobModal({ job, onClose, onStatusChange, candidateProfile }: Job
 
         {/* Scrollable Modal Body */}
         <div className="flex-1 overflow-y-auto p-5 md:p-6 space-y-6">
-          {/* SECTION 1: Hermes IA Compatibility */}
-          <section className="space-y-3.5">
+          {/* SECTION 1: Análise de Compatibilidade */}
+          <section className="space-y-3">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <Sparkles className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
                 <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
-                  Análise Granular de Compatibilidade (Hermes IA)
+                  Compatibilidade Detalhada
                 </h3>
               </div>
             </div>
@@ -203,57 +203,54 @@ export function JobModal({ job, onClose, onStatusChange, candidateProfile }: Job
             {/* 3 Metrics KPI Grid */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               {/* Stack Match */}
-              <div className="p-3.5 rounded-xl bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-800/80 flex flex-col justify-between gap-2">
+              <div className="p-3 rounded-lg bg-zinc-50 dark:bg-zinc-800/40 border border-zinc-200 dark:border-zinc-800 flex flex-col justify-between gap-1.5">
                 <div className="flex items-center justify-between text-xs font-mono">
-                  <span className="text-zinc-600 dark:text-zinc-400">Stack Match</span>
-                  <span className="font-semibold text-emerald-600 dark:text-emerald-400">{stackScore}%</span>
+                  <span className="text-zinc-600 dark:text-zinc-400 font-sans">Afinidade de Stack</span>
+                  <span className="font-semibold text-emerald-700 dark:text-emerald-400">{stackScore}%</span>
                 </div>
                 <div className="w-full h-1.5 bg-zinc-200 dark:bg-zinc-700 rounded-full overflow-hidden">
                   <div
-                    className="h-full bg-emerald-500 rounded-full transition-all duration-500"
+                    className="h-full bg-emerald-500 rounded-full transition-all duration-300"
                     style={{ width: `${stackScore}%` }}
                   />
                 </div>
-                <span className="text-[11px] font-mono text-zinc-500">Afinidade de stack</span>
               </div>
 
               {/* Seniority */}
-              <div className="p-3.5 rounded-xl bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-800/80 flex flex-col justify-between gap-2">
+              <div className="p-3 rounded-lg bg-zinc-50 dark:bg-zinc-800/40 border border-zinc-200 dark:border-zinc-800 flex flex-col justify-between gap-1.5">
                 <div className="flex items-center justify-between text-xs font-mono">
-                  <span className="text-zinc-600 dark:text-zinc-400">Senioridade</span>
-                  <span className="font-semibold text-emerald-600 dark:text-emerald-400">{seniorityScore}%</span>
+                  <span className="text-zinc-600 dark:text-zinc-400 font-sans">Nível / Senioridade</span>
+                  <span className="font-semibold text-emerald-700 dark:text-emerald-400">{seniorityScore}%</span>
                 </div>
                 <div className="w-full h-1.5 bg-zinc-200 dark:bg-zinc-700 rounded-full overflow-hidden">
                   <div
-                    className="h-full bg-emerald-500 rounded-full transition-all duration-500"
+                    className="h-full bg-emerald-500 rounded-full transition-all duration-300"
                     style={{ width: `${seniorityScore}%` }}
                   />
                 </div>
-                <span className="text-[11px] font-mono text-zinc-500">Nível Jr / Entry</span>
               </div>
 
               {/* Location / Model */}
-              <div className="p-3.5 rounded-xl bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-800/80 flex flex-col justify-between gap-2">
+              <div className="p-3 rounded-lg bg-zinc-50 dark:bg-zinc-800/40 border border-zinc-200 dark:border-zinc-800 flex flex-col justify-between gap-1.5">
                 <div className="flex items-center justify-between text-xs font-mono">
-                  <span className="text-zinc-600 dark:text-zinc-400">Local / Modelo</span>
-                  <span className="font-semibold text-emerald-600 dark:text-emerald-400">{locationScore}%</span>
+                  <span className="text-zinc-600 dark:text-zinc-400 font-sans">Modelo de Trabalho</span>
+                  <span className="font-semibold text-emerald-700 dark:text-emerald-400">{locationScore}%</span>
                 </div>
                 <div className="w-full h-1.5 bg-zinc-200 dark:bg-zinc-700 rounded-full overflow-hidden">
                   <div
-                    className="h-full bg-emerald-500 rounded-full transition-all duration-500"
+                    className="h-full bg-emerald-500 rounded-full transition-all duration-300"
                     style={{ width: `${locationScore}%` }}
                   />
                 </div>
-                <span className="text-[11px] font-mono text-zinc-500">Modelo compatível</span>
               </div>
             </div>
 
             {/* Parecer IA */}
             {job.aiReasoning && (
-              <div className="p-3.5 rounded-xl bg-zinc-50 dark:bg-zinc-800/40 border border-zinc-200 dark:border-zinc-800/80 flex items-start gap-2.5">
+              <div className="p-3.5 rounded-lg bg-zinc-50 dark:bg-zinc-800/30 border border-zinc-200 dark:border-zinc-800 flex items-start gap-2.5">
                 <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5" />
-                <p className="text-xs md:text-sm text-zinc-700 dark:text-zinc-300 leading-relaxed font-mono">
-                  <strong className="text-zinc-900 dark:text-zinc-100">Parecer:</strong>{' '}
+                <p className="text-xs md:text-sm text-zinc-700 dark:text-zinc-300 leading-relaxed">
+                  <strong className="text-zinc-900 dark:text-zinc-100 font-medium">Parecer:</strong>{' '}
                   {renderHighlightedModalReasoning(job.aiReasoning)}
                 </p>
               </div>
