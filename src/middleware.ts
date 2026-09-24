@@ -1,32 +1,43 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
-import { decodeSessionTokenEdge } from '@/lib/edge-auth';
+import { decodeAdminSessionTokenEdge } from '@/lib/admin-edge-auth';
 
-const SESSION_COOKIE_NAME = 'buscavag_session';
+const ADMIN_SESSION_COOKIE_NAME = 'admin_session';
+
+// Rotas públicas administrativas (não exigem sessão prévia)
+const PUBLIC_ADMIN_PATHS = [
+  '/admin/login',
+  '/api/admin/auth/login',
+  '/api/admin/auth/setup-totp',
+];
 
 export async function middleware(request: NextRequest) {
   const path = request.nextUrl.pathname;
 
-  // Protect /admin and /api/admin routes
+  // Proteção exclusiva de rotas administrativas /admin e /api/admin
   if (path.startsWith('/admin') || path.startsWith('/api/admin')) {
-    const token = request.cookies.get(SESSION_COOKIE_NAME)?.value;
-    
-    if (!token) {
-      if (path.startsWith('/api/')) {
-        return NextResponse.json({ success: false, error: 'Não autorizado' }, { status: 401 });
+    // Permite livre acesso às rotas públicas de autenticação admin
+    const isPublic = PUBLIC_ADMIN_PATHS.some((publicPath) => path === publicPath || path.startsWith(publicPath + '/'));
+    const token = request.cookies.get(ADMIN_SESSION_COOKIE_NAME)?.value;
+    const session = token ? decodeAdminSessionTokenEdge(token) : null;
+
+    if (isPublic) {
+      // Se já estiver autenticado e tentar acessar /admin/login, redireciona para o painel
+      if (path === '/admin/login' && session && session.role === 'ADMIN') {
+        return NextResponse.redirect(new URL('/admin', request.url));
       }
-      return NextResponse.redirect(new URL('/login', request.url));
+      return NextResponse.next();
     }
 
-    const session = decodeSessionTokenEdge(token);
-    
-    // Only users with ADMIN role can access these routes
-    if (!session || session.role !== 'ADMIN') {
+    // Validação estrita da sessão de administrador
+    if (!token || !session || session.role !== 'ADMIN') {
       if (path.startsWith('/api/')) {
-        return NextResponse.json({ success: false, error: 'Acesso negado' }, { status: 403 });
+        return NextResponse.json(
+          { success: false, error: 'Sessão administrativa ausente ou inválida' },
+          { status: 401 }
+        );
       }
-      // Redirect non-admins trying to access admin pages to the home page
-      return NextResponse.redirect(new URL('/', request.url));
+      return NextResponse.redirect(new URL('/admin/login', request.url));
     }
   }
 
@@ -36,3 +47,4 @@ export async function middleware(request: NextRequest) {
 export const config = {
   matcher: ['/admin/:path*', '/api/admin/:path*'],
 };
+
