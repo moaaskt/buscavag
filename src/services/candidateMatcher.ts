@@ -8,6 +8,8 @@ export interface CandidateContext {
   preferredWorkModels: string[];
   skills: string[]; // Combined skills from profile + resume
   bio?: string | null;
+  city?: string | null;
+  state?: string | null;
 }
 
 export interface CandidateMatchResult {
@@ -306,6 +308,133 @@ export function evaluateSeniorityDistance(
   };
 }
 
+export interface GeoCompatibilityResult {
+  locationScore: number;
+  locationCap: number;
+  isGeoHardBlocked: boolean;
+  geoReason: string;
+}
+
+/**
+ * Normaliza string para comparação geográfica: minusculas, sem acentos, sem pontuação extra.
+ */
+function normalizeGeo(str: string): string {
+  return str
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '') // remove diacríticos
+    .replace(/[^a-z0-9\s]/g, ' ')    // substitui pontuação por espaço
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+/**
+ * Avalia compatibilidade geográfica entre candidato e vaga.
+ *
+ * Regras:
+ * - Vaga remota ou candidato sem cidade → neutro (sem cap‐geográfico).
+ * - Vaga presencial/híbrida + candidato COM cidade:
+ *   • Mesma cidade (ou estado + cidade na string da vaga) → score 100, sem teto.
+ *   • Mesmo estado, cidade diferente → score 55, teto 70.
+ *   • Estado diferente → score 15, teto 35 (Hard Block).
+ */
+export function evaluateGeographicCompatibility(
+  candidateCity: string | null | undefined,
+  candidateState: string | null | undefined,
+  jobLocation: string | null | undefined,
+  jobWorkModel: string | null | undefined,
+  candidatePreferredModels: string[]
+): GeoCompatibilityResult {
+  const jobLoc = (jobLocation || '').toLowerCase();
+  const workModel = (jobWorkModel || '').toLowerCase();
+
+  // 1. Vaga remota → sem impacto geográfico (preserva comportamento anterior)
+  const isRemote =
+    /remoto|remote|home office|teletrabalho|qualquer lugar|anywhere|brasil/i.test(jobLoc) ||
+    /remoto|remote|home office/i.test(workModel);
+
+  if (isRemote) {
+    const prefersRemote = candidatePreferredModels.some((m) => /remoto/i.test(m));
+    return {
+      locationScore: prefersRemote ? 100 : 60,
+      locationCap: 100,
+      isGeoHardBlocked: false,
+      geoReason: 'Vaga remota: sem restrição geográfica',
+    };
+  }
+
+  // 2. Vaga presencial/híbrida: verifica preferência do candidato
+  const prefersHybrid = candidatePreferredModels.some((m) => /h[ií]brido/i.test(m));
+  const prefersPresential = candidatePreferredModels.some((m) => /presencial/i.test(m));
+  const acceptsOnsite = prefersHybrid || prefersPresential;
+
+  // 2a. Candidato prefere APENAS remoto: Hard Block legado
+  if (!acceptsOnsite) {
+    return {
+      locationScore: 20,
+      locationCap: 35,
+      isGeoHardBlocked: true,
+      geoReason: 'Hard Block: Vaga presencial incompatível com preferência exclusiva por trabalho remoto (teto 35%)',
+    };
+  }
+
+  // 2b. Candidato aceita presencial/híbrido mas não tem cidade cadastrada: neutro
+  const hasCity = Boolean(candidateCity && candidateCity.trim().length > 0);
+  const hasState = Boolean(candidateState && candidateState.trim().length > 0);
+
+  if (!hasCity && !hasState) {
+    return {
+      locationScore: 70,
+      locationCap: 100,
+      isGeoHardBlocked: false,
+      geoReason: 'Candidato sem cidade cadastrada: score neutro (sem penalização)',
+    };
+  }
+
+  // 2c. Candidato TEM cidade/estado: comparar com a vaga
+  const normJobLoc = normalizeGeo(jobLoc);
+  const normCandCity = candidateCity ? normalizeGeo(candidateCity) : '';
+  const normCandState = candidateState ? normalizeGeo(candidateState) : '';
+  // UF em upper para busca na string (ex: "SC", "SP")
+  const candStateUpper = (candidateState || '').toUpperCase().trim();
+
+  // Checa se estado do candidato aparece na string da vaga
+  const stateInJob =
+    (candStateUpper.length === 2 && new RegExp(`\\b${candStateUpper}\\b`).test((jobLocation || '').toUpperCase())) ||
+    (normCandState.length > 2 && normJobLoc.includes(normCandState));
+
+  // Checa se cidade do candidato aparece na string da vaga
+  const cityInJob = normCandCity.length > 0 && normJobLoc.includes(normCandCity);
+
+  if (cityInJob) {
+    // Mesma cidade → score perfeito
+    return {
+      locationScore: 100,
+      locationCap: 100,
+      isGeoHardBlocked: false,
+      geoReason: `Harmonia geográfica: vaga na mesma cidade (${candidateCity})`,
+    };
+  }
+
+  if (stateInJob) {
+    // Mesmo estado, cidade diferente → soft penalty
+    return {
+      locationScore: 55,
+      locationCap: 70,
+      isGeoHardBlocked: false,
+      geoReason: `Compatibilidade parcial: mesmo estado (${candidateState}), cidades distintas (teto 70%)`,
+    };
+  }
+
+  // Estado diferente → Hard Block geográfico
+  return {
+    locationScore: 15,
+    locationCap: 35,
+    isGeoHardBlocked: true,
+    geoReason: `Hard Block Geográfico: vaga presencial em estado diferente do candidato (${candidateState || '?'}) — teto 35%`,
+  };
+}
+
 export interface RankedJobResult {
   job: ProcessedJob | (RawJob & { id: string; overall_score?: number; score_ia?: number });
   match: CandidateMatchResult;
@@ -506,32 +635,21 @@ export class CandidateMatcher {
       roleScore = 100;
     }
 
-    // 4. Cálculo de Modelo de Trabalho & Localização (20% do peso total)
-    let locationScore = 70;
-    let locationCap = 100;
-    const isRemoteJob = /(remoto|remote|home office|teletrabalho|qualquer lugar|anywhere|brasil)/i.test(jobLocation) ||
-                        /(remoto|remote|home office)/i.test(jobTitle);
-
+    // 4. Avaliação Geográfica (20% do peso total) — via evaluateGeographicCompatibility()
     const preferredModels = Array.isArray(candidate.preferredWorkModels) && candidate.preferredWorkModels.length > 0
       ? candidate.preferredWorkModels
       : ['Remoto', 'Híbrido', 'Presencial'];
-    const prefersRemote = preferredModels.some((m) => /remoto/i.test(m));
-    const prefersHybrid = preferredModels.some((m) => /h[ií]brido/i.test(m));
-    const prefersPresential = preferredModels.some((m) => /presencial/i.test(m));
 
-    if (isRemoteJob && prefersRemote) {
-      locationScore = 100;
-    } else if (isRemoteJob && !prefersRemote) {
-      locationScore = 60;
-    } else if (!isRemoteJob) {
-      if (prefersHybrid || prefersPresential) {
-        locationScore = 85;
-      } else {
-        // Candidato prefere exclusivamente remoto e a vaga é presencial
-        locationScore = 20;
-        locationCap = 35; // Teto eliminatório de 35% para vaga presencial incompatível com candidato 100% remoto
-      }
-    }
+    const geoEval = evaluateGeographicCompatibility(
+      candidate.city,
+      candidate.state,
+      job.location || '',
+      job.work_model || job.workModel || '',
+      preferredModels
+    );
+    const locationScore = geoEval.locationScore;
+    const locationCap = geoEval.locationCap;
+    const isGeoHardBlocked = geoEval.isGeoHardBlocked;
 
     // 5. Cálculo de Pretensão Salarial (10% do peso total)
     const jobSalaryParsed = parseSalary(job.salary || (job.description ? job.description.match(/(?:r\$|sal[áa]rio:?)\s*[\d.,k\s-]+/i)?.[0] : null));
@@ -574,12 +692,12 @@ export class CandidateMatcher {
     }
     overallScore = Math.max(0, Math.min(100, overallScore));
 
-    const isHardBlocked = isHardBlockedSeniority || locationCap <= 35;
+    const isHardBlocked = isHardBlockedSeniority || isGeoHardBlocked;
     let blockReason: string | undefined;
     if (isHardBlockedSeniority) {
       blockReason = seniorityEvaluation.reason;
-    } else if (locationCap <= 35) {
-      blockReason = 'Hard Block: Vaga presencial incompatível com preferência exclusiva por trabalho remoto (teto 35%)';
+    } else if (isGeoHardBlocked) {
+      blockReason = geoEval.geoReason;
     }
 
     // Geração de Justificativa da IA
