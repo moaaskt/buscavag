@@ -1,5 +1,7 @@
 import { Bot } from 'grammy';
 import { ProcessedJob } from '../types/job.js';
+import { db } from '@/db';
+import crypto from 'crypto';
 
 export class TelegramNotifier {
   private bot: Bot | null = null;
@@ -12,6 +14,15 @@ export class TelegramNotifier {
     if (token) {
       this.bot = new Bot(token);
     }
+  }
+
+  public getStatus() {
+    return {
+      isConfigured: !!(this.bot && this.chatId),
+      chatId: this.chatId ? this.maskChatId(this.chatId) : undefined,
+      hasToken: !!process.env.TELEGRAM_BOT_TOKEN,
+      mode: (!this.bot || !this.chatId) ? 'mock' : 'live',
+    };
   }
 
   public formatJobMessage(job: ProcessedJob): string {
@@ -46,21 +57,87 @@ export class TelegramNotifier {
            `🔗 <a href="${job.url}">Clique aqui para ver a vaga</a>`;
   }
 
+  public async sendMessage(chatId: string, text: string, parseMode: 'HTML' | 'Markdown' = 'HTML'): Promise<{ success: boolean; messageId?: string; mock?: boolean; error?: string }> {
+    const targetChat = chatId || this.chatId;
+    if (!targetChat) {
+      return { success: false, error: 'Chat ID não configurado para envio Telegram.' };
+    }
+
+    if (!this.bot || !this.chatId) {
+      console.log(`\n[TelegramNotifier MOCK MODE] Mensagem para ${targetChat}:\n${text}\n`);
+      const mockId = `mock-tg-${Date.now()}`;
+      this.recordDeliveryLog({
+        recipient: targetChat,
+        status: 'delivered',
+        messageId: mockId,
+        isMock: true,
+        preview: text.slice(0, 150),
+      });
+      return { success: true, mock: true, messageId: mockId };
+    }
+
+    try {
+      const res = await this.bot.api.sendMessage(targetChat, text, { parse_mode: parseMode });
+      await new Promise((resolve) => setTimeout(resolve, 800));
+
+      this.recordDeliveryLog({
+        recipient: targetChat,
+        status: 'delivered',
+        messageId: String(res.message_id),
+        preview: text.slice(0, 150),
+      });
+
+      return { success: true, messageId: String(res.message_id) };
+    } catch (err: any) {
+      const errorMsg = err.message || String(err);
+      console.error(`[TelegramNotifier] Erro ao enviar mensagem para ${targetChat}:`, errorMsg);
+
+      this.recordDeliveryLog({
+        recipient: targetChat,
+        status: 'failed',
+        error: errorMsg,
+        preview: text.slice(0, 150),
+      });
+
+      return { success: false, error: errorMsg };
+    }
+  }
+
   public async sendNotification(job: ProcessedJob): Promise<boolean> {
     const message = this.formatJobMessage(job);
 
     if (!this.bot || !this.chatId) {
       console.log(`[TelegramNotifier MOCK MODE] Notificação gerada para a vaga "${job.title}":\n${message}\n`);
+      this.recordDeliveryLog({
+        recipient: 'chat_default',
+        status: 'delivered',
+        messageId: `mock-job-${Date.now()}`,
+        isMock: true,
+        preview: `Vaga: ${job.title}`,
+      });
       return true;
     }
 
     try {
-      await this.bot.api.sendMessage(this.chatId, message, { parse_mode: 'HTML' });
-      // Throttling 800ms entre requisições para evitar rate-limit/ETIMEDOUT
+      const res = await this.bot.api.sendMessage(this.chatId, message, { parse_mode: 'HTML' });
       await new Promise((resolve) => setTimeout(resolve, 800));
+
+      this.recordDeliveryLog({
+        recipient: this.chatId,
+        status: 'delivered',
+        messageId: String(res.message_id),
+        preview: `Vaga: ${job.title}`,
+      });
       return true;
-    } catch (err) {
+    } catch (err: any) {
       console.error(`[TelegramNotifier] Erro ao enviar notificação da vaga "${job.title}":`, err);
+
+      this.recordDeliveryLog({
+        recipient: this.chatId || 'chat_default',
+        status: 'failed',
+        error: err.message || String(err),
+        preview: `Vaga: ${job.title}`,
+      });
       return false;
     }
   }
@@ -70,15 +147,36 @@ export class TelegramNotifier {
 
     if (!this.bot || !this.chatId) {
       console.warn(`[TelegramNotifier MOCK MODE] Alerta gerado:\n${formattedAlert}\n`);
+      this.recordDeliveryLog({
+        recipient: 'chat_default',
+        status: 'delivered',
+        messageId: `mock-alert-${Date.now()}`,
+        isMock: true,
+        preview: alertMessage.slice(0, 150),
+      });
       return true;
     }
 
     try {
-      await this.bot.api.sendMessage(this.chatId, formattedAlert, { parse_mode: 'HTML' });
+      const res = await this.bot.api.sendMessage(this.chatId, formattedAlert, { parse_mode: 'HTML' });
       await new Promise((resolve) => setTimeout(resolve, 800));
+
+      this.recordDeliveryLog({
+        recipient: this.chatId,
+        status: 'delivered',
+        messageId: String(res.message_id),
+        preview: alertMessage.slice(0, 150),
+      });
       return true;
-    } catch (err) {
+    } catch (err: any) {
       console.error(`[TelegramNotifier] Erro ao enviar alerta no Telegram:`, err);
+
+      this.recordDeliveryLog({
+        recipient: this.chatId || 'chat_default',
+        status: 'failed',
+        error: err.message || String(err),
+        preview: alertMessage.slice(0, 150),
+      });
       return false;
     }
   }
@@ -100,5 +198,47 @@ export class TelegramNotifier {
       .replace(/&/g, '&amp;')
       .replace(/</g, '&lt;')
       .replace(/>/g, '&gt;');
+  }
+
+  private maskChatId(id: string): string {
+    if (id.length <= 4) return '***';
+    return id.slice(0, 3) + '****' + id.slice(-2);
+  }
+
+  private recordDeliveryLog(data: {
+    recipient: string;
+    status: 'delivered' | 'failed';
+    messageId?: string;
+    error?: string;
+    isMock?: boolean;
+    preview?: string;
+  }) {
+    try {
+      const logId = crypto.randomUUID();
+      const now = new Date().toISOString();
+
+      const metadata = JSON.stringify({
+        canal: 'telegram',
+        destinatario: data.recipient,
+        status: data.status,
+        messageId: data.messageId || null,
+        error: data.error || null,
+        mock: !!data.isMock,
+        preview: data.preview || '',
+      });
+
+      const nivel = data.status === 'delivered' ? 'info' : 'error';
+      const mensagem = data.status === 'delivered'
+        ? `[Telegram] Mensagem enviada com sucesso para ${data.recipient}`
+        : `[Telegram] Falha no envio para ${data.recipient}: ${data.error || 'Erro desconhecido'}`;
+
+      const stmt = db.prepare(`
+        INSERT INTO logs (id, tipo, nivel, origem, mensagem, metadata, created_at)
+        VALUES (?, 'mensageria', ?, 'mensageria', ?, ?, ?)
+      `);
+      stmt.run(logId, nivel, mensagem, metadata, now);
+    } catch (err) {
+      console.error('[TelegramNotifier] Falha ao registrar log de entrega:', err);
+    }
   }
 }
