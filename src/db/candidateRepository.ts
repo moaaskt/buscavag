@@ -9,6 +9,8 @@ export interface User {
   tier: 'free' | 'premium';
   role: 'GUEST' | 'CANDIDATE' | 'ADMIN';
   onboarding_completed: number;
+  status?: 'active' | 'suspended';
+  force_password_change?: number;
   created_at: string;
   updated_at: string;
 }
