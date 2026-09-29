@@ -129,6 +129,7 @@ export function verifySessionToken(token: string): UserSession | null {
       name: payload.name,
       tier: payload.tier || 'free',
       role: payload.role || 'CANDIDATE',
+      ...(payload.impersonatedBy ? { impersonatedBy: payload.impersonatedBy } : {}),
     };
   } catch {
     return null;
