@@ -83,6 +83,7 @@ export const ProcessedJobSchema = RawJobSchema.extend({
   workModel: z.string().optional(),
   isTechSoftware: z.boolean().optional(),
   applicationStatus: z.enum(['pending', 'applied', 'interview', 'offer', 'rejected']).default('pending').optional(),
+  status: z.enum(['active', 'expired', 'hidden']).default('active').optional(),
   notified: z.boolean().default(false),
   createdAt: z.date().default(() => new Date()),
 });

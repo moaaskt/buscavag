@@ -84,6 +84,29 @@ class SystemLogger {
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
       `);
       stmt.run(id, timestamp, level, category, message, userId, metadataStr, ip, userAgent);
+
+      // Persistência na tabela unificada de logs (Phase 77)
+      const unificadoTipo =
+        category === 'mensageria'
+          ? 'mensageria'
+          : category === 'admin-auth'
+          ? 'acao'
+          : 'sistema';
+      const unificadoNivel = level === 'warn' ? 'warning' : level;
+      const unificadoOrigem = (context?.metadata?.origem as string) || (category === 'admin-auth' ? 'admin_action' : category);
+
+      const unifiedMeta = JSON.stringify({
+        ...(context?.metadata || {}),
+        userId,
+        ip,
+        userAgent,
+      });
+
+      const unifiedStmt = db.prepare(`
+        INSERT INTO logs (id, tipo, nivel, origem, mensagem, metadata, created_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?)
+      `);
+      unifiedStmt.run(id, unificadoTipo, unificadoNivel, unificadoOrigem, message, unifiedMeta, timestamp);
     } catch (err: any) {
       if (err.message && err.message.includes('no such table')) {
         try {
@@ -149,3 +172,27 @@ class SystemLogger {
 }
 
 export const logger = new SystemLogger();
+
+/**
+ * Registra formalmente uma ação ou intervenção operacional de um administrador na tabela unificada de logs.
+ */
+export function logAdminAction(
+  adminUser: { id?: string; email?: string; name?: string } | null,
+  action: string,
+  details?: Record<string, any>,
+  req?: Request | { headers: Headers | Record<string, any> } | null
+): void {
+  const metadata: Record<string, any> = {
+    ...details,
+    adminEmail: adminUser?.email,
+    adminName: adminUser?.name,
+    origem: 'admin_action',
+  };
+
+  logger.info('admin-auth', action, {
+    userId: adminUser?.id,
+    metadata,
+    req,
+  });
+}
+
