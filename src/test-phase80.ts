@@ -180,15 +180,16 @@ async function runTests() {
     const repo = new AdminPaymentRepository();
     const unique = `cortesia_${Date.now()}_${Math.random().toString(36).substring(7)}`;
     const userId = `usr_${unique}`;
+    const userEmail = `${unique}@cortesia.test`;
     const adminUser = { id: 'adm_1', email: 'suporte@admin.buscavag.com', name: 'Suporte Admin' };
 
     db.prepare(`
       INSERT INTO users (id, email, password_hash, name, tier, role, created_at, updated_at)
       VALUES (?, ?, 'hash', 'Candidato Cortesia', 'free', 'CANDIDATE', datetime('now'), datetime('now'))
-    `).run(userId, `${unique}@cortesia.test`);
+    `).run(userId, userEmail);
 
-    const result = repo.grantCourtesySubscription(userId, 30, 'Cortesia de teste de integração', adminUser);
-    assert(result !== null && result.success, 'concessão de cortesia deve ter sucesso');
+    const result = repo.grantCourtesySubscription(userEmail, 30, 'Cortesia de teste de integração', adminUser);
+    assert(result !== null && result.success, 'concessão de cortesia por email deve ter sucesso');
 
     // Valida que o usuário virou premium
     const userCheck = db.prepare('SELECT tier FROM users WHERE id = ?').get(userId) as { tier: string };

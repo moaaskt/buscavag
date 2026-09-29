@@ -348,9 +348,10 @@ export class AdminPaymentRepository {
     reason: string,
     adminUser?: { id?: string; email?: string; name?: string } | null
   ): { success: boolean; paymentId: string; subscriptionId: string; expiresAt: string } | null {
-    const user = db.prepare('SELECT id, email, name FROM users WHERE id = ?').get(userId) as any;
+    const user = db.prepare('SELECT id, email, name FROM users WHERE id = ? OR LOWER(email) = LOWER(?)').get(userId, userId) as any;
     if (!user) return null;
 
+    const targetUserId = user.id;
     const now = new Date();
     const periodEnd = new Date(now.getTime() + days * 24 * 60 * 60 * 1000);
     const nowIso = now.toISOString();
@@ -368,7 +369,7 @@ export class AdminPaymentRepository {
       ) VALUES (?, ?, 'manual', ?, 0, 'BRL', 'courtesy', 'manual', 'premium', 'monthly', NULL, ?, ?, ?)
     `).run(
       paymentId,
-      userId,
+      targetUserId,
       `cortesia_${days}d`,
       JSON.stringify({ reason, grantedBy: adminUser?.email || 'admin', days }),
       nowIso,
@@ -391,7 +392,7 @@ export class AdminPaymentRepository {
         updated_at = ?
     `).run(
       subId,
-      userId,
+      targetUserId,
       `cortesia_${days}d`,
       nowIso,
       periodEndIso,
@@ -402,13 +403,13 @@ export class AdminPaymentRepository {
     );
 
     // 3. Atualiza o tier do usuário para premium
-    db.prepare('UPDATE users SET tier = ?, updated_at = ? WHERE id = ?').run('premium', nowIso, userId);
+    db.prepare('UPDATE users SET tier = ?, updated_at = ? WHERE id = ?').run('premium', nowIso, targetUserId);
 
     // 4. Auditoria
     logAdminAction(
       adminUser || null,
       `Concessão de Cortesia Pro (${days} dias) para ${user.email}`,
-      { targetUserId: userId, days, reason, paymentId, expiresAt: periodEndIso }
+      { targetUserId, days, reason, paymentId, expiresAt: periodEndIso }
     );
 
     return {
