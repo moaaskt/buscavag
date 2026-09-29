@@ -42,6 +42,14 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    if (user.status === 'suspended') {
+      logger.security('auth', `Tentativa de login em conta suspensa: ${email}`, { userId: user.id, req });
+      return NextResponse.json(
+        { success: false, error: 'Sua conta foi suspensa pela administração. Entre em contato com o suporte.' },
+        { status: 403 }
+      );
+    }
+
     logger.info('auth', `Login bem-sucedido: ${email} (${user.role})`, { userId: user.id, req });
 
     const token = createSessionToken({

@@ -77,6 +77,8 @@ export function initDatabase() {
       tier TEXT DEFAULT 'free',
       role TEXT DEFAULT 'CANDIDATE',
       onboarding_completed INTEGER DEFAULT 0,
+      status TEXT DEFAULT 'active',
+      force_password_change INTEGER DEFAULT 0,
       created_at TEXT NOT NULL,
       updated_at TEXT NOT NULL
     );
@@ -226,6 +228,13 @@ export function initDatabase() {
     if (!existingUserCols.includes('onboarding_completed')) {
       db.exec(`ALTER TABLE users ADD COLUMN onboarding_completed INTEGER DEFAULT 0;`);
     }
+    if (!existingUserCols.includes('status')) {
+      db.exec(`ALTER TABLE users ADD COLUMN status TEXT DEFAULT 'active';`);
+    }
+    if (!existingUserCols.includes('force_password_change')) {
+      db.exec(`ALTER TABLE users ADD COLUMN force_password_change INTEGER DEFAULT 0;`);
+    }
+    db.exec("UPDATE users SET status = 'active' WHERE status IS NULL;");
 
     const existingProfileCols = (db.pragma('table_info(candidate_profiles)') as Array<{ name: string }>).map((col) => col.name);
     const profileColumnsToAdd: Array<{ name: string; type: string }> = [
@@ -293,6 +302,8 @@ export function initDatabase() {
       CREATE INDEX IF NOT EXISTS idx_logs_scraper_name ON scraper_logs(scraper_name);
       CREATE INDEX IF NOT EXISTS idx_logs_created_at ON scraper_logs(created_at);
       CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
+      CREATE INDEX IF NOT EXISTS idx_users_status ON users(status);
+      CREATE INDEX IF NOT EXISTS idx_users_tier ON users(tier);
       CREATE INDEX IF NOT EXISTS idx_resumes_user_id ON candidate_resumes(user_id);
       CREATE INDEX IF NOT EXISTS idx_saved_jobs_user ON user_saved_jobs(user_id);
       CREATE INDEX IF NOT EXISTS idx_hidden_jobs_user ON user_hidden_jobs(user_id);

@@ -58,6 +58,7 @@ export interface UserSession {
   name: string;
   tier: 'free' | 'premium';
   role: 'GUEST' | 'CANDIDATE' | 'ADMIN';
+  impersonatedBy?: { adminId: string; adminEmail: string };
 }
 
 /**
