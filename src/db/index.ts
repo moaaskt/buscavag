@@ -55,7 +55,8 @@ export function initDatabase() {
       required_seniority TEXT,
       tech_stack TEXT,
       work_model TEXT,
-      is_tech_software INTEGER DEFAULT 1
+      is_tech_software INTEGER DEFAULT 1,
+      status TEXT DEFAULT 'active'
     );
 
     CREATE TABLE IF NOT EXISTS scraper_logs (
@@ -206,6 +207,7 @@ export function initDatabase() {
       { name: 'tech_stack', type: 'TEXT' },
       { name: 'work_model', type: 'TEXT' },
       { name: 'is_tech_software', type: 'INTEGER DEFAULT 1' },
+      { name: 'status', type: "TEXT DEFAULT 'active'" },
     ];
 
     for (const col of jobColumnsToAdd) {
@@ -213,6 +215,9 @@ export function initDatabase() {
         db.exec(`ALTER TABLE jobs ADD COLUMN ${col.name} ${col.type};`);
       }
     }
+
+    // Garante que registros sem status sejam marcados como 'active'
+    db.exec("UPDATE jobs SET status = 'active' WHERE status IS NULL;");
 
     const existingUserCols = (db.pragma('table_info(users)') as Array<{ name: string }>).map((col) => col.name);
     if (!existingUserCols.includes('role')) {
@@ -251,12 +256,38 @@ export function initDatabase() {
     console.warn('[DB Migration] Aviso ao verificar colunas:', (err as Error).message);
   }
 
+  // Configuração segura de auto_vacuum = INCREMENTAL para gestão enxuta de disco na VPS
+  try {
+    const currentAutoVacuum = db.pragma('auto_vacuum', { simple: true });
+    if (currentAutoVacuum === 0) {
+      db.pragma('auto_vacuum = INCREMENTAL');
+      db.exec('VACUUM');
+    }
+  } catch (err) {
+    console.warn('[DB Pragma] Aviso ao verificar auto_vacuum:', (err as Error).message);
+  }
+
+  // Seed da retenção de vagas em admin_settings
+  try {
+    const retentionSetting = db.prepare('SELECT value FROM admin_settings WHERE key = ?').get('job_retention_days');
+    if (!retentionSetting) {
+      db.prepare('INSERT INTO admin_settings (key, value, updated_at) VALUES (?, ?, ?)').run(
+        'job_retention_days',
+        '21',
+        new Date().toISOString()
+      );
+    }
+  } catch (err) {
+    console.warn('[DB Seed] Aviso ao verificar job_retention_days:', (err as Error).message);
+  }
+
   // Criação segura de índices após migrações
   try {
     db.exec(`
       CREATE INDEX IF NOT EXISTS idx_jobs_platform ON jobs(platform);
       CREATE INDEX IF NOT EXISTS idx_jobs_notified ON jobs(notified);
       CREATE INDEX IF NOT EXISTS idx_jobs_app_status ON jobs(application_status);
+      CREATE INDEX IF NOT EXISTS idx_jobs_status ON jobs(status);
       CREATE INDEX IF NOT EXISTS idx_logs_run_id ON scraper_logs(run_id);
       CREATE INDEX IF NOT EXISTS idx_logs_level ON scraper_logs(level);
       CREATE INDEX IF NOT EXISTS idx_logs_scraper_name ON scraper_logs(scraper_name);

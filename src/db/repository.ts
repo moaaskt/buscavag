@@ -14,6 +14,8 @@ export interface JobFilterOptions {
   period?: string;
   location?: string;
   userId?: string;
+  adminMode?: boolean;
+  jobStatus?: string;
 }
 
 
@@ -160,6 +162,7 @@ export class JobRepository {
       techStack,
       workModel: workModel || undefined,
       isTechSoftware: Boolean(isTechSoftware),
+      status: 'active',
       notified: false,
       createdAt,
     };
@@ -223,6 +226,19 @@ export class JobRepository {
     }
 
     sql += ' WHERE 1=1';
+
+    // Blindagem de visibilidade pública / candidato: apenas vagas ativas
+    if (!filters?.adminMode) {
+      if (filters?.jobStatus && filters.jobStatus !== 'all') {
+        sql += ' AND jobs.status = ?';
+        params.push(filters.jobStatus);
+      } else {
+        sql += " AND (jobs.status IS NULL OR jobs.status = 'active')";
+      }
+    } else if (filters?.jobStatus && filters.jobStatus !== 'all') {
+      sql += ' AND jobs.status = ?';
+      params.push(filters.jobStatus);
+    }
 
     if (filters?.onlyApproved) {
       sql += ' AND is_junior_fullstack = 1';
@@ -391,6 +407,7 @@ export class JobRepository {
       })(),
       workModel: row.work_model || undefined,
       isTechSoftware: Boolean(row.is_tech_software ?? 1),
+      status: row.status || 'active',
       notified: Boolean(row.notified),
       createdAt: new Date(row.created_at),
     };

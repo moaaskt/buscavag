@@ -93,6 +93,7 @@ class SystemLogger {
           ? 'acao'
           : 'sistema';
       const unificadoNivel = level === 'warn' ? 'warning' : level;
+      const unificadoOrigem = (context?.metadata?.origem as string) || (category === 'admin-auth' ? 'admin_action' : category);
 
       const unifiedMeta = JSON.stringify({
         ...(context?.metadata || {}),
@@ -105,7 +106,7 @@ class SystemLogger {
         INSERT INTO logs (id, tipo, nivel, origem, mensagem, metadata, created_at)
         VALUES (?, ?, ?, ?, ?, ?, ?)
       `);
-      unifiedStmt.run(id, unificadoTipo, unificadoNivel, category, message, unifiedMeta, timestamp);
+      unifiedStmt.run(id, unificadoTipo, unificadoNivel, unificadoOrigem, message, unifiedMeta, timestamp);
     } catch (err: any) {
       if (err.message && err.message.includes('no such table')) {
         try {
@@ -185,6 +186,7 @@ export function logAdminAction(
     ...details,
     adminEmail: adminUser?.email,
     adminName: adminUser?.name,
+    origem: 'admin_action',
   };
 
   logger.info('admin-auth', action, {
@@ -192,19 +194,5 @@ export function logAdminAction(
     metadata,
     req,
   });
-
-  try {
-    const timestamp = new Date().toISOString();
-    const id = crypto.randomUUID();
-    const { ip, userAgent } = extractRequestInfo(req);
-    const metaStr = JSON.stringify({ ...metadata, ip, userAgent });
-
-    db.prepare(`
-      INSERT INTO logs (id, tipo, nivel, origem, mensagem, metadata, created_at)
-      VALUES (?, 'acao', 'info', 'admin_action', ?, ?, ?)
-    `).run(id, action, metaStr, timestamp);
-  } catch (err: any) {
-    console.error('[logAdminAction error]:', err.message);
-  }
 }
 
