@@ -186,6 +186,63 @@ export function initDatabase() {
     CREATE INDEX IF NOT EXISTS idx_logs_nivel ON logs(nivel);
     CREATE INDEX IF NOT EXISTS idx_logs_origem ON logs(origem);
     CREATE INDEX IF NOT EXISTS idx_logs_created_at ON logs(created_at DESC);
+
+    -- Phase 80: Gestão Financeira & Pagamentos
+    CREATE TABLE IF NOT EXISTS payments (
+      id TEXT PRIMARY KEY,
+      user_id TEXT NOT NULL,
+      gateway TEXT NOT NULL,
+      gateway_payment_id TEXT,
+      amount REAL NOT NULL,
+      currency TEXT DEFAULT 'BRL',
+      status TEXT NOT NULL,
+      payment_method TEXT,
+      plan_tier TEXT DEFAULT 'premium',
+      billing_cycle TEXT DEFAULT 'monthly',
+      invoice_url TEXT,
+      metadata TEXT,
+      created_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL,
+      FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_payments_user_id ON payments(user_id);
+    CREATE INDEX IF NOT EXISTS idx_payments_status ON payments(status);
+    CREATE INDEX IF NOT EXISTS idx_payments_gateway ON payments(gateway);
+    CREATE INDEX IF NOT EXISTS idx_payments_created_at ON payments(created_at DESC);
+
+    CREATE TABLE IF NOT EXISTS subscriptions (
+      id TEXT PRIMARY KEY,
+      user_id TEXT NOT NULL UNIQUE,
+      gateway TEXT NOT NULL,
+      gateway_subscription_id TEXT,
+      tier TEXT DEFAULT 'premium',
+      billing_cycle TEXT DEFAULT 'monthly',
+      status TEXT NOT NULL,
+      amount REAL NOT NULL,
+      current_period_start TEXT NOT NULL,
+      current_period_end TEXT NOT NULL,
+      cancel_at_period_end INTEGER DEFAULT 0,
+      canceled_at TEXT,
+      created_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL,
+      FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_subscriptions_user_id ON subscriptions(user_id);
+    CREATE INDEX IF NOT EXISTS idx_subscriptions_status ON subscriptions(status);
+
+    CREATE TABLE IF NOT EXISTS payment_webhooks (
+      id TEXT PRIMARY KEY,
+      gateway TEXT NOT NULL,
+      event_type TEXT NOT NULL,
+      payload TEXT NOT NULL,
+      processed INTEGER DEFAULT 1,
+      created_at TEXT NOT NULL
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_webhooks_gateway ON payment_webhooks(gateway);
+    CREATE INDEX IF NOT EXISTS idx_webhooks_created_at ON payment_webhooks(created_at DESC);
   `);
 
   // Migração automática para bancos já existentes
