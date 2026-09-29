@@ -109,6 +109,8 @@ export class CandidateRepository {
       tier,
       role,
       onboarding_completed: 0,
+      status: 'active',
+      force_password_change: 0,
       created_at: now,
       updated_at: now,
     };
