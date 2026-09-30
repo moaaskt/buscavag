@@ -50,6 +50,7 @@ services:
       - DATABASE_PATH=/app/data/buscavag.db
       - NODE_ENV=production
       - SCRAPLING_ENGINE_URL=http://scrapling-engine:8000
+      - AUTH_SECRET=${AUTH_SECRET}
     restart: unless-stopped
     depends_on:
       - scraper

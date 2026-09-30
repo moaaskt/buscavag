@@ -14,6 +14,8 @@ export interface JobFilterOptions {
   period?: string;
   location?: string;
   userId?: string;
+  adminMode?: boolean;
+  jobStatus?: string;
 }
 
 
@@ -32,8 +34,8 @@ export class JobRepository {
     initDatabase();
   }
 
-  public exists(url: string, company: string, title: string): boolean {
-    const id = generateJobHash(url, company, title);
+  public exists(url: string, company: string, title: string, platform?: string): boolean {
+    const id = generateJobHash(url, company, title, platform);
     const stmt = db.prepare('SELECT 1 FROM jobs WHERE id = ? OR url = ?');
     const result = stmt.get(id, url);
     return !!result;
@@ -45,7 +47,7 @@ export class JobRepository {
     scoreIa: number = 0,
     reasoning: string = ''
   ): ProcessedJob {
-    const id = generateJobHash(rawJob.url, rawJob.company, rawJob.title);
+    const id = generateJobHash(rawJob.url, rawJob.company, rawJob.title, rawJob.platform);
     const createdAt = new Date();
 
     let isJunior = false;
@@ -61,6 +63,11 @@ export class JobRepository {
     let contractType = '';
     let applicationChannel = '';
     let salary = '';
+    let directContact = '';
+    let requiredSeniority = '';
+    let techStack: string[] = [];
+    let workModel = '';
+    let isTechSoftware = 1;
 
     if (typeof evalResultOrIsJunior === 'object' && evalResultOrIsJunior !== null) {
       isJunior = evalResultOrIsJunior.isJuniorFullStack;
@@ -76,6 +83,11 @@ export class JobRepository {
       contractType = evalResultOrIsJunior.contractType || '';
       applicationChannel = evalResultOrIsJunior.applicationChannel || '';
       salary = evalResultOrIsJunior.salary || '';
+      directContact = evalResultOrIsJunior.directContact || '';
+      requiredSeniority = evalResultOrIsJunior.requiredSeniority || '';
+      techStack = evalResultOrIsJunior.techStack || [];
+      workModel = evalResultOrIsJunior.workModel || '';
+      isTechSoftware = evalResultOrIsJunior.isTechSoftware !== false ? 1 : 0;
     } else {
       isJunior = Boolean(evalResultOrIsJunior);
       overallScore = scoreIa;
@@ -89,8 +101,10 @@ export class JobRepository {
         id, url, title, company, platform, description, published_at, location,
         is_junior_fullstack, score_ia, overall_score, stack_score, seniority_score,
         location_score, category, gaps, resume_tips, application_status, ai_reasoning, notified, created_at,
-        extracted_role, contract_type, application_channel, salary
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, ?, ?, ?, ?, ?)
+        extracted_role, contract_type, application_channel, salary, direct_contact,
+        required_seniority, tech_stack, work_model, is_tech_software
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      ON CONFLICT(id) DO NOTHING
     `);
 
     stmt.run(
@@ -117,7 +131,12 @@ export class JobRepository {
       extractedRole,
       contractType,
       applicationChannel,
-      salary
+      salary,
+      directContact,
+      requiredSeniority,
+      JSON.stringify(techStack),
+      workModel,
+      isTechSoftware
     );
 
     return {
@@ -138,6 +157,12 @@ export class JobRepository {
       contractType,
       applicationChannel,
       salary,
+      directContact: directContact || undefined,
+      requiredSeniority: requiredSeniority || undefined,
+      techStack,
+      workModel: workModel || undefined,
+      isTechSoftware: Boolean(isTechSoftware),
+      status: 'active',
       notified: false,
       createdAt,
     };
@@ -201,6 +226,19 @@ export class JobRepository {
     }
 
     sql += ' WHERE 1=1';
+
+    // Blindagem de visibilidade pública / candidato: apenas vagas ativas
+    if (!filters?.adminMode) {
+      if (filters?.jobStatus && filters.jobStatus !== 'all') {
+        sql += ' AND jobs.status = ?';
+        params.push(filters.jobStatus);
+      } else {
+        sql += " AND (jobs.status IS NULL OR jobs.status = 'active')";
+      }
+    } else if (filters?.jobStatus && filters.jobStatus !== 'all') {
+      sql += ' AND jobs.status = ?';
+      params.push(filters.jobStatus);
+    }
 
     if (filters?.onlyApproved) {
       sql += ' AND is_junior_fullstack = 1';
@@ -358,6 +396,18 @@ export class JobRepository {
       contractType: row.contract_type || undefined,
       applicationChannel: row.application_channel || undefined,
       salary: row.salary || undefined,
+      directContact: row.direct_contact || undefined,
+      requiredSeniority: row.required_seniority || undefined,
+      techStack: (() => {
+        try {
+          return row.tech_stack ? (typeof row.tech_stack === 'string' ? JSON.parse(row.tech_stack) : row.tech_stack) : [];
+        } catch {
+          return [];
+        }
+      })(),
+      workModel: row.work_model || undefined,
+      isTechSoftware: Boolean(row.is_tech_software ?? 1),
+      status: row.status || 'active',
       notified: Boolean(row.notified),
       createdAt: new Date(row.created_at),
     };

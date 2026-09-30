@@ -2,13 +2,15 @@ import crypto from 'crypto';
 import { db, initDatabase } from '@/db';
 
 export type LogLevel = 'info' | 'warn' | 'error' | 'security';
-export type LogCategory = 'auth' | 'jobs' | 'cv' | 'scraper' | 'billing' | 'system' | 'security';
+export type LogCategory = 'auth' | 'admin-auth' | 'jobs' | 'cv' | 'scraper' | 'billing' | 'system' | 'security' | 'mensageria';
 
 export interface LogContext {
   userId?: string | null;
+  user_id?: string | null;
   metadata?: Record<string, any> | null;
   ip?: string | null;
   userAgent?: string | null;
+  user_agent?: string | null;
   req?: Request | { headers: Headers | Record<string, string | string[] | undefined> } | null;
 }
 
@@ -61,8 +63,8 @@ class SystemLogger {
 
     const { ip: reqIp, userAgent: reqUserAgent } = extractRequestInfo(context?.req);
     const ip = context?.ip || reqIp;
-    const userAgent = context?.userAgent || reqUserAgent;
-    const userId = context?.userId || null;
+    const userAgent = context?.userAgent || context?.user_agent || reqUserAgent;
+    const userId = context?.userId || context?.user_id || null;
     const metadataStr = context?.metadata ? JSON.stringify(context.metadata) : null;
 
     // Log no console com formatação clara
@@ -82,6 +84,29 @@ class SystemLogger {
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
       `);
       stmt.run(id, timestamp, level, category, message, userId, metadataStr, ip, userAgent);
+
+      // Persistência na tabela unificada de logs (Phase 77)
+      const unificadoTipo =
+        category === 'mensageria'
+          ? 'mensageria'
+          : category === 'admin-auth'
+          ? 'acao'
+          : 'sistema';
+      const unificadoNivel = level === 'warn' ? 'warning' : level;
+      const unificadoOrigem = (context?.metadata?.origem as string) || (category === 'admin-auth' ? 'admin_action' : category);
+
+      const unifiedMeta = JSON.stringify({
+        ...(context?.metadata || {}),
+        userId,
+        ip,
+        userAgent,
+      });
+
+      const unifiedStmt = db.prepare(`
+        INSERT INTO logs (id, tipo, nivel, origem, mensagem, metadata, created_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?)
+      `);
+      unifiedStmt.run(id, unificadoTipo, unificadoNivel, unificadoOrigem, message, unifiedMeta, timestamp);
     } catch (err: any) {
       if (err.message && err.message.includes('no such table')) {
         try {
@@ -147,3 +172,27 @@ class SystemLogger {
 }
 
 export const logger = new SystemLogger();
+
+/**
+ * Registra formalmente uma ação ou intervenção operacional de um administrador na tabela unificada de logs.
+ */
+export function logAdminAction(
+  adminUser: { id?: string; email?: string; name?: string } | null,
+  action: string,
+  details?: Record<string, any>,
+  req?: Request | { headers: Headers | Record<string, any> } | null
+): void {
+  const metadata: Record<string, any> = {
+    ...details,
+    adminEmail: adminUser?.email,
+    adminName: adminUser?.name,
+    origem: 'admin_action',
+  };
+
+  logger.info('admin-auth', action, {
+    userId: adminUser?.id,
+    metadata,
+    req,
+  });
+}
+

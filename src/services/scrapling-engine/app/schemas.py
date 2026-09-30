@@ -62,6 +62,10 @@ class CVAnalysisData(BaseModel):
     detected_seniority: str
     hard_skills: List[str] = Field(default_factory=list)
     soft_skills: List[str] = Field(default_factory=list)
+    primary_stack: List[str] = Field(default_factory=list)
+    secondary_stack: List[str] = Field(default_factory=list)
+    work_model: Optional[str] = None
+    expected_salary: Optional[str] = None
     summary: str
     strengths: List[str] = Field(default_factory=list)
     improvement_tips: List[str] = Field(default_factory=list)

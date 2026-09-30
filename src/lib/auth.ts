@@ -2,7 +2,54 @@ import crypto from 'crypto';
 import { cookies } from 'next/headers';
 import { NextRequest } from 'next/server';
 
-const AUTH_SECRET = process.env.AUTH_SECRET || 'buscavag-secret-key-candidate-portal-2026-secure-auth';
+export const DEFAULT_AUTH_SECRET = 'buscavag-secret-key-candidate-portal-2026-secure-auth';
+
+/**
+ * Validação estrita de segurança do AUTH_SECRET (REQ-07).
+ * Em ambiente de produção (NODE_ENV=production), a aplicação bloqueia fatalmente
+ * a inicialização se AUTH_SECRET estiver ausente, usar a chave padrão ou tiver menos de 32 caracteres.
+ * Em development ou test, utiliza o segredo fornecido ou o fallback local para DX.
+ */
+export function validateAuthSecretSecurity(
+  secret: string | undefined = process.env.AUTH_SECRET,
+  nodeEnv: string | undefined = process.env.NODE_ENV
+): string {
+  const isProd = nodeEnv === 'production';
+  if (isProd) {
+    if (!secret || secret.trim() === '') {
+      throw new Error('🚨 [FATAL_SECURITY] AUTH_SECRET environment variable is missing in production!');
+    }
+    if (secret === DEFAULT_AUTH_SECRET) {
+      throw new Error('🚨 [FATAL_SECURITY] AUTH_SECRET cannot use the default hardcoded secret in production!');
+    }
+    if (secret.length < 32) {
+      throw new Error(`🚨 [FATAL_SECURITY] AUTH_SECRET must have at least 32 characters in production! (Found ${secret.length})`);
+    }
+    return secret;
+  }
+  return secret || DEFAULT_AUTH_SECRET;
+}
+
+let cachedSecret: string | null = null;
+
+/**
+ * Obtém e valida o AUTH_SECRET sob demanda no runtime.
+ * Garante que a compilação/build estático do Next.js não quebre por ausência de variáveis de runtime,
+ * mas qualquer operação criptográfica ou inicialização de servidor valide rigorosamente a chave.
+ */
+export function getAuthSecret(): string {
+  if (cachedSecret) return cachedSecret;
+  cachedSecret = validateAuthSecretSecurity(process.env.AUTH_SECRET, process.env.NODE_ENV);
+  return cachedSecret;
+}
+
+/**
+ * Permite limpar o cache do segredo (utilizado em testes unitários).
+ */
+export function resetAuthSecretCache(): void {
+  cachedSecret = null;
+}
+
 export const SESSION_COOKIE_NAME = 'buscavag_session';
 
 export interface UserSession {
@@ -11,6 +58,7 @@ export interface UserSession {
   name: string;
   tier: 'free' | 'premium';
   role: 'GUEST' | 'CANDIDATE' | 'ADMIN';
+  impersonatedBy?: { adminId: string; adminEmail: string };
 }
 
 /**
@@ -48,7 +96,8 @@ export function createSessionToken(payload: UserSession): string {
   const b64Body = Buffer.from(JSON.stringify(body)).toString('base64url');
   const data = `${b64Header}.${b64Body}`;
 
-  const signature = crypto.createHmac('sha256', AUTH_SECRET).update(data).digest('base64url');
+  const secret = getAuthSecret();
+  const signature = crypto.createHmac('sha256', secret).update(data).digest('base64url');
   return `${data}.${signature}`;
 }
 
@@ -63,7 +112,8 @@ export function verifySessionToken(token: string): UserSession | null {
     const [b64Header, b64Body, signature] = parts;
     const data = `${b64Header}.${b64Body}`;
 
-    const expectedSignature = crypto.createHmac('sha256', AUTH_SECRET).update(data).digest('base64url');
+    const secret = getAuthSecret();
+    const expectedSignature = crypto.createHmac('sha256', secret).update(data).digest('base64url');
     if (signature !== expectedSignature) return null;
 
     const payload = JSON.parse(Buffer.from(b64Body, 'base64url').toString('utf-8'));
@@ -79,6 +129,7 @@ export function verifySessionToken(token: string): UserSession | null {
       name: payload.name,
       tier: payload.tier || 'free',
       role: payload.role || 'CANDIDATE',
+      ...(payload.impersonatedBy ? { impersonatedBy: payload.impersonatedBy } : {}),
     };
   } catch {
     return null;

@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { ProcessedJob } from '@/types/job';
-import { ChevronRight, Building2, MapPin, Sparkles, Trash2, Check, ChevronDown } from 'lucide-react';
+import { ChevronRight, Building2, MapPin, Sparkles, Trash2, Check, ChevronDown, Mail } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -10,6 +10,8 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { PlatformBadge } from '@/components/ui/PlatformBadge';
+import { getCategoryBadgeClass } from '@/lib/category-colors';
+import { ScoreBadge } from '@/components/ScoreBadge';
 
 interface JobCardProps {
   job: ProcessedJob;
@@ -54,11 +56,13 @@ export function JobCard({
         className={`group cursor-pointer bg-white dark:bg-zinc-900/70 hover:bg-zinc-50 dark:hover:bg-zinc-800/80 p-3 rounded-xl border ${
           isSelected
             ? 'border-emerald-500/80 bg-emerald-50/20 dark:bg-emerald-950/10'
+            : job.isStrongMatch
+            ? 'border-emerald-500/40 dark:border-emerald-500/30'
             : 'border-zinc-200 dark:border-zinc-800/80'
         } shadow-sm transition-all flex flex-col gap-2 w-full min-w-0 relative`}
       >
         <div className="flex items-center justify-between gap-2 min-w-0">
-          <div className="flex items-center gap-1.5">
+          <div className="flex items-center gap-1.5 flex-wrap">
             {onToggleSelect && (
               <button
                 type="button"
@@ -73,10 +77,26 @@ export function JobCard({
               </button>
             )}
             <PlatformBadge platform={job.platform} className="max-w-[100px]" />
+            {job.isStrongMatch && (
+              <span
+                className="flex items-center gap-0.5 text-emerald-600 dark:text-emerald-400 font-semibold shrink-0 bg-emerald-50 dark:bg-emerald-950/40 px-1.5 py-0.5 rounded border border-emerald-200 dark:border-emerald-800/60 text-[9px]"
+                title="Super Match: Aderência ≥ 75%"
+              >
+                <Sparkles className="w-2.5 h-2.5" />
+                <span>Super Match</span>
+              </span>
+            )}
+            {job.directContact && (
+              <span
+                className="flex items-center gap-1 text-emerald-600 dark:text-emerald-400 font-semibold shrink-0 bg-emerald-50 dark:bg-emerald-950/40 px-1.5 py-0.5 rounded border border-emerald-200 dark:border-emerald-800/60 text-[9px]"
+                title={`Contato: ${job.directContact}`}
+              >
+                <Mail className="w-2.5 h-2.5" />
+                <span>Direto</span>
+              </span>
+            )}
           </div>
-          <span className="font-mono text-xs font-semibold text-emerald-600 dark:text-emerald-400 shrink-0">
-            {score}%
-          </span>
+          <ScoreBadge score={score} size="sm" />
         </div>
 
         <div className="min-w-0">
@@ -140,6 +160,8 @@ export function JobCard({
       className={`group cursor-pointer bg-white dark:bg-zinc-900/70 hover:bg-zinc-50 dark:hover:bg-zinc-800/80 p-4 md:p-5 rounded-xl border ${
         isSelected
           ? 'border-emerald-500/80 bg-emerald-50/20 dark:bg-emerald-950/10'
+          : job.isStrongMatch
+          ? 'border-emerald-500/40 dark:border-emerald-500/30'
           : 'border-zinc-200 dark:border-zinc-800/80'
       } shadow-sm transition-all flex flex-col gap-2.5 w-full min-w-0 relative`}
     >
@@ -166,9 +188,18 @@ export function JobCard({
                 {job.title}
               </span>
               <PlatformBadge platform={job.platform} />
+              {job.isStrongMatch && (
+                <span
+                  className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 shrink-0"
+                  title="Super Match: Aderência ≥ 75%"
+                >
+                  <Sparkles className="w-3 h-3" />
+                  Super Match
+                </span>
+              )}
               {/* Category tag */}
               {job.category && (
-                <span className="font-mono text-[11px] px-2 py-0.5 rounded bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 border border-zinc-200 dark:border-zinc-700/60 shrink-0">
+                <span className={`font-mono text-[11px] px-2 py-0.5 rounded border shrink-0 ${getCategoryBadgeClass(job.category)}`}>
                   {job.category}
                 </span>
               )}
@@ -218,19 +249,23 @@ export function JobCard({
               <span className="truncate">{job.location || 'Remoto'}</span>
               <span>•</span>
               <span className="shrink-0">{publishedStr}</span>
+              {job.directContact && (
+                <>
+                  <span>•</span>
+                  <span className="flex items-center gap-1 text-emerald-600 dark:text-emerald-400 font-semibold shrink-0 bg-emerald-50 dark:bg-emerald-950/40 px-1.5 py-0.5 rounded border border-emerald-200 dark:border-emerald-800/60 text-[10px]">
+                    <Mail className="w-2.5 h-2.5" />
+                    <span>Contato Direto</span>
+                  </span>
+                </>
+              )}
             </div>
           </div>
         </div>
 
         {/* Right: Scores & Actions */}
         <div className="flex items-center gap-4 shrink-0 pt-2 lg:pt-0 border-t lg:border-t-0 border-zinc-100 dark:border-zinc-800/60 justify-between lg:justify-end">
-          <div className="flex flex-col items-end">
-            <div className="flex items-baseline gap-1.5 font-mono text-xs">
-              <span className="text-zinc-400 dark:text-zinc-500">SCORE:</span>
-              <span className="text-sm font-semibold text-emerald-600 dark:text-emerald-400">
-                {score}%
-              </span>
-            </div>
+          <div className="flex flex-col items-end gap-1">
+            <ScoreBadge score={score} size="sm" />
             {job.stackScore !== undefined && (
               <span className="font-mono text-[11px] text-zinc-400 dark:text-zinc-500">
                 Stack: {job.stackScore}%

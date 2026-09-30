@@ -8,6 +8,9 @@ export interface User {
   name: string;
   tier: 'free' | 'premium';
   role: 'GUEST' | 'CANDIDATE' | 'ADMIN';
+  onboarding_completed: number;
+  status?: 'active' | 'suspended';
+  force_password_change?: number;
   created_at: string;
   updated_at: string;
 }
@@ -19,7 +22,11 @@ export interface CandidateProfile {
   expected_salary: string | null;
   preferred_work_models: string[];
   skills: string[];
+  primary_stack: string[];
+  secondary_stack: string[];
   bio: string | null;
+  city: string | null;
+  state: string | null;
   updated_at: string;
 }
 
@@ -28,6 +35,10 @@ export interface CVAnalysisResult {
   detected_seniority: string;
   hard_skills: string[];
   soft_skills: string[];
+  primary_stack: string[];
+  secondary_stack: string[];
+  work_model: string | null;
+  expected_salary: string | null;
   summary: string;
   strengths: string[];
   improvement_tips: string[];
@@ -77,16 +88,16 @@ export class CandidateRepository {
     const role = user.role || 'CANDIDATE';
 
     const stmt = db.prepare(`
-      INSERT INTO users (id, email, password_hash, name, tier, role, created_at, updated_at)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+      INSERT INTO users (id, email, password_hash, name, tier, role, onboarding_completed, created_at, updated_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
     `);
 
-    stmt.run(user.id, user.email.toLowerCase().trim(), user.password_hash, user.name.trim(), tier, role, now, now);
+    stmt.run(user.id, user.email.toLowerCase().trim(), user.password_hash, user.name.trim(), tier, role, 0, now, now);
 
-    // Inicializa perfil vazio
+    // Inicializa perfil vazio (W-03: inclui city/state explicitamente para consistência)
     const profileStmt = db.prepare(`
-      INSERT OR IGNORE INTO candidate_profiles (user_id, target_role, seniority, expected_salary, preferred_work_models, skills, bio, updated_at)
-      VALUES (?, '', 'Júnior', '', '[]', '[]', '', ?)
+      INSERT OR IGNORE INTO candidate_profiles (user_id, target_role, seniority, expected_salary, preferred_work_models, skills, primary_stack, secondary_stack, bio, city, state, updated_at)
+      VALUES (?, '', 'Júnior', '', '[]', '[]', '[]', '[]', '', NULL, NULL, ?)
     `);
     profileStmt.run(user.id, now);
 
@@ -97,6 +108,9 @@ export class CandidateRepository {
       name: user.name.trim(),
       tier,
       role,
+      onboarding_completed: 0,
+      status: 'active',
+      force_password_change: 0,
       created_at: now,
       updated_at: now,
     };
@@ -121,6 +135,43 @@ export class CandidateRepository {
     return info.changes > 0;
   }
 
+  updateOnboardingStatus(id: string, status: boolean): boolean {
+    const now = new Date().toISOString();
+    const stmt = db.prepare('UPDATE users SET onboarding_completed = ?, updated_at = ? WHERE id = ?');
+    const info = stmt.run(status ? 1 : 0, now, id);
+    return info.changes > 0;
+  }
+
+  /**
+   * Avalia e unifica a verificação de onboarding do candidato (REQ-04).
+   * Retorna true se já marcado no banco ou se o perfil contém os dados essenciais
+   * (target_role, seniority e pelo menos 1 competência técnica).
+   * Se os dados essenciais estiverem completos, sincroniza users.onboarding_completed = 1 automaticamente.
+   */
+  isOnboardingComplete(userId: string): boolean {
+    const user = this.getUserById(userId);
+    if (!user) return false;
+
+    if (user.onboarding_completed === 1) {
+      return true;
+    }
+
+    const profile = this.getProfile(userId);
+    if (!profile) return false;
+
+    const hasRole = Boolean(profile.target_role && profile.target_role.trim().length > 0);
+    const hasSeniority = Boolean(profile.seniority && profile.seniority.trim().length > 0);
+    const totalSkills = (profile.skills?.length || 0) + (profile.primary_stack?.length || 0) + (profile.secondary_stack?.length || 0);
+    const hasSkills = totalSkills > 0;
+
+    if (hasRole && hasSeniority && hasSkills) {
+      this.updateOnboardingStatus(userId, true);
+      return true;
+    }
+
+    return false;
+  }
+
   // --- Perfil do Candidato ---
 
   getProfile(userId: string): CandidateProfile | null {
@@ -130,6 +181,8 @@ export class CandidateRepository {
 
     let workModels: string[] = [];
     let skills: string[] = [];
+    let primaryStack: string[] = [];
+    let secondaryStack: string[] = [];
     try {
       workModels = JSON.parse(row.preferred_work_models || '[]');
     } catch {
@@ -140,6 +193,16 @@ export class CandidateRepository {
     } catch {
       skills = [];
     }
+    try {
+      primaryStack = JSON.parse(row.primary_stack || '[]');
+    } catch {
+      primaryStack = [];
+    }
+    try {
+      secondaryStack = JSON.parse(row.secondary_stack || '[]');
+    } catch {
+      secondaryStack = [];
+    }
 
     return {
       user_id: row.user_id,
@@ -148,7 +211,11 @@ export class CandidateRepository {
       expected_salary: row.expected_salary || null,
       preferred_work_models: workModels,
       skills,
+      primary_stack: primaryStack,
+      secondary_stack: secondaryStack,
       bio: row.bio || null,
+      city: row.city || null,
+      state: row.state || null,
       updated_at: row.updated_at,
     };
   }
@@ -162,22 +229,33 @@ export class CandidateRepository {
     const expected_salary = data.expected_salary !== undefined ? data.expected_salary : existing?.expected_salary || '';
     const preferred_work_models = JSON.stringify(data.preferred_work_models || existing?.preferred_work_models || []);
     const skills = JSON.stringify(data.skills || existing?.skills || []);
+    const primary_stack = JSON.stringify(data.primary_stack || existing?.primary_stack || []);
+    const secondary_stack = JSON.stringify(data.secondary_stack || existing?.secondary_stack || []);
     const bio = data.bio !== undefined ? data.bio : existing?.bio || '';
+    const city = data.city !== undefined ? data.city : existing?.city || null;
+    const state = data.state !== undefined ? data.state : existing?.state || null;
 
     const stmt = db.prepare(`
-      INSERT INTO candidate_profiles (user_id, target_role, seniority, expected_salary, preferred_work_models, skills, bio, updated_at)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+      INSERT INTO candidate_profiles (user_id, target_role, seniority, expected_salary, preferred_work_models, skills, primary_stack, secondary_stack, bio, city, state, updated_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       ON CONFLICT(user_id) DO UPDATE SET
         target_role = excluded.target_role,
         seniority = excluded.seniority,
         expected_salary = excluded.expected_salary,
         preferred_work_models = excluded.preferred_work_models,
         skills = excluded.skills,
+        primary_stack = excluded.primary_stack,
+        secondary_stack = excluded.secondary_stack,
         bio = excluded.bio,
+        city = excluded.city,
+        state = excluded.state,
         updated_at = excluded.updated_at
     `);
 
-    stmt.run(userId, target_role, seniority, expected_salary, preferred_work_models, skills, bio, now);
+    stmt.run(userId, target_role, seniority, expected_salary, preferred_work_models, skills, primary_stack, secondary_stack, bio, city, state, now);
+
+    // Sincroniza e unifica status de onboarding (REQ-05)
+    this.isOnboardingComplete(userId);
 
     return this.getProfile(userId)!;
   }
@@ -244,7 +322,17 @@ export class CandidateRepository {
     return info.changes > 0;
   }
 
-  syncSkillsToProfile(userId: string, newSkills: string[], detectedRole?: string, detectedSeniority?: string, summary?: string): CandidateProfile {
+  syncSkillsToProfile(
+    userId: string,
+    newSkills: string[],
+    detectedRole?: string,
+    detectedSeniority?: string,
+    summary?: string,
+    primaryStack?: string[],
+    secondaryStack?: string[],
+    workModel?: string,
+    expectedSalary?: string
+  ): CandidateProfile {
     const currentProfile = this.getProfile(userId);
     const existingSkills = currentProfile?.skills || [];
     
@@ -264,8 +352,33 @@ export class CandidateRepository {
     if (summary && (!currentProfile?.bio || currentProfile.bio.trim() === '')) {
       updateData.bio = summary;
     }
+    if (primaryStack && primaryStack.length > 0) {
+      const mergedPrimary = Array.from(new Set([...(currentProfile?.primary_stack || []), ...primaryStack]));
+      updateData.primary_stack = mergedPrimary;
+    }
+    if (secondaryStack && secondaryStack.length > 0) {
+      const mergedSecondary = Array.from(new Set([...(currentProfile?.secondary_stack || []), ...secondaryStack]));
+      updateData.secondary_stack = mergedSecondary;
+    }
+    if (workModel && (!currentProfile?.preferred_work_models || currentProfile.preferred_work_models.length === 0)) {
+      updateData.preferred_work_models = [workModel];
+    }
+    if (expectedSalary && (!currentProfile?.expected_salary || currentProfile.expected_salary.trim() === '')) {
+      updateData.expected_salary = expectedSalary;
+    }
 
-    return this.upsertProfile(userId, updateData);
+    const updated = this.upsertProfile(userId, updateData);
+
+    // Marca onboarding como concluído se os campos essenciais estiverem preenchidos
+    if (
+      updated.target_role &&
+      updated.seniority &&
+      updated.primary_stack.length > 0
+    ) {
+      this.updateOnboardingStatus(userId, true);
+    }
+
+    return updated;
   }
 
   deleteResume(userId: string): boolean {
@@ -321,7 +434,7 @@ export class CandidateRepository {
       FROM user_saved_jobs s
       JOIN jobs j ON s.job_id = j.id
       WHERE s.user_id = ?
-      ORDER BY s.created_at DESC
+      ORDER BY j.overall_score DESC, s.created_at DESC
     `);
 
     const rows = stmt.all(userId) as any[];
@@ -413,6 +526,8 @@ export class CandidateRepository {
       preferredWorkModels,
       skills: combinedSkills,
       bio: profile?.bio || resume?.ai_analysis?.summary || null,
+      city: profile?.city || null,
+      state: profile?.state || null,
     };
   }
 

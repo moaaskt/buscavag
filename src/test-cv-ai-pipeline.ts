@@ -77,6 +77,10 @@ TypeScript, JavaScript, React, Next.js, Node.js, NestJS, Python, FastAPI, Docker
       summary: 'Profissional com sólida experiência em TypeScript, React, Node.js e IoT.',
       strengths: ['Domínio comprovado de stack full stack moderna.', 'Conhecimento especializado em hardware IoT (ESP32).'],
       improvement_tips: ['Mantenha os links para repositórios no GitHub no topo do currículo.'],
+      primary_stack: ['TypeScript', 'Node.js', 'React'],
+      secondary_stack: ['PostgreSQL', 'Docker'],
+      work_model: 'remoto',
+      expected_salary: '8000',
       source: 'test-heuristic',
     };
   }

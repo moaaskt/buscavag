@@ -42,6 +42,7 @@ export enum PlatformSource {
   TRAMPOS = 'trampos',
   // Comunidades & Redes Sociais
   FACEBOOK_GROUPS = 'facebook_groups',
+  LINKEDIN_POSTS = 'linkedin_posts',
 }
 
 
@@ -67,6 +68,7 @@ export const ProcessedJobSchema = RawJobSchema.extend({
   stackScore: z.number().min(0).max(100).optional(),
   seniorityScore: z.number().min(0).max(100).optional(),
   locationScore: z.number().min(0).max(100).optional(),
+  isStrongMatch: z.boolean().optional(),
   category: z.string().optional(),
   gaps: z.array(z.string()).optional(),
   resumeTips: z.string().optional(),
@@ -74,8 +76,14 @@ export const ProcessedJobSchema = RawJobSchema.extend({
   extractedRole: z.string().optional(),
   contractType: z.string().optional(),
   applicationChannel: z.string().optional(),
+  directContact: z.string().optional(),
   salary: z.string().optional(),
+  requiredSeniority: z.string().optional(),
+  techStack: z.array(z.string()).optional(),
+  workModel: z.string().optional(),
+  isTechSoftware: z.boolean().optional(),
   applicationStatus: z.enum(['pending', 'applied', 'interview', 'offer', 'rejected']).default('pending').optional(),
+  status: z.enum(['active', 'expired', 'hidden']).default('active').optional(),
   notified: z.boolean().default(false),
   createdAt: z.date().default(() => new Date()),
 });

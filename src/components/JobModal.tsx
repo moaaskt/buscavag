@@ -20,27 +20,78 @@ import {
   User,
   DollarSign,
   Send,
-  Briefcase
+  Briefcase,
+  Mail
 } from 'lucide-react';
 import { PlatformBadge } from '@/components/ui/PlatformBadge';
+import { getCategoryBadgeClass } from '@/lib/category-colors';
+import { ScoreBadge } from '@/components/ScoreBadge';
+import { generatePitch, PitchCandidateContext } from '@/lib/pitchGenerator';
+
+export interface CandidateProfileProps {
+  name?: string | null;
+  target_role?: string | null;
+  targetRole?: string | null;
+  primary_stack?: string[] | null;
+  primaryStack?: string[] | null;
+  skills?: string[] | null;
+}
 
 interface JobModalProps {
   job: ProcessedJob | null;
   onClose: () => void;
   onStatusChange?: (id: string, newStatus: string) => void;
+  candidateProfile?: CandidateProfileProps | null;
 }
 
-export function JobModal({ job, onClose, onStatusChange }: JobModalProps) {
+export function JobModal({ job, onClose, onStatusChange, candidateProfile }: JobModalProps) {
   const [descExpanded, setDescExpanded] = useState(false);
   const [copiedPitch, setCopiedPitch] = useState(false);
+  const [copiedEmail, setCopiedEmail] = useState(false);
+  const [profile, setProfile] = useState<CandidateProfileProps | null>(candidateProfile || null);
+
+  React.useEffect(() => {
+    if (candidateProfile) {
+      setProfile(candidateProfile);
+      return;
+    }
+
+    let isMounted = true;
+    fetch('/api/candidate/profile')
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (isMounted && data?.success && data?.profile) {
+          setProfile(data.profile);
+        }
+      })
+      .catch(() => {
+        // Fallback transparente: se visitante anônimo ou falhar, mantém profile como null
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [candidateProfile]);
 
   if (!job) return null;
 
   const handleCopyPitch = () => {
-    const pitch = `Olá, time de recrutamento da ${job.company}!\n\nMe interessei muito pela vaga de ${job.title}.\nPossuo sólida experiência no ecossistema Full Stack (TypeScript, React, Next.js, Node.js, Python e APIs), além de foco em entregas de qualidade e código limpo.\n\nLink da vaga: ${job.url}\n\nFico à disposição para uma conversa!`;
+    const pitch = generatePitch(job, {
+      name: profile?.name,
+      targetRole: profile?.target_role || profile?.targetRole,
+      primaryStack: profile?.primary_stack || profile?.primaryStack,
+      skills: profile?.skills,
+    });
     navigator.clipboard.writeText(pitch);
     setCopiedPitch(true);
     setTimeout(() => setCopiedPitch(false), 2500);
+  };
+
+  const handleCopyEmail = () => {
+    if (!job.directContact) return;
+    navigator.clipboard.writeText(job.directContact);
+    setCopiedEmail(true);
+    setTimeout(() => setCopiedEmail(false), 2500);
   };
 
   const handleShareWhatsApp = () => {
@@ -83,14 +134,11 @@ export function JobModal({ job, onClose, onStatusChange }: JobModalProps) {
           <div className="flex flex-wrap items-center gap-2 pr-10">
             <PlatformBadge platform={job.platform} />
             {job.category && (
-              <span className="font-mono text-[11px] px-2 py-0.5 rounded bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 border border-zinc-200 dark:border-zinc-700/60 font-medium">
+              <span className={`font-mono text-[11px] px-2 py-0.5 rounded border font-medium ${getCategoryBadgeClass(job.category)}`}>
                 {job.category}
               </span>
             )}
-            <span className="font-mono text-[11px] font-semibold text-emerald-600 dark:text-emerald-400 flex items-center gap-1.5 pl-1">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-              SCORE: {overallScore}%
-            </span>
+            <ScoreBadge score={overallScore} size="sm" />
           </div>
 
           {/* Title */}
@@ -130,18 +178,24 @@ export function JobModal({ job, onClose, onStatusChange }: JobModalProps) {
                 {job.applicationChannel}
               </span>
             )}
+            {job.directContact && (
+              <span className="flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 font-medium text-xs border border-emerald-200 dark:border-emerald-800/60 shadow-sm">
+                <Mail className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+                <span>Contato Direto: <strong>{job.directContact}</strong></span>
+              </span>
+            )}
           </div>
         </div>
 
         {/* Scrollable Modal Body */}
         <div className="flex-1 overflow-y-auto p-5 md:p-6 space-y-6">
-          {/* SECTION 1: Hermes IA Compatibility */}
-          <section className="space-y-3.5">
+          {/* SECTION 1: Análise de Compatibilidade */}
+          <section className="space-y-3">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <Sparkles className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
                 <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
-                  Análise Granular de Compatibilidade (Hermes IA)
+                  Compatibilidade Detalhada
                 </h3>
               </div>
             </div>
@@ -149,57 +203,54 @@ export function JobModal({ job, onClose, onStatusChange }: JobModalProps) {
             {/* 3 Metrics KPI Grid */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               {/* Stack Match */}
-              <div className="p-3.5 rounded-xl bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-800/80 flex flex-col justify-between gap-2">
+              <div className="p-3 rounded-lg bg-zinc-50 dark:bg-zinc-800/40 border border-zinc-200 dark:border-zinc-800 flex flex-col justify-between gap-1.5">
                 <div className="flex items-center justify-between text-xs font-mono">
-                  <span className="text-zinc-600 dark:text-zinc-400">Stack Match</span>
-                  <span className="font-semibold text-emerald-600 dark:text-emerald-400">{stackScore}%</span>
+                  <span className="text-zinc-600 dark:text-zinc-400 font-sans">Afinidade de Stack</span>
+                  <span className="font-semibold text-emerald-700 dark:text-emerald-400">{stackScore}%</span>
                 </div>
                 <div className="w-full h-1.5 bg-zinc-200 dark:bg-zinc-700 rounded-full overflow-hidden">
                   <div
-                    className="h-full bg-emerald-500 rounded-full transition-all duration-500"
+                    className="h-full bg-emerald-500 rounded-full transition-all duration-300"
                     style={{ width: `${stackScore}%` }}
                   />
                 </div>
-                <span className="text-[11px] font-mono text-zinc-500">Afinidade de stack</span>
               </div>
 
               {/* Seniority */}
-              <div className="p-3.5 rounded-xl bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-800/80 flex flex-col justify-between gap-2">
+              <div className="p-3 rounded-lg bg-zinc-50 dark:bg-zinc-800/40 border border-zinc-200 dark:border-zinc-800 flex flex-col justify-between gap-1.5">
                 <div className="flex items-center justify-between text-xs font-mono">
-                  <span className="text-zinc-600 dark:text-zinc-400">Senioridade</span>
-                  <span className="font-semibold text-emerald-600 dark:text-emerald-400">{seniorityScore}%</span>
+                  <span className="text-zinc-600 dark:text-zinc-400 font-sans">Nível / Senioridade</span>
+                  <span className="font-semibold text-emerald-700 dark:text-emerald-400">{seniorityScore}%</span>
                 </div>
                 <div className="w-full h-1.5 bg-zinc-200 dark:bg-zinc-700 rounded-full overflow-hidden">
                   <div
-                    className="h-full bg-emerald-500 rounded-full transition-all duration-500"
+                    className="h-full bg-emerald-500 rounded-full transition-all duration-300"
                     style={{ width: `${seniorityScore}%` }}
                   />
                 </div>
-                <span className="text-[11px] font-mono text-zinc-500">Nível Jr / Entry</span>
               </div>
 
               {/* Location / Model */}
-              <div className="p-3.5 rounded-xl bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-800/80 flex flex-col justify-between gap-2">
+              <div className="p-3 rounded-lg bg-zinc-50 dark:bg-zinc-800/40 border border-zinc-200 dark:border-zinc-800 flex flex-col justify-between gap-1.5">
                 <div className="flex items-center justify-between text-xs font-mono">
-                  <span className="text-zinc-600 dark:text-zinc-400">Local / Modelo</span>
-                  <span className="font-semibold text-emerald-600 dark:text-emerald-400">{locationScore}%</span>
+                  <span className="text-zinc-600 dark:text-zinc-400 font-sans">Modelo de Trabalho</span>
+                  <span className="font-semibold text-emerald-700 dark:text-emerald-400">{locationScore}%</span>
                 </div>
                 <div className="w-full h-1.5 bg-zinc-200 dark:bg-zinc-700 rounded-full overflow-hidden">
                   <div
-                    className="h-full bg-emerald-500 rounded-full transition-all duration-500"
+                    className="h-full bg-emerald-500 rounded-full transition-all duration-300"
                     style={{ width: `${locationScore}%` }}
                   />
                 </div>
-                <span className="text-[11px] font-mono text-zinc-500">Modelo compatível</span>
               </div>
             </div>
 
             {/* Parecer IA */}
             {job.aiReasoning && (
-              <div className="p-3.5 rounded-xl bg-zinc-50 dark:bg-zinc-800/40 border border-zinc-200 dark:border-zinc-800/80 flex items-start gap-2.5">
+              <div className="p-3.5 rounded-lg bg-zinc-50 dark:bg-zinc-800/30 border border-zinc-200 dark:border-zinc-800 flex items-start gap-2.5">
                 <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5" />
-                <p className="text-xs md:text-sm text-zinc-700 dark:text-zinc-300 leading-relaxed font-mono">
-                  <strong className="text-zinc-900 dark:text-zinc-100">Parecer:</strong>{' '}
+                <p className="text-xs md:text-sm text-zinc-700 dark:text-zinc-300 leading-relaxed">
+                  <strong className="text-zinc-900 dark:text-zinc-100 font-medium">Parecer:</strong>{' '}
                   {renderHighlightedModalReasoning(job.aiReasoning)}
                 </p>
               </div>
@@ -304,17 +355,25 @@ export function JobModal({ job, onClose, onStatusChange }: JobModalProps) {
               onClick={handleCopyPitch}
               type="button"
               className="h-9 px-3 rounded-lg text-xs font-medium border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors flex items-center gap-1.5 shadow-sm"
-              title="Copiar carta de apresentação para esta vaga"
+              title={
+                Boolean(profile?.primary_stack?.length || profile?.primaryStack?.length || profile?.skills?.length)
+                  ? `Copiar pitch personalizado com suas stacks (${(profile?.primary_stack || profile?.primaryStack || profile?.skills)?.slice(0, 3).join(', ')})`
+                  : 'Copiar mensagem de apresentação para esta vaga'
+              }
             >
               {copiedPitch ? (
                 <>
                   <Check className="w-3.5 h-3.5 text-emerald-500" />
-                  <span className="text-emerald-600 dark:text-emerald-400 font-semibold">Copiado!</span>
+                  <span className="text-emerald-600 dark:text-emerald-400 font-semibold">Pitch Copiado!</span>
                 </>
               ) : (
                 <>
-                  <Copy className="w-3.5 h-3.5 text-zinc-500 dark:text-zinc-400" />
-                  <span>Copiar Carta</span>
+                  {Boolean(profile?.primary_stack?.length || profile?.primaryStack?.length || profile?.skills?.length) ? (
+                    <Sparkles className="w-3.5 h-3.5 text-emerald-500" />
+                  ) : (
+                    <Copy className="w-3.5 h-3.5 text-zinc-500 dark:text-zinc-400" />
+                  )}
+                  <span>Copiar Pitch</span>
                 </>
               )}
             </button>
@@ -336,6 +395,37 @@ export function JobModal({ job, onClose, onStatusChange }: JobModalProps) {
             >
               Fechar
             </button>
+
+            {job.directContact && job.directContact.includes('@') && (
+              <>
+                <button
+                  onClick={handleCopyEmail}
+                  type="button"
+                  className="h-9 px-3 rounded-lg text-xs font-medium border border-emerald-500/40 bg-emerald-50/50 dark:bg-emerald-950/20 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-100 dark:hover:bg-emerald-900/40 transition-colors flex items-center gap-1.5 shadow-sm"
+                  title={`Copiar e-mail ${job.directContact}`}
+                >
+                  {copiedEmail ? (
+                    <>
+                      <Check className="w-3.5 h-3.5 text-emerald-500" />
+                      <span className="text-emerald-600 dark:text-emerald-400 font-semibold">E-mail Copiado!</span>
+                    </>
+                  ) : (
+                    <>
+                      <Copy className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+                      <span>Copiar E-mail</span>
+                    </>
+                  )}
+                </button>
+
+                <a
+                  href={`mailto:${job.directContact}?subject=Candidatura: ${encodeURIComponent(job.title)}&body=Olá! Vi sua postagem sobre a oportunidade de ${encodeURIComponent(job.title)} e gostaria de apresentar meu perfil.`}
+                  className="h-9 px-4 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs md:text-sm font-semibold transition-colors flex items-center gap-2 shadow-sm"
+                >
+                  <Mail className="w-3.5 h-3.5" />
+                  <span>Enviar E-mail</span>
+                </a>
+              </>
+            )}
 
             <a
               href={job.url}

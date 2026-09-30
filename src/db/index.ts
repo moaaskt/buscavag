@@ -50,7 +50,13 @@ export function initDatabase() {
       extracted_role TEXT,
       contract_type TEXT,
       application_channel TEXT,
-      salary TEXT
+      salary TEXT,
+      direct_contact TEXT,
+      required_seniority TEXT,
+      tech_stack TEXT,
+      work_model TEXT,
+      is_tech_software INTEGER DEFAULT 1,
+      status TEXT DEFAULT 'active'
     );
 
     CREATE TABLE IF NOT EXISTS scraper_logs (
@@ -70,6 +76,9 @@ export function initDatabase() {
       name TEXT NOT NULL,
       tier TEXT DEFAULT 'free',
       role TEXT DEFAULT 'CANDIDATE',
+      onboarding_completed INTEGER DEFAULT 0,
+      status TEXT DEFAULT 'active',
+      force_password_change INTEGER DEFAULT 0,
       created_at TEXT NOT NULL,
       updated_at TEXT NOT NULL
     );
@@ -81,7 +90,11 @@ export function initDatabase() {
       expected_salary TEXT,
       preferred_work_models TEXT,
       skills TEXT,
+      primary_stack TEXT,
+      secondary_stack TEXT,
       bio TEXT,
+      city TEXT,
+      state TEXT,
       updated_at TEXT NOT NULL,
       FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
     );
@@ -129,6 +142,107 @@ export function initDatabase() {
       ip TEXT,
       user_agent TEXT
     );
+
+    CREATE TABLE IF NOT EXISTS admin_users (
+      id TEXT PRIMARY KEY,
+      email TEXT UNIQUE NOT NULL,
+      password_hash TEXT NOT NULL,
+      name TEXT NOT NULL,
+      totp_secret TEXT,
+      totp_enabled INTEGER DEFAULT 0,
+      created_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL,
+      last_login_at TEXT
+    );
+
+    CREATE TABLE IF NOT EXISTS admin_sessions (
+      id TEXT PRIMARY KEY,
+      admin_user_id TEXT NOT NULL,
+      token_hash TEXT NOT NULL,
+      ip_address TEXT,
+      user_agent TEXT,
+      expires_at TEXT NOT NULL,
+      created_at TEXT NOT NULL,
+      FOREIGN KEY (admin_user_id) REFERENCES admin_users(id) ON DELETE CASCADE
+    );
+
+    CREATE TABLE IF NOT EXISTS admin_settings (
+      key TEXT PRIMARY KEY,
+      value TEXT NOT NULL,
+      updated_at TEXT NOT NULL
+    );
+
+    CREATE TABLE IF NOT EXISTS logs (
+      id TEXT PRIMARY KEY,
+      tipo TEXT NOT NULL,
+      nivel TEXT NOT NULL,
+      origem TEXT NOT NULL,
+      mensagem TEXT NOT NULL,
+      metadata TEXT,
+      created_at TEXT NOT NULL
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_logs_tipo ON logs(tipo);
+    CREATE INDEX IF NOT EXISTS idx_logs_nivel ON logs(nivel);
+    CREATE INDEX IF NOT EXISTS idx_logs_origem ON logs(origem);
+    CREATE INDEX IF NOT EXISTS idx_logs_created_at ON logs(created_at DESC);
+
+    -- Phase 80: Gestão Financeira & Pagamentos
+    CREATE TABLE IF NOT EXISTS payments (
+      id TEXT PRIMARY KEY,
+      user_id TEXT NOT NULL,
+      gateway TEXT NOT NULL,
+      gateway_payment_id TEXT,
+      amount REAL NOT NULL,
+      currency TEXT DEFAULT 'BRL',
+      status TEXT NOT NULL,
+      payment_method TEXT,
+      plan_tier TEXT DEFAULT 'premium',
+      billing_cycle TEXT DEFAULT 'monthly',
+      invoice_url TEXT,
+      metadata TEXT,
+      created_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL,
+      FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_payments_user_id ON payments(user_id);
+    CREATE INDEX IF NOT EXISTS idx_payments_status ON payments(status);
+    CREATE INDEX IF NOT EXISTS idx_payments_gateway ON payments(gateway);
+    CREATE INDEX IF NOT EXISTS idx_payments_created_at ON payments(created_at DESC);
+
+    CREATE TABLE IF NOT EXISTS subscriptions (
+      id TEXT PRIMARY KEY,
+      user_id TEXT NOT NULL UNIQUE,
+      gateway TEXT NOT NULL,
+      gateway_subscription_id TEXT,
+      tier TEXT DEFAULT 'premium',
+      billing_cycle TEXT DEFAULT 'monthly',
+      status TEXT NOT NULL,
+      amount REAL NOT NULL,
+      current_period_start TEXT NOT NULL,
+      current_period_end TEXT NOT NULL,
+      cancel_at_period_end INTEGER DEFAULT 0,
+      canceled_at TEXT,
+      created_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL,
+      FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_subscriptions_user_id ON subscriptions(user_id);
+    CREATE INDEX IF NOT EXISTS idx_subscriptions_status ON subscriptions(status);
+
+    CREATE TABLE IF NOT EXISTS payment_webhooks (
+      id TEXT PRIMARY KEY,
+      gateway TEXT NOT NULL,
+      event_type TEXT NOT NULL,
+      payload TEXT NOT NULL,
+      processed INTEGER DEFAULT 1,
+      created_at TEXT NOT NULL
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_webhooks_gateway ON payment_webhooks(gateway);
+    CREATE INDEX IF NOT EXISTS idx_webhooks_created_at ON payment_webhooks(created_at DESC);
   `);
 
   // Migração automática para bancos já existentes
@@ -147,6 +261,12 @@ export function initDatabase() {
       { name: 'contract_type', type: 'TEXT' },
       { name: 'application_channel', type: 'TEXT' },
       { name: 'salary', type: 'TEXT' },
+      { name: 'direct_contact', type: 'TEXT' },
+      { name: 'required_seniority', type: 'TEXT' },
+      { name: 'tech_stack', type: 'TEXT' },
+      { name: 'work_model', type: 'TEXT' },
+      { name: 'is_tech_software', type: 'INTEGER DEFAULT 1' },
+      { name: 'status', type: "TEXT DEFAULT 'active'" },
     ];
 
     for (const col of jobColumnsToAdd) {
@@ -155,9 +275,36 @@ export function initDatabase() {
       }
     }
 
+    // Garante que registros sem status sejam marcados como 'active'
+    db.exec("UPDATE jobs SET status = 'active' WHERE status IS NULL;");
+
     const existingUserCols = (db.pragma('table_info(users)') as Array<{ name: string }>).map((col) => col.name);
     if (!existingUserCols.includes('role')) {
       db.exec(`ALTER TABLE users ADD COLUMN role TEXT DEFAULT 'CANDIDATE';`);
+    }
+    if (!existingUserCols.includes('onboarding_completed')) {
+      db.exec(`ALTER TABLE users ADD COLUMN onboarding_completed INTEGER DEFAULT 0;`);
+    }
+    if (!existingUserCols.includes('status')) {
+      db.exec(`ALTER TABLE users ADD COLUMN status TEXT DEFAULT 'active';`);
+    }
+    if (!existingUserCols.includes('force_password_change')) {
+      db.exec(`ALTER TABLE users ADD COLUMN force_password_change INTEGER DEFAULT 0;`);
+    }
+    db.exec("UPDATE users SET status = 'active' WHERE status IS NULL;");
+
+    const existingProfileCols = (db.pragma('table_info(candidate_profiles)') as Array<{ name: string }>).map((col) => col.name);
+    const profileColumnsToAdd: Array<{ name: string; type: string }> = [
+      { name: 'primary_stack', type: 'TEXT' },
+      { name: 'secondary_stack', type: 'TEXT' },
+      { name: 'city', type: 'TEXT' },
+      { name: 'state', type: 'TEXT' },
+    ];
+
+    for (const col of profileColumnsToAdd) {
+      if (!existingProfileCols.includes(col.name)) {
+        db.exec(`ALTER TABLE candidate_profiles ADD COLUMN ${col.name} ${col.type};`);
+      }
     }
 
     const existingResumeCols = (db.pragma('table_info(candidate_resumes)') as Array<{ name: string }>).map((col) => col.name);
@@ -175,17 +322,45 @@ export function initDatabase() {
     console.warn('[DB Migration] Aviso ao verificar colunas:', (err as Error).message);
   }
 
+  // Configuração segura de auto_vacuum = INCREMENTAL para gestão enxuta de disco na VPS
+  try {
+    const currentAutoVacuum = db.pragma('auto_vacuum', { simple: true });
+    if (currentAutoVacuum === 0) {
+      db.pragma('auto_vacuum = INCREMENTAL');
+      db.exec('VACUUM');
+    }
+  } catch (err) {
+    console.warn('[DB Pragma] Aviso ao verificar auto_vacuum:', (err as Error).message);
+  }
+
+  // Seed da retenção de vagas em admin_settings
+  try {
+    const retentionSetting = db.prepare('SELECT value FROM admin_settings WHERE key = ?').get('job_retention_days');
+    if (!retentionSetting) {
+      db.prepare('INSERT INTO admin_settings (key, value, updated_at) VALUES (?, ?, ?)').run(
+        'job_retention_days',
+        '21',
+        new Date().toISOString()
+      );
+    }
+  } catch (err) {
+    console.warn('[DB Seed] Aviso ao verificar job_retention_days:', (err as Error).message);
+  }
+
   // Criação segura de índices após migrações
   try {
     db.exec(`
       CREATE INDEX IF NOT EXISTS idx_jobs_platform ON jobs(platform);
       CREATE INDEX IF NOT EXISTS idx_jobs_notified ON jobs(notified);
       CREATE INDEX IF NOT EXISTS idx_jobs_app_status ON jobs(application_status);
+      CREATE INDEX IF NOT EXISTS idx_jobs_status ON jobs(status);
       CREATE INDEX IF NOT EXISTS idx_logs_run_id ON scraper_logs(run_id);
       CREATE INDEX IF NOT EXISTS idx_logs_level ON scraper_logs(level);
       CREATE INDEX IF NOT EXISTS idx_logs_scraper_name ON scraper_logs(scraper_name);
       CREATE INDEX IF NOT EXISTS idx_logs_created_at ON scraper_logs(created_at);
       CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
+      CREATE INDEX IF NOT EXISTS idx_users_status ON users(status);
+      CREATE INDEX IF NOT EXISTS idx_users_tier ON users(tier);
       CREATE INDEX IF NOT EXISTS idx_resumes_user_id ON candidate_resumes(user_id);
       CREATE INDEX IF NOT EXISTS idx_saved_jobs_user ON user_saved_jobs(user_id);
       CREATE INDEX IF NOT EXISTS idx_hidden_jobs_user ON user_hidden_jobs(user_id);
