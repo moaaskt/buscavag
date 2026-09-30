@@ -96,9 +96,6 @@ export default function AdminDashboardPage() {
         <div>
           <h1 className="text-xl md:text-2xl font-bold tracking-tight text-slate-800 dark:text-slate-100 flex items-center gap-2">
             Painel Geral de Operações
-            <VelzonBadge variant="primary" size="sm">
-              Velzon UI
-            </VelzonBadge>
           </h1>
           <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 font-mono">
             Infraestrutura de coleta, inteligência de triagem e saúde dos motores.

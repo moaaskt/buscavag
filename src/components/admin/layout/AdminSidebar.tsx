@@ -6,6 +6,7 @@ import { usePathname } from 'next/navigation';
 import {
   LayoutDashboard,
   Briefcase,
+  Building2,
   ScrollText,
   Users,
   CreditCard,
@@ -34,11 +35,12 @@ export function AdminSidebar({ collapsed, onToggleCollapse }: AdminSidebarProps)
     {
       group: 'Operações SaaS',
       items: [
-        { name: 'Gestão de Vagas', href: '/admin/vagas', icon: Briefcase, badge: 'Phase 78' },
+        { name: 'Gestão de Vagas', href: '/admin/vagas', icon: Briefcase },
+        { name: 'Empresas B2B', href: '/admin/empresas', icon: Building2 },
         { name: 'Logs & Auditoria', href: '/admin/logs', icon: ScrollText },
-        { name: 'Usuários & Acessos', href: '/admin/usuarios', icon: Users, badge: 'Phase 79' },
-        { name: 'Financeiro', href: '/admin/pagamentos', icon: CreditCard, badge: 'Phase 80' },
-        { name: 'Hub Mensageria', href: '/admin/mensageria', icon: Send, badge: 'Phase 81' },
+        { name: 'Usuários & Acessos', href: '/admin/usuarios', icon: Users },
+        { name: 'Financeiro', href: '/admin/pagamentos', icon: CreditCard },
+        { name: 'Hub Mensageria', href: '/admin/mensageria', icon: Send },
       ],
     },
   ];
@@ -103,11 +105,6 @@ export function AdminSidebar({ collapsed, onToggleCollapse }: AdminSidebarProps)
                     <Icon className={`w-4 h-4 shrink-0 ${isActive ? 'text-white' : 'text-slate-400'}`} />
                     {!collapsed && (
                       <span className="flex-1 truncate">{item.name}</span>
-                    )}
-                    {!collapsed && item.badge && (
-                      <span className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-slate-800 text-slate-400 border border-slate-700">
-                        {item.badge}
-                      </span>
                     )}
                   </Link>
                 );
