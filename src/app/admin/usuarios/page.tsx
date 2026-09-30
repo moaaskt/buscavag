@@ -246,11 +246,8 @@ export default function AdminUsuariosPage() {
       {/* Top Banner */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-[#e9ebec] dark:border-slate-800">
         <div>
-          <h1 className="text-xl md:text-2xl font-bold tracking-tight text-slate-800 dark:text-slate-100 flex items-center gap-2">
+          <h1 className="text-xl md:text-2xl font-bold tracking-tight text-slate-800 dark:text-slate-100">
             Gestão de Usuários & Suporte
-            <VelzonBadge variant="primary" size="sm">
-              Phase 79
-            </VelzonBadge>
           </h1>
           <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 font-mono">
             Controle de planos SaaS, suporte operacional, impersonate e auditoria de candidatos.

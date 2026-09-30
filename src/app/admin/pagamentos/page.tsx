@@ -258,9 +258,6 @@ export default function AdminPagamentosPage() {
         <div>
           <h1 className="text-xl md:text-2xl font-bold tracking-tight text-slate-800 dark:text-slate-100 flex items-center gap-2">
             Gestão Financeira & Pagamentos
-            <VelzonBadge variant="primary" size="sm">
-              Phase 80
-            </VelzonBadge>
           </h1>
           <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 font-mono">
             Dashboard de receita recorrente (MRR), gestão de faturamento, conciliação e webhooks de pagamento.

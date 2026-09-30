@@ -169,11 +169,8 @@ export default function AdminLogsPage() {
       {/* Top Banner */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-[#e9ebec] dark:border-slate-800">
         <div>
-          <h1 className="text-xl md:text-2xl font-bold tracking-tight text-slate-800 dark:text-slate-100 flex items-center gap-2">
+          <h1 className="text-xl md:text-2xl font-bold tracking-tight text-slate-800 dark:text-slate-100">
             Central Unificada de Logs & Auditoria
-            <VelzonBadge variant="primary" size="sm">
-              Phase 77
-            </VelzonBadge>
           </h1>
           <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 font-mono">
             Rastreamento integrado de eventos de sistema, ações de operadores e mensageria.
