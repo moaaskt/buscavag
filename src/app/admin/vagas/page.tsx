@@ -6,7 +6,7 @@ import { VelzonCard } from '@/components/admin/ui/VelzonCard';
 import { VelzonBadge } from '@/components/admin/ui/VelzonBadge';
 import { VelzonStatWidget } from '@/components/admin/ui/VelzonStatWidget';
 import { VelzonModal } from '@/components/admin/ui/VelzonModal';
-import { VelzonInput, VelzonSelect, VelzonLabel } from '@/components/admin/ui';
+import { VelzonInput, VelzonSelect, VelzonLabel, VelzonTextarea } from '@/components/admin/ui';
 import {
   Briefcase,
   Search,
@@ -27,6 +27,12 @@ import {
   Sparkles,
   Database,
   Check,
+  LayoutGrid,
+  Table,
+  Send,
+  Share2,
+  Smartphone,
+  MessageSquare,
 } from 'lucide-react';
 import type { AdminJobEntry, AdminJobStats, JobStatus } from '@/db/adminJobRepository';
 
@@ -36,6 +42,33 @@ export default function AdminVagasPage() {
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [loading, setLoading] = useState(true);
+
+  // Alternador de Visualização (Tabela vs. Kanban)
+  const [viewMode, setViewMode] = useState<'table' | 'kanban'>('table');
+
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem('buscavag_jobs_view');
+      if (saved === 'kanban' || saved === 'table') {
+        setViewMode(saved);
+      }
+    } catch {}
+  }, []);
+
+  const handleSwitchView = (mode: 'table' | 'kanban') => {
+    setViewMode(mode);
+    try {
+      localStorage.setItem('buscavag_jobs_view', mode);
+    } catch {}
+  };
+
+  // Disparo Rápido para Canais
+  const [dispatchJobTarget, setDispatchJobTarget] = useState<AdminJobEntry | null>(null);
+  const [dispatchChannel, setDispatchChannel] = useState<'telegram' | 'whatsapp'>('telegram');
+  const [dispatchRecipient, setDispatchRecipient] = useState('');
+  const [dispatchMessage, setDispatchMessage] = useState('');
+  const [dispatching, setDispatching] = useState(false);
+  const [dispatchToast, setDispatchToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
 
   // Filtros
   const [search, setSearch] = useState('');
@@ -66,6 +99,71 @@ export default function AdminVagasPage() {
   const [purgeRetention, setPurgeRetention] = useState(21);
   const [purging, setPurging] = useState(false);
   const [purgeSuccessMessage, setPurgeSuccessMessage] = useState<string | null>(null);
+
+  const generateOfficialTemplate = (job: AdminJobEntry) => {
+    const workModelStr = job.work_model ? job.work_model.toUpperCase() : 'NÃO INFORMADO';
+    const locationStr = job.location || 'Brasil';
+    const seniorityStr = job.required_seniority || 'Não especificada';
+    const stackStr = job.tech_stack || 'Geral';
+    const urlStr = job.url || 'https://buscavag.com.br';
+
+    return `🚀 NOVA OPORTUNIDADE TECH - BUSCAVAG
+
+💼 Vaga: ${job.title}
+🏢 Empresa: ${job.company}
+📍 Localização: ${locationStr} (${workModelStr})
+🎯 Senioridade: ${seniorityStr}
+💻 Stacks: ${stackStr}
+
+🔗 Veja mais detalhes e candidate-se em:
+${urlStr}`;
+  };
+
+  const handleOpenDispatch = (job: AdminJobEntry) => {
+    setDispatchJobTarget(job);
+    setDispatchChannel('telegram');
+    setDispatchRecipient('');
+    setDispatchMessage(generateOfficialTemplate(job));
+  };
+
+  const handleExecuteDispatch = async () => {
+    if (!dispatchJobTarget || !dispatchMessage.trim()) return;
+    setDispatching(true);
+    try {
+      const res = await fetch(`/api/admin/vagas/${dispatchJobTarget.id}/dispatch`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          canal: dispatchChannel,
+          destinatario: dispatchRecipient.trim() || undefined,
+          mensagem: dispatchMessage,
+        }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setDispatchToast({
+          message: `Vaga disparada com sucesso para ${dispatchChannel === 'telegram' ? 'Telegram' : 'WhatsApp'}!`,
+          type: 'success',
+        });
+        setDispatchJobTarget(null);
+        setTimeout(() => setDispatchToast(null), 4000);
+      } else {
+        setDispatchToast({
+          message: data.error || 'Erro ao processar disparo',
+          type: 'error',
+        });
+        setTimeout(() => setDispatchToast(null), 4000);
+      }
+    } catch (err) {
+      setDispatchToast({
+        message: 'Falha de comunicação ao disparar vaga',
+        type: 'error',
+      });
+      setTimeout(() => setDispatchToast(null), 4000);
+    } finally {
+      setDispatching(false);
+    }
+  };
 
   const fetchJobs = useCallback(async () => {
     setLoading(true);
@@ -242,8 +340,136 @@ export default function AdminVagasPage() {
     }
   };
 
+  const renderKanbanCard = (job: AdminJobEntry) => (
+    <div
+      key={job.id}
+      className="bg-white dark:bg-[#1a1e29] border border-[#e9ebec] dark:border-slate-800 rounded-lg p-3 shadow-2xs hover:shadow-xs transition-shadow space-y-2.5"
+    >
+      <div className="flex items-start justify-between gap-2">
+        <h4
+          className="text-xs font-bold text-slate-900 dark:text-slate-100 line-clamp-2 leading-snug"
+          title={job.title}
+        >
+          {job.title}
+        </h4>
+        <span className="font-mono text-[9px] px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 shrink-0">
+          {job.platform}
+        </span>
+      </div>
+
+      <div className="space-y-1 text-[11px] text-slate-500 dark:text-slate-400">
+        <div className="flex items-center gap-1.5 font-medium text-slate-700 dark:text-slate-300 truncate">
+          <Building className="w-3 h-3 text-slate-400 shrink-0" />
+          <span className="truncate">{job.company}</span>
+        </div>
+        <div className="flex items-center gap-2 text-[10px] text-slate-400">
+          <span className="capitalize">{job.work_model || 'Híbrido'}</span>
+          <span>•</span>
+          <span className="truncate">{job.location || 'Brasil'}</span>
+          {job.required_seniority && (
+            <>
+              <span>•</span>
+              <span className="font-mono">{job.required_seniority}</span>
+            </>
+          )}
+        </div>
+      </div>
+
+      {job.tech_stack && (
+        <div className="flex flex-wrap gap-1 pt-0.5">
+          {job.tech_stack
+            .split(',')
+            .slice(0, 3)
+            .map((st, idx) => (
+              <span
+                key={idx}
+                className="text-[9px] px-1.5 py-0.2 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400"
+              >
+                {st.trim()}
+              </span>
+            ))}
+        </div>
+      )}
+
+      <div className="pt-2 border-t border-[#e9ebec] dark:border-slate-800/80 flex items-center justify-between text-[10px] text-slate-400">
+        <span className="font-mono">{formatDate(job.published_at)}</span>
+
+        <div className="flex items-center gap-1">
+          {/* Disparo para Canais */}
+          <button
+            onClick={() => handleOpenDispatch(job)}
+            className="p-1 rounded hover:bg-slate-100 dark:hover:bg-slate-700/60 text-slate-500 hover:text-indigo-600 transition-colors"
+            title="Disparar vaga para canais (Telegram / WhatsApp)"
+          >
+            <Send className="w-3 h-3" />
+          </button>
+
+          {/* Link original */}
+          <a
+            href={job.url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="p-1 rounded hover:bg-slate-100 dark:hover:bg-slate-700/60 text-slate-500 hover:text-[#405189] transition-colors"
+            title="Abrir URL original"
+          >
+            <ExternalLink className="w-3 h-3" />
+          </a>
+
+          {/* Toggle Soft-Hide */}
+          <button
+            onClick={() => handleToggleHide(job)}
+            className={`p-1 rounded transition-colors ${
+              job.status === 'hidden'
+                ? 'text-amber-600 bg-amber-50 hover:bg-amber-100 dark:bg-amber-950/40'
+                : 'text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-700/60 hover:text-amber-600'
+            }`}
+            title={job.status === 'hidden' ? 'Desocultar vaga' : 'Ocultar da busca (Soft-Hide)'}
+          >
+            {job.status === 'hidden' ? <EyeOff className="w-3 h-3" /> : <Eye className="w-3 h-3" />}
+          </button>
+
+          {/* Editar */}
+          <button
+            onClick={() => handleOpenEdit(job)}
+            className="p-1 rounded hover:bg-slate-100 dark:hover:bg-slate-700/60 text-slate-500 hover:text-[#405189] transition-colors"
+            title="Editar Vaga"
+          >
+            <Edit3 className="w-3 h-3" />
+          </button>
+
+          {/* Excluir */}
+          <button
+            onClick={() => setDeletingJob(job)}
+            className="p-1 rounded hover:bg-rose-50 dark:hover:bg-rose-950/40 text-slate-400 hover:text-rose-600 transition-colors"
+            title="Excluir Definitivamente"
+          >
+            <Trash2 className="w-3 h-3" />
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+
   return (
     <AdminLayout>
+      {/* Toast de Notificação de Disparo */}
+      {dispatchToast && (
+        <div
+          className={`fixed bottom-6 right-6 z-50 flex items-center gap-2 px-4 py-3 rounded-lg shadow-xl text-xs font-semibold transition-all ${
+            dispatchToast.type === 'success'
+              ? 'bg-emerald-600 text-white'
+              : 'bg-rose-600 text-white'
+          }`}
+        >
+          {dispatchToast.type === 'success' ? (
+            <CheckCircle2 className="w-4 h-4 shrink-0" />
+          ) : (
+            <AlertTriangle className="w-4 h-4 shrink-0" />
+          )}
+          <span>{dispatchToast.message}</span>
+        </div>
+      )}
+
       {/* Top Banner */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-[#e9ebec] dark:border-slate-800">
         <div>
@@ -251,11 +477,39 @@ export default function AdminVagasPage() {
             Gestão de Vagas Expostas & Expurgo
           </h1>
           <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 font-mono">
-            Controle de visibilidade pública, retificação de scraping e manutenção otimizada para VPS.
+            Controle de visibilidade pública, retificação de scraping, visualização Kanban e disparo para canais.
           </p>
         </div>
 
         <div className="flex items-center gap-2">
+          {/* Alternador de Visualização: Tabela vs. Kanban */}
+          <div className="flex items-center border border-[#e9ebec] dark:border-slate-700 rounded-lg p-0.5 bg-slate-100 dark:bg-slate-800">
+            <button
+              onClick={() => handleSwitchView('table')}
+              className={`flex items-center gap-1 px-2.5 py-1.5 rounded-md text-xs font-semibold transition-colors ${
+                viewMode === 'table'
+                  ? 'bg-white dark:bg-slate-700 text-[#405189] dark:text-indigo-300 shadow-2xs'
+                  : 'text-slate-500 hover:text-slate-700 dark:text-slate-400'
+              }`}
+              title="Visualização em Tabela"
+            >
+              <Table className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">Tabela</span>
+            </button>
+            <button
+              onClick={() => handleSwitchView('kanban')}
+              className={`flex items-center gap-1 px-2.5 py-1.5 rounded-md text-xs font-semibold transition-colors ${
+                viewMode === 'kanban'
+                  ? 'bg-white dark:bg-slate-700 text-[#405189] dark:text-indigo-300 shadow-2xs'
+                  : 'text-slate-500 hover:text-slate-700 dark:text-slate-400'
+              }`}
+              title="Visualização em Colunas Kanban"
+            >
+              <LayoutGrid className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">Kanban</span>
+            </button>
+          </div>
+
           <button
             onClick={() => setIsPurgeModalOpen(true)}
             className="flex items-center gap-1.5 px-3 py-2 text-xs font-semibold rounded-lg bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/40 dark:hover:bg-rose-900/50 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-800 transition-colors shadow-2xs"
@@ -397,138 +651,217 @@ export default function AdminVagasPage() {
           </div>
         </div>
 
-        {/* Tabela de Vagas */}
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs text-slate-700 dark:text-slate-300">
-            <thead className="bg-slate-50 dark:bg-slate-900/60 text-[11px] uppercase tracking-wider text-slate-500 dark:text-slate-400 font-mono border-b border-[#e9ebec] dark:border-slate-800">
-              <tr>
-                <th className="py-3 px-4">Vaga & Empresa</th>
-                <th className="py-3 px-4">Plataforma</th>
-                <th className="py-3 px-4">Modelo & Local</th>
-                <th className="py-3 px-4">Publicação</th>
-                <th className="py-3 px-4">Status</th>
-                <th className="py-3 px-4 text-right">Ações Operacionais</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-[#e9ebec] dark:divide-slate-800/80">
-              {loading ? (
+        {/* Visualização Alternada: Tabela vs. Kanban */}
+        {viewMode === 'table' ? (
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-xs text-slate-700 dark:text-slate-300">
+              <thead className="bg-slate-50 dark:bg-slate-900/60 text-[11px] uppercase tracking-wider text-slate-500 dark:text-slate-400 font-mono border-b border-[#e9ebec] dark:border-slate-800">
                 <tr>
-                  <td colSpan={6} className="py-12 text-center text-slate-400 font-mono">
-                    <RefreshCw className="w-5 h-5 animate-spin mx-auto mb-2 text-[#405189]" />
-                    Carregando catálogo de vagas...
-                  </td>
+                  <th className="py-3 px-4">Vaga & Empresa</th>
+                  <th className="py-3 px-4">Plataforma</th>
+                  <th className="py-3 px-4">Modelo & Local</th>
+                  <th className="py-3 px-4">Publicação</th>
+                  <th className="py-3 px-4">Status</th>
+                  <th className="py-3 px-4 text-right">Ações Operacionais</th>
                 </tr>
-              ) : jobs.length === 0 ? (
-                <tr>
-                  <td colSpan={6} className="py-12 text-center text-slate-400">
-                    <Briefcase className="w-8 h-8 mx-auto mb-2 text-slate-300 dark:text-slate-600" />
-                    Nenhuma vaga encontrada com os filtros selecionados.
-                  </td>
-                </tr>
-              ) : (
-                jobs.map((job) => (
-                  <tr
-                    key={job.id}
-                    className="hover:bg-slate-50/70 dark:hover:bg-slate-800/40 transition-colors"
-                  >
-                    <td className="py-3 px-4 max-w-sm">
-                      <div className="font-semibold text-slate-800 dark:text-slate-100 truncate" title={job.title}>
-                        {job.title}
-                      </div>
-                      <div className="text-[11px] text-slate-500 dark:text-slate-400 flex items-center gap-1 mt-0.5">
-                        <Building className="w-3 h-3 text-slate-400 shrink-0" />
-                        <span className="truncate">{job.company}</span>
-                        {job.required_seniority && (
-                          <span className="ml-1 px-1.5 py-0.2 rounded bg-slate-100 dark:bg-slate-800 text-[10px] font-mono">
-                            {job.required_seniority}
-                          </span>
-                        )}
-                      </div>
-                    </td>
-
-                    <td className="py-3 px-4 whitespace-nowrap">
-                      <span className="font-mono text-[11px] px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
-                        {job.platform}
-                      </span>
-                    </td>
-
-                    <td className="py-3 px-4 whitespace-nowrap">
-                      <div className="flex items-center gap-1 text-[11px]">
-                        <span className="capitalize font-medium text-slate-700 dark:text-slate-300">
-                          {job.work_model || 'Não especificado'}
-                        </span>
-                      </div>
-                      {job.location && (
-                        <div className="text-[10px] text-slate-400 flex items-center gap-1 mt-0.5">
-                          <MapPin className="w-2.5 h-2.5" />
-                          <span className="truncate max-w-[140px]">{job.location}</span>
-                        </div>
-                      )}
-                    </td>
-
-                    <td className="py-3 px-4 font-mono text-[11px] text-slate-500 whitespace-nowrap">
-                      {formatDate(job.published_at)}
-                    </td>
-
-                    <td className="py-3 px-4 whitespace-nowrap">
-                      {getStatusBadge(job.status)}
-                    </td>
-
-                    <td className="py-3 px-4 text-right whitespace-nowrap">
-                      <div className="inline-flex items-center gap-1">
-                        {/* Link externo */}
-                        <a
-                          href={job.url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="p-1.5 rounded hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 hover:text-[#405189] transition-colors"
-                          title="Abrir URL original"
-                        >
-                          <ExternalLink className="w-3.5 h-3.5" />
-                        </a>
-
-                        {/* Soft-Hide Toggle */}
-                        <button
-                          onClick={() => handleToggleHide(job)}
-                          className={`p-1.5 rounded transition-colors ${
-                            job.status === 'hidden'
-                              ? 'text-amber-600 bg-amber-50 hover:bg-amber-100 dark:bg-amber-950/40'
-                              : 'text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-amber-600'
-                          }`}
-                          title={job.status === 'hidden' ? 'Desocultar vaga' : 'Ocultar da busca pública (Soft-Hide)'}
-                        >
-                          {job.status === 'hidden' ? (
-                            <EyeOff className="w-3.5 h-3.5" />
-                          ) : (
-                            <Eye className="w-3.5 h-3.5" />
-                          )}
-                        </button>
-
-                        {/* Editar */}
-                        <button
-                          onClick={() => handleOpenEdit(job)}
-                          className="p-1.5 rounded hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 hover:text-[#405189] transition-colors"
-                          title="Editar Vaga"
-                        >
-                          <Edit3 className="w-3.5 h-3.5" />
-                        </button>
-
-                        {/* Excluir Definitivo */}
-                        <button
-                          onClick={() => setDeletingJob(job)}
-                          className="p-1.5 rounded hover:bg-rose-50 dark:hover:bg-rose-950/40 text-slate-400 hover:text-rose-600 transition-colors"
-                          title="Excluir Definitivamente"
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </button>
-                      </div>
+              </thead>
+              <tbody className="divide-y divide-[#e9ebec] dark:divide-slate-800/80">
+                {loading ? (
+                  <tr>
+                    <td colSpan={6} className="py-12 text-center text-slate-400 font-mono">
+                      <RefreshCw className="w-5 h-5 animate-spin mx-auto mb-2 text-[#405189]" />
+                      Carregando catálogo de vagas...
                     </td>
                   </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
+                ) : jobs.length === 0 ? (
+                  <tr>
+                    <td colSpan={6} className="py-12 text-center text-slate-400">
+                      <Briefcase className="w-8 h-8 mx-auto mb-2 text-slate-300 dark:text-slate-600" />
+                      Nenhuma vaga encontrada com os filtros selecionados.
+                    </td>
+                  </tr>
+                ) : (
+                  jobs.map((job) => (
+                    <tr
+                      key={job.id}
+                      className="hover:bg-slate-50/70 dark:hover:bg-slate-800/40 transition-colors"
+                    >
+                      <td className="py-3 px-4 max-w-sm">
+                        <div className="font-semibold text-slate-800 dark:text-slate-100 truncate" title={job.title}>
+                          {job.title}
+                        </div>
+                        <div className="text-[11px] text-slate-500 dark:text-slate-400 flex items-center gap-1 mt-0.5">
+                          <Building className="w-3 h-3 text-slate-400 shrink-0" />
+                          <span className="truncate">{job.company}</span>
+                          {job.required_seniority && (
+                            <span className="ml-1 px-1.5 py-0.2 rounded bg-slate-100 dark:bg-slate-800 text-[10px] font-mono">
+                              {job.required_seniority}
+                            </span>
+                          )}
+                        </div>
+                      </td>
+
+                      <td className="py-3 px-4 whitespace-nowrap">
+                        <span className="font-mono text-[11px] px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
+                          {job.platform}
+                        </span>
+                      </td>
+
+                      <td className="py-3 px-4 whitespace-nowrap">
+                        <div className="flex items-center gap-1 text-[11px]">
+                          <span className="capitalize font-medium text-slate-700 dark:text-slate-300">
+                            {job.work_model || 'Não especificado'}
+                          </span>
+                        </div>
+                        {job.location && (
+                          <div className="text-[10px] text-slate-400 flex items-center gap-1 mt-0.5">
+                            <MapPin className="w-2.5 h-2.5" />
+                            <span className="truncate max-w-[140px]">{job.location}</span>
+                          </div>
+                        )}
+                      </td>
+
+                      <td className="py-3 px-4 font-mono text-[11px] text-slate-500 whitespace-nowrap">
+                        {formatDate(job.published_at)}
+                      </td>
+
+                      <td className="py-3 px-4 whitespace-nowrap">
+                        {getStatusBadge(job.status)}
+                      </td>
+
+                      <td className="py-3 px-4 text-right whitespace-nowrap">
+                        <div className="inline-flex items-center gap-1">
+                          {/* Disparo Rápido para Canais */}
+                          <button
+                            onClick={() => handleOpenDispatch(job)}
+                            className="p-1.5 rounded hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 hover:text-indigo-600 transition-colors"
+                            title="Disparar vaga para canais (Telegram / WhatsApp)"
+                          >
+                            <Send className="w-3.5 h-3.5" />
+                          </button>
+
+                          {/* Link externo */}
+                          <a
+                            href={job.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="p-1.5 rounded hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 hover:text-[#405189] transition-colors"
+                            title="Abrir URL original"
+                          >
+                            <ExternalLink className="w-3.5 h-3.5" />
+                          </a>
+
+                          {/* Soft-Hide Toggle */}
+                          <button
+                            onClick={() => handleToggleHide(job)}
+                            className={`p-1.5 rounded transition-colors ${
+                              job.status === 'hidden'
+                                ? 'text-amber-600 bg-amber-50 hover:bg-amber-100 dark:bg-amber-950/40'
+                                : 'text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-amber-600'
+                            }`}
+                            title={job.status === 'hidden' ? 'Desocultar vaga' : 'Ocultar da busca pública (Soft-Hide)'}
+                          >
+                            {job.status === 'hidden' ? (
+                              <EyeOff className="w-3.5 h-3.5" />
+                            ) : (
+                              <Eye className="w-3.5 h-3.5" />
+                            )}
+                          </button>
+
+                          {/* Editar */}
+                          <button
+                            onClick={() => handleOpenEdit(job)}
+                            className="p-1.5 rounded hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 hover:text-[#405189] transition-colors"
+                            title="Editar Vaga"
+                          >
+                            <Edit3 className="w-3.5 h-3.5" />
+                          </button>
+
+                          {/* Excluir Definitivo */}
+                          <button
+                            onClick={() => setDeletingJob(job)}
+                            className="p-1.5 rounded hover:bg-rose-50 dark:hover:bg-rose-950/40 text-slate-400 hover:text-rose-600 transition-colors"
+                            title="Excluir Definitivamente"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          <div className="p-4 grid grid-cols-1 md:grid-cols-3 gap-4 bg-slate-50/50 dark:bg-slate-900/30 min-h-[450px]">
+            {/* Coluna 1: Ativas */}
+            <div className="flex flex-col rounded-lg bg-slate-100/70 dark:bg-slate-800/40 border border-[#e9ebec] dark:border-slate-800 p-3">
+              <div className="flex items-center justify-between pb-2 mb-3 border-b border-[#e9ebec] dark:border-slate-800">
+                <div className="flex items-center gap-2">
+                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                  <span className="text-xs font-bold text-slate-800 dark:text-slate-200">Vagas Ativas</span>
+                </div>
+                <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300">
+                  {jobs.filter((j) => j.status === 'active').length}
+                </span>
+              </div>
+              <div className="space-y-3 overflow-y-auto max-h-[600px] pr-1">
+                {jobs.filter((j) => j.status === 'active').length === 0 ? (
+                  <div className="py-8 text-center text-xs text-slate-400 font-mono">
+                    Nenhuma vaga ativa na página.
+                  </div>
+                ) : (
+                  jobs.filter((j) => j.status === 'active').map((job) => renderKanbanCard(job))
+                )}
+              </div>
+            </div>
+
+            {/* Coluna 2: Ocultas */}
+            <div className="flex flex-col rounded-lg bg-slate-100/70 dark:bg-slate-800/40 border border-[#e9ebec] dark:border-slate-800 p-3">
+              <div className="flex items-center justify-between pb-2 mb-3 border-b border-[#e9ebec] dark:border-slate-800">
+                <div className="flex items-center gap-2">
+                  <span className="w-2 h-2 rounded-full bg-amber-500" />
+                  <span className="text-xs font-bold text-slate-800 dark:text-slate-200">Ocultas (Soft-Hide)</span>
+                </div>
+                <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-amber-100 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300">
+                  {jobs.filter((j) => j.status === 'hidden').length}
+                </span>
+              </div>
+              <div className="space-y-3 overflow-y-auto max-h-[600px] pr-1">
+                {jobs.filter((j) => j.status === 'hidden').length === 0 ? (
+                  <div className="py-8 text-center text-xs text-slate-400 font-mono">
+                    Nenhuma vaga oculta na página.
+                  </div>
+                ) : (
+                  jobs.filter((j) => j.status === 'hidden').map((job) => renderKanbanCard(job))
+                )}
+              </div>
+            </div>
+
+            {/* Coluna 3: Expiradas */}
+            <div className="flex flex-col rounded-lg bg-slate-100/70 dark:bg-slate-800/40 border border-[#e9ebec] dark:border-slate-800 p-3">
+              <div className="flex items-center justify-between pb-2 mb-3 border-b border-[#e9ebec] dark:border-slate-800">
+                <div className="flex items-center gap-2">
+                  <span className="w-2 h-2 rounded-full bg-rose-500" />
+                  <span className="text-xs font-bold text-slate-800 dark:text-slate-200">Expiradas</span>
+                </div>
+                <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-rose-100 dark:bg-rose-950/60 text-rose-700 dark:text-rose-300">
+                  {jobs.filter((j) => j.status === 'expired').length}
+                </span>
+              </div>
+              <div className="space-y-3 overflow-y-auto max-h-[600px] pr-1">
+                {jobs.filter((j) => j.status === 'expired').length === 0 ? (
+                  <div className="py-8 text-center text-xs text-slate-400 font-mono">
+                    Nenhuma vaga expirada na página.
+                  </div>
+                ) : (
+                  jobs.filter((j) => j.status === 'expired').map((job) => renderKanbanCard(job))
+                )}
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Rodapé de Paginação */}
         <div className="p-4 border-t border-[#e9ebec] dark:border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-500">
@@ -780,6 +1113,132 @@ export default function AdminVagasPage() {
           <div className="p-3 rounded bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-xs">
             <div className="font-bold text-slate-800 dark:text-slate-100">{deletingJob.title}</div>
             <div className="text-slate-500 mt-1">{deletingJob.company} • {deletingJob.platform}</div>
+          </div>
+        )}
+      </VelzonModal>
+
+      {/* Modal de Disparo Rápido para Canais */}
+      <VelzonModal
+        isOpen={Boolean(dispatchJobTarget)}
+        onClose={() => !dispatching && setDispatchJobTarget(null)}
+        title="Disparar Vaga para Canais de Mensageria"
+        maxWidth="lg"
+        footer={
+          <div className="flex items-center justify-end gap-2 w-full">
+            <button
+              onClick={() => setDispatchJobTarget(null)}
+              disabled={dispatching}
+              className="px-3 py-1.5 text-xs font-semibold rounded-lg border border-[#e9ebec] dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 transition-colors"
+            >
+              Cancelar
+            </button>
+            <button
+              onClick={handleExecuteDispatch}
+              disabled={dispatching || !dispatchMessage.trim()}
+              className="flex items-center gap-1.5 px-4 py-1.5 text-xs font-semibold rounded-lg bg-[#405189] hover:bg-[#364473] text-white transition-colors disabled:opacity-60 shadow-xs"
+            >
+              {dispatching ? (
+                <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+              ) : (
+                <Send className="w-3.5 h-3.5" />
+              )}
+              <span>{dispatching ? 'Disparando...' : 'Confirmar e Disparar'}</span>
+            </button>
+          </div>
+        }
+      >
+        {dispatchJobTarget && (
+          <div className="space-y-4 text-xs">
+            {/* Card resumo da vaga */}
+            <div className="p-3 rounded-lg bg-slate-50 dark:bg-slate-800/60 border border-[#e9ebec] dark:border-slate-800 flex items-center justify-between gap-3">
+              <div>
+                <div className="font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
+                  <span>{dispatchJobTarget.title}</span>
+                  <span className="font-mono text-[10px] px-1.5 py-0.2 rounded bg-indigo-50 dark:bg-indigo-950/60 text-[#405189] dark:text-indigo-300 border border-indigo-200/50">
+                    {dispatchJobTarget.platform}
+                  </span>
+                </div>
+                <div className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+                  {dispatchJobTarget.company} • {dispatchJobTarget.location || 'Brasil'} • {dispatchJobTarget.work_model || 'Não especificado'}
+                </div>
+              </div>
+              {getStatusBadge(dispatchJobTarget.status)}
+            </div>
+
+            {/* Seletor de Canal */}
+            <div>
+              <VelzonLabel required>Canal de Comunicação</VelzonLabel>
+              <div className="grid grid-cols-2 gap-3 mt-1">
+                <button
+                  type="button"
+                  onClick={() => setDispatchChannel('telegram')}
+                  className={`p-2.5 rounded-lg border text-left flex items-center gap-2.5 transition-colors ${
+                    dispatchChannel === 'telegram'
+                      ? 'border-[#405189] bg-[#405189]/5 text-[#405189] dark:border-indigo-400 dark:text-indigo-300'
+                      : 'border-[#e9ebec] dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-400'
+                  }`}
+                >
+                  <Send className="w-4 h-4 shrink-0 text-blue-500" />
+                  <div>
+                    <div className="font-bold text-xs">Telegram</div>
+                    <div className="text-[10px] text-slate-400">Canal / Grupo Oficial</div>
+                  </div>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setDispatchChannel('whatsapp')}
+                  className={`p-2.5 rounded-lg border text-left flex items-center gap-2.5 transition-colors ${
+                    dispatchChannel === 'whatsapp'
+                      ? 'border-[#405189] bg-[#405189]/5 text-[#405189] dark:border-indigo-400 dark:text-indigo-300'
+                      : 'border-[#e9ebec] dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-400'
+                  }`}
+                >
+                  <MessageSquare className="w-4 h-4 shrink-0 text-emerald-500" />
+                  <div>
+                    <div className="font-bold text-xs">WhatsApp</div>
+                    <div className="text-[10px] text-slate-400">Meta Cloud API / Lista</div>
+                  </div>
+                </button>
+              </div>
+            </div>
+
+            {/* Destinatário customizado (opcional) */}
+            <div>
+              <VelzonLabel>Destinatário / Grupo (Opcional)</VelzonLabel>
+              <VelzonInput
+                placeholder={
+                  dispatchChannel === 'telegram'
+                    ? 'Ex: @canal_vagas_tech ou deixe em branco para canal padrão'
+                    : 'Ex: 5511999998888 ou deixe em branco para número padrão'
+                }
+                value={dispatchRecipient}
+                onChange={(e) => setDispatchRecipient(e.target.value)}
+              />
+              <p className="text-[10px] text-slate-400 mt-1">
+                Deixe em branco para utilizar as credenciais e destinos oficiais configurados nas variáveis de ambiente.
+              </p>
+            </div>
+
+            {/* Mensagem Formatada Oficial */}
+            <div>
+              <div className="flex items-center justify-between mb-1">
+                <VelzonLabel required>Prévia da Mensagem Oficial</VelzonLabel>
+                <button
+                  type="button"
+                  onClick={() => setDispatchMessage(generateOfficialTemplate(dispatchJobTarget))}
+                  className="text-[10px] text-[#405189] dark:text-indigo-400 hover:underline font-semibold"
+                >
+                  Restaurar Template
+                </button>
+              </div>
+              <VelzonTextarea
+                rows={9}
+                value={dispatchMessage}
+                onChange={(e) => setDispatchMessage(e.target.value)}
+                className="font-mono text-xs leading-relaxed"
+              />
+            </div>
           </div>
         )}
       </VelzonModal>
