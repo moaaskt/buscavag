@@ -6,6 +6,7 @@ import { VelzonCard } from '@/components/admin/ui/VelzonCard';
 import { VelzonBadge } from '@/components/admin/ui/VelzonBadge';
 import { VelzonStatWidget } from '@/components/admin/ui/VelzonStatWidget';
 import { VelzonModal } from '@/components/admin/ui/VelzonModal';
+import { VelzonInput, VelzonSelect, VelzonLabel } from '@/components/admin/ui';
 import {
   Briefcase,
   Search,
@@ -589,98 +590,77 @@ export default function AdminVagasPage() {
           </div>
         }
       >
-        <div className="space-y-3 text-xs">
+        <div className="space-y-3.5 text-xs">
           <div>
-            <label className="block font-medium text-slate-700 dark:text-slate-300 mb-1">
-              Título da Vaga
-            </label>
-            <input
+            <VelzonLabel required>Título da Vaga</VelzonLabel>
+            <VelzonInput
               type="text"
               value={editForm.title || ''}
               onChange={(e) => setEditForm((prev) => ({ ...prev, title: e.target.value }))}
-              className="w-full px-3 py-1.5 rounded border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100 focus:outline-none focus:border-[#405189]"
             />
           </div>
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block font-medium text-slate-700 dark:text-slate-300 mb-1">
-                Empresa
-              </label>
-              <input
+              <VelzonLabel required>Empresa</VelzonLabel>
+              <VelzonInput
                 type="text"
                 value={editForm.company || ''}
                 onChange={(e) => setEditForm((prev) => ({ ...prev, company: e.target.value }))}
-                className="w-full px-3 py-1.5 rounded border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100 focus:outline-none focus:border-[#405189]"
               />
             </div>
             <div>
-              <label className="block font-medium text-slate-700 dark:text-slate-300 mb-1">
-                Localização
-              </label>
-              <input
+              <VelzonLabel>Localização</VelzonLabel>
+              <VelzonInput
                 type="text"
                 value={editForm.location || ''}
                 onChange={(e) => setEditForm((prev) => ({ ...prev, location: e.target.value }))}
-                className="w-full px-3 py-1.5 rounded border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100 focus:outline-none focus:border-[#405189]"
               />
             </div>
           </div>
 
           <div className="grid grid-cols-3 gap-3">
             <div>
-              <label className="block font-medium text-slate-700 dark:text-slate-300 mb-1">
-                Modelo
-              </label>
-              <select
+              <VelzonLabel>Modelo</VelzonLabel>
+              <VelzonSelect
                 value={editForm.work_model || ''}
                 onChange={(e) => setEditForm((prev) => ({ ...prev, work_model: e.target.value }))}
-                className="w-full px-2.5 py-1.5 rounded border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100 focus:outline-none focus:border-[#405189]"
               >
                 <option value="">Não informado</option>
                 <option value="remoto">Remoto</option>
                 <option value="hibrido">Híbrido</option>
                 <option value="presencial">Presencial</option>
-              </select>
+              </VelzonSelect>
             </div>
             <div>
-              <label className="block font-medium text-slate-700 dark:text-slate-300 mb-1">
-                Senioridade
-              </label>
-              <input
+              <VelzonLabel>Senioridade</VelzonLabel>
+              <VelzonInput
                 type="text"
                 placeholder="Ex: Júnior, Pleno"
                 value={editForm.required_seniority || ''}
                 onChange={(e) => setEditForm((prev) => ({ ...prev, required_seniority: e.target.value }))}
-                className="w-full px-2.5 py-1.5 rounded border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100 focus:outline-none focus:border-[#405189]"
               />
             </div>
             <div>
-              <label className="block font-medium text-slate-700 dark:text-slate-300 mb-1">
-                Status
-              </label>
-              <select
+              <VelzonLabel>Status</VelzonLabel>
+              <VelzonSelect
                 value={editForm.status || 'active'}
                 onChange={(e) => setEditForm((prev) => ({ ...prev, status: e.target.value as any }))}
-                className="w-full px-2.5 py-1.5 rounded border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100 focus:outline-none focus:border-[#405189]"
               >
                 <option value="active">Ativa</option>
                 <option value="hidden">Oculta (Soft-Hide)</option>
                 <option value="expired">Expirada</option>
-              </select>
+              </VelzonSelect>
             </div>
           </div>
 
           <div>
-            <label className="block font-medium text-slate-700 dark:text-slate-300 mb-1">
-              Stack Tecnológica
-            </label>
-            <input
+            <VelzonLabel>Stack Tecnológica</VelzonLabel>
+            <VelzonInput
               type="text"
               placeholder="Ex: React, Node.js, TypeScript"
               value={editForm.tech_stack || ''}
               onChange={(e) => setEditForm((prev) => ({ ...prev, tech_stack: e.target.value }))}
-              className="w-full px-3 py-1.5 rounded border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100 focus:outline-none focus:border-[#405189]"
             />
           </div>
         </div>

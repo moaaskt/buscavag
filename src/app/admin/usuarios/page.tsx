@@ -6,6 +6,7 @@ import { VelzonCard } from '@/components/admin/ui/VelzonCard';
 import { VelzonBadge } from '@/components/admin/ui/VelzonBadge';
 import { VelzonStatWidget } from '@/components/admin/ui/VelzonStatWidget';
 import { VelzonModal } from '@/components/admin/ui/VelzonModal';
+import { VelzonInput, VelzonSelect, VelzonLabel } from '@/components/admin/ui';
 import {
   Users,
   Search,
@@ -316,9 +317,8 @@ export default function AdminUsuariosPage() {
         <div className="p-4 md:p-5 border-b border-[#e9ebec] dark:border-slate-800/80 bg-slate-50/50 dark:bg-slate-900/30">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
             {/* Busca Textual */}
-            <div className="lg:col-span-2 relative">
-              <Search className="w-4 h-4 absolute left-3 top-2.5 text-slate-400 pointer-events-none" />
-              <input
+            <div className="lg:col-span-2">
+              <VelzonInput
                 type="text"
                 placeholder="Buscar por nome ou e-mail..."
                 value={search}
@@ -326,56 +326,53 @@ export default function AdminUsuariosPage() {
                   setSearch(e.target.value);
                   setPage(1);
                 }}
-                className="w-full pl-9 pr-3 py-2 text-xs bg-white dark:bg-slate-900 border border-[#e9ebec] dark:border-slate-700 rounded-lg text-slate-800 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:border-[#405189]"
+                leftIcon={<Search className="w-4 h-4" />}
               />
             </div>
 
             {/* Filtro por Plano */}
             <div>
-              <select
+              <VelzonSelect
                 value={tier}
                 onChange={(e) => {
                   setTier(e.target.value);
                   setPage(1);
                 }}
-                className="w-full px-3 py-2 text-xs bg-white dark:bg-slate-900 border border-[#e9ebec] dark:border-slate-700 rounded-lg text-slate-800 dark:text-slate-100 focus:outline-none focus:border-[#405189]"
               >
                 <option value="all">Todos os Planos</option>
                 <option value="premium">Plano Pro (SaaS)</option>
                 <option value="free">Plano Free</option>
-              </select>
+              </VelzonSelect>
             </div>
 
             {/* Filtro por Status */}
             <div>
-              <select
+              <VelzonSelect
                 value={status}
                 onChange={(e) => {
                   setStatus(e.target.value);
                   setPage(1);
                 }}
-                className="w-full px-3 py-2 text-xs bg-white dark:bg-slate-900 border border-[#e9ebec] dark:border-slate-700 rounded-lg text-slate-800 dark:text-slate-100 focus:outline-none focus:border-[#405189]"
               >
                 <option value="all">Todos os Status</option>
                 <option value="active">Ativas</option>
                 <option value="suspended">Suspensas</option>
-              </select>
+              </VelzonSelect>
             </div>
 
             {/* Filtro por Papel */}
             <div>
-              <select
+              <VelzonSelect
                 value={role}
                 onChange={(e) => {
                   setRole(e.target.value);
                   setPage(1);
                 }}
-                className="w-full px-3 py-2 text-xs bg-white dark:bg-slate-900 border border-[#e9ebec] dark:border-slate-700 rounded-lg text-slate-800 dark:text-slate-100 focus:outline-none focus:border-[#405189]"
               >
                 <option value="all">Todos os Papéis</option>
                 <option value="CANDIDATE">Candidato</option>
                 <option value="ADMIN">Administrador</option>
-              </select>
+              </VelzonSelect>
             </div>
           </div>
         </div>
