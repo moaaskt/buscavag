@@ -6,6 +6,7 @@ import { usePathname } from 'next/navigation';
 import {
   LayoutDashboard,
   Briefcase,
+  Building2,
   ScrollText,
   Users,
   CreditCard,
@@ -35,6 +36,7 @@ export function AdminSidebar({ collapsed, onToggleCollapse }: AdminSidebarProps)
       group: 'Operações SaaS',
       items: [
         { name: 'Gestão de Vagas', href: '/admin/vagas', icon: Briefcase },
+        { name: 'Empresas B2B', href: '/admin/empresas', icon: Building2 },
         { name: 'Logs & Auditoria', href: '/admin/logs', icon: ScrollText },
         { name: 'Usuários & Acessos', href: '/admin/usuarios', icon: Users },
         { name: 'Financeiro', href: '/admin/pagamentos', icon: CreditCard },

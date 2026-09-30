@@ -243,6 +243,32 @@ export function initDatabase() {
 
     CREATE INDEX IF NOT EXISTS idx_webhooks_gateway ON payment_webhooks(gateway);
     CREATE INDEX IF NOT EXISTS idx_webhooks_created_at ON payment_webhooks(created_at DESC);
+
+    -- Phase 85: Módulo B2B & Gestão de Empresas
+    CREATE TABLE IF NOT EXISTS companies (
+      id TEXT PRIMARY KEY,
+      name TEXT NOT NULL,
+      slug TEXT UNIQUE NOT NULL,
+      logo_url TEXT,
+      website TEXT,
+      industry TEXT,
+      description TEXT,
+      recruiter_name TEXT,
+      recruiter_email TEXT,
+      recruiter_phone TEXT,
+      plan_tier TEXT DEFAULT 'free',
+      status TEXT DEFAULT 'active',
+      featured_job_limit INTEGER DEFAULT 0,
+      notes TEXT,
+      created_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_companies_name ON companies(name);
+    CREATE INDEX IF NOT EXISTS idx_companies_slug ON companies(slug);
+    CREATE INDEX IF NOT EXISTS idx_companies_status ON companies(status);
+    CREATE INDEX IF NOT EXISTS idx_companies_plan_tier ON companies(plan_tier);
+    CREATE INDEX IF NOT EXISTS idx_companies_created_at ON companies(created_at DESC);
   `);
 
   // Migração automática para bancos já existentes
