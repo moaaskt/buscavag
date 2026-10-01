@@ -90,9 +90,9 @@ export async function runPipeline(customLogger?: ScraperLogger, targetScraperNam
       const evalResult = await evaluator.evaluate(job);
       evaluatedCount++;
 
-      // REGRA DE INGESTÃO MULTI-TENANT (Fase 68):
-      // Descartar apenas se NÃO for vaga de tecnologia/software ou se for classificada como 'Other'
-      if (!evalResult.isTechSoftware || evalResult.category === 'Other') {
+      // REGRA DE INGESTÃO MULTI-TENANT (Fases 68 & 91):
+      // Descartar apenas se NÃO for vaga de tecnologia/software ou se for classificada como 'Other' ou 'Não-Tech'
+      if (!evalResult.isTechSoftware || evalResult.category === 'Other' || evalResult.category === 'Não-Tech') {
         discardedNonTechCount++;
         const msg = `[INGESTÃO DESCARTADA (NÃO-TECH)] "${job.title}" (${job.company}) - Categoria: ${evalResult.category} | ${evalResult.reasoning}`;
         console.log(`   ${msg}`);
