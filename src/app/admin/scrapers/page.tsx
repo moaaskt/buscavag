@@ -8,6 +8,7 @@ import { VelzonBadge } from '@/components/admin/ui/VelzonBadge';
 import { VelzonStatWidget } from '@/components/admin/ui/VelzonStatWidget';
 import { VelzonModal } from '@/components/admin/ui/VelzonModal';
 import { VelzonSelect } from '@/components/admin/ui/VelzonSelect';
+import { ScraperLiveTerminal } from '@/components/admin/scrapers/ScraperLiveTerminal';
 import {
   Cpu,
   RefreshCw,
@@ -553,6 +554,9 @@ export default function AdminScrapersPage() {
           </button>
         </VelzonCard>
       </div>
+
+      {/* Terminal de Logs SSE em Tempo Real */}
+      <ScraperLiveTerminal className="mt-8" />
 
       {/* Tabela de Monitoramento & Métricas de Conectores */}
       <div className="mt-8">
