@@ -9,12 +9,21 @@ import { ScraperLogger } from './services/scraperLogger.js';
 
 dotenv.config();
 
-export async function runPipeline(customLogger?: ScraperLogger) {
-  const logger = customLogger || new ScraperLogger('Pipeline');
-  logger.info(`Iniciando pipeline autônomo de monitoramento de vagas...`, { step: 'START' });
+export async function runPipeline(customLogger?: ScraperLogger, targetScraperName?: string) {
+  const target = targetScraperName || process.env.SCRAPER_TARGET || undefined;
+  const logger = customLogger || new ScraperLogger(target || 'Pipeline');
+  logger.info(
+    target
+      ? `Iniciando execução individual do conector "${target}"...`
+      : 'Iniciando pipeline autônomo de monitoramento de vagas...',
+    { step: 'START', data: { target: target || 'ALL' } }
+  );
 
   console.log(`\n======================================================`);
   console.log(`  BUSCAVAG - PIPELINE AUTÔNOMO DE MONITORAMENTO DE VAGAS`);
+  if (target) {
+    console.log(`  Alvo Selecionado: ${target}`);
+  }
   console.log(`  Executado em: ${new Date().toLocaleString('pt-BR')}`);
   console.log(`======================================================\n`);
 
@@ -23,10 +32,13 @@ export async function runPipeline(customLogger?: ScraperLogger) {
   const repo = new JobRepository();
   const evaluator = new HermesEvaluator();
 
-  // 1. Coleta de vagas de todas as fontes
-  console.log('[1/4] Coletando vagas dos conectores...');
-  logger.info('[1/4] Coletando vagas dos 24+ conectores...', { step: 'PROGRESS' });
-  const rawJobs = await orchestrator.runAll();
+  // 1. Coleta de vagas
+  console.log(target ? `[1/4] Coletando vagas do conector ${target}...` : '[1/4] Coletando vagas dos conectores...');
+  logger.info(
+    target ? `[1/4] Coletando vagas do conector ${target}...` : '[1/4] Coletando vagas dos 24+ conectores...',
+    { step: 'PROGRESS', data: { target: target || 'ALL' } }
+  );
+  const rawJobs = await orchestrator.runAll(target);
   console.log(`-> Total de vagas coletadas: ${rawJobs.length}`);
 
   // 2. Filtragem de duplicadas, limiar de data (5 dias) e filtros não-tech
@@ -164,8 +176,11 @@ export async function runPipeline(customLogger?: ScraperLogger) {
 // Execução direta quando rodado como script principal
 const isDirectRun = process.argv[1]?.includes('index');
 if (isDirectRun) {
+  const args = process.argv.slice(2);
+  const scraperArgIdx = args.indexOf('--scraper');
+  const cliTarget = scraperArgIdx !== -1 && args[scraperArgIdx + 1] ? args[scraperArgIdx + 1] : process.env.SCRAPER_TARGET;
   const notifier = new TelegramNotifier();
-  runPipeline().catch(async (err) => {
+  runPipeline(undefined, cliTarget).catch(async (err) => {
     console.error('[ERRO CRÍTICO NO PIPELINE]:', err);
     const errorMsg = (err as Error).message || String(err);
     await notifier.sendAlert(`🚨 [ERRO CRÍTICO] O pipeline principal falhou: ${errorMsg}`);
