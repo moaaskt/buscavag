@@ -269,6 +269,17 @@ export function initDatabase() {
     CREATE INDEX IF NOT EXISTS idx_companies_status ON companies(status);
     CREATE INDEX IF NOT EXISTS idx_companies_plan_tier ON companies(plan_tier);
     CREATE INDEX IF NOT EXISTS idx_companies_created_at ON companies(created_at DESC);
+
+    CREATE TABLE IF NOT EXISTS scraper_configs (
+      name TEXT PRIMARY KEY,
+      is_enabled INTEGER DEFAULT 1,
+      method TEXT NOT NULL,
+      target_url TEXT,
+      timeout_ms INTEGER DEFAULT 45000,
+      updated_at TEXT NOT NULL
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_scraper_configs_enabled ON scraper_configs(is_enabled);
   `);
 
   // Migração automática para bancos já existentes

@@ -15,6 +15,7 @@ import {
   ChevronLeft,
   ChevronRight,
   ExternalLink,
+  Cpu,
 } from 'lucide-react';
 
 interface AdminSidebarProps {
@@ -35,6 +36,7 @@ export function AdminSidebar({ collapsed, onToggleCollapse }: AdminSidebarProps)
     {
       group: 'Operações SaaS',
       items: [
+        { name: 'Central de Scrapers', href: '/admin/scrapers', icon: Cpu },
         { name: 'Gestão de Vagas', href: '/admin/vagas', icon: Briefcase },
         { name: 'Empresas B2B', href: '/admin/empresas', icon: Building2 },
         { name: 'Logs & Auditoria', href: '/admin/logs', icon: ScrollText },
