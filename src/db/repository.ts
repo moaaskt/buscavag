@@ -1,6 +1,7 @@
 import { db, initDatabase } from './index';
 import { ProcessedJob, RawJob } from '../types/job';
 import { generateJobHash } from '../utils/hash';
+import { generateJobFingerprint } from '../utils/fingerprint';
 import { EvaluationResult } from '../services/hermesEvaluator';
 import { TITLE_BLACKLIST } from '../config/jobFilters';
 
@@ -34,10 +35,17 @@ export class JobRepository {
     initDatabase();
   }
 
-  public exists(url: string, company: string, title: string, platform?: string): boolean {
+  public exists(
+    url: string,
+    company: string,
+    title: string,
+    platform?: string,
+    location?: string | null
+  ): boolean {
     const id = generateJobHash(url, company, title, platform);
-    const stmt = db.prepare('SELECT 1 FROM jobs WHERE id = ? OR url = ?');
-    const result = stmt.get(id, url);
+    const fingerprint = generateJobFingerprint(title, company, location);
+    const stmt = db.prepare('SELECT 1 FROM jobs WHERE id = ? OR url = ? OR fingerprint = ?');
+    const result = stmt.get(id, url, fingerprint);
     return !!result;
   }
 
@@ -95,6 +103,7 @@ export class JobRepository {
     }
 
     const applicationStatus = isJunior ? 'pending' : 'rejected';
+    const fingerprint = generateJobFingerprint(rawJob.title, rawJob.company, rawJob.location);
 
     const stmt = db.prepare(`
       INSERT INTO jobs (
@@ -102,8 +111,8 @@ export class JobRepository {
         is_junior_fullstack, score_ia, overall_score, stack_score, seniority_score,
         location_score, category, gaps, resume_tips, application_status, ai_reasoning, notified, created_at,
         extracted_role, contract_type, application_channel, salary, direct_contact,
-        required_seniority, tech_stack, work_model, is_tech_software
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        required_seniority, tech_stack, work_model, is_tech_software, fingerprint
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       ON CONFLICT(id) DO NOTHING
     `);
 
@@ -136,12 +145,14 @@ export class JobRepository {
       requiredSeniority,
       JSON.stringify(techStack),
       workModel,
-      isTechSoftware
+      isTechSoftware,
+      fingerprint
     );
 
     return {
       ...rawJob,
       id,
+      fingerprint,
       isJuniorFullStack: isJunior,
       scoreIa: overallScore,
       overallScore,
@@ -188,6 +199,13 @@ export class JobRepository {
   public getJobById(id: string): ProcessedJob | null {
     const stmt = db.prepare('SELECT * FROM jobs WHERE id = ?');
     const row = stmt.get(id) as any;
+    if (!row) return null;
+    return this.mapRowToJob(row);
+  }
+
+  public findByFingerprint(fingerprint: string): ProcessedJob | null {
+    const stmt = db.prepare('SELECT * FROM jobs WHERE fingerprint = ?');
+    const row = stmt.get(fingerprint) as any;
     if (!row) return null;
     return this.mapRowToJob(row);
   }
@@ -407,6 +425,7 @@ export class JobRepository {
       })(),
       workModel: row.work_model || undefined,
       isTechSoftware: Boolean(row.is_tech_software ?? 1),
+      fingerprint: row.fingerprint || undefined,
       status: row.status || 'active',
       notified: Boolean(row.notified),
       createdAt: new Date(row.created_at),
