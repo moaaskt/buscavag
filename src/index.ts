@@ -49,6 +49,7 @@ export async function runPipeline(customLogger?: ScraperLogger, targetScraperNam
   let approvedCount = 0;
   let blacklistFilteredCount = 0;
   let whitelistFilteredCount = 0;
+  let duplicateFilteredCount = 0;
   let discardedNonTechCount = 0;
 
   for (const job of rawJobs) {
@@ -82,46 +83,57 @@ export async function runPipeline(customLogger?: ScraperLogger, targetScraperNam
       continue;
     }
 
-    if (!repo.exists(job.url, job.company, job.title, job.platform)) {
-      newJobsCount++;
-
-      // 3. Avaliação semântica via Hermes Agent / IA
-      console.log(` -> Avaliando vaga: "${job.title}" | ${job.company}`);
-      const evalResult = await evaluator.evaluate(job);
-      evaluatedCount++;
-
-      // REGRA DE INGESTÃO MULTI-TENANT (Fase 68):
-      // Descartar apenas se NÃO for vaga de tecnologia/software ou se for classificada como 'Other'
-      if (!evalResult.isTechSoftware || evalResult.category === 'Other') {
-        discardedNonTechCount++;
-        const msg = `[INGESTÃO DESCARTADA (NÃO-TECH)] "${job.title}" (${job.company}) - Categoria: ${evalResult.category} | ${evalResult.reasoning}`;
-        console.log(`   ${msg}`);
-        logger.info(msg, {
-          step: 'PROGRESS',
-          data: { title: job.title, company: job.company, filter: 'non_tech', category: evalResult.category },
-        });
-        continue;
-      }
-
-      approvedCount++;
-      const topStacks = evalResult.techStack && evalResult.techStack.length > 0 ? evalResult.techStack.slice(0, 3).join(', ') : 'Gerais';
-      const msg = `[INGESTÃO APROVADA TECH] "${job.title}" (${job.company}) Nível: ${evalResult.requiredSeniority || 'Não especificado'} | Stacks: ${topStacks}`;
-      console.log(`   ${msg} [${evalResult.category}] | ${evalResult.reasoning}`);
+    // Filtro 3: Deduplicação Multi-Fonte via Fingerprint & URL
+    if (repo.exists(job.url, job.company, job.title, job.platform, job.location)) {
+      duplicateFilteredCount++;
+      const msg = `[DEDUPLICAÇÃO FINGERPRINT] Vaga já cadastrada via outra fonte ou URL: "${job.title}" (${job.company})`;
+      console.log(`   ${msg}`);
       logger.info(msg, {
         step: 'PROGRESS',
-        data: { title: job.title, company: job.company, seniority: evalResult.requiredSeniority || 'Não especificado', category: evalResult.category },
+        data: { title: job.title, company: job.company, filter: 'duplicate' },
       });
-
-      // Inserir no banco de dados com análise enriquecida neutra
-      repo.insert(job, evalResult);
+      continue;
     }
+
+    newJobsCount++;
+
+    // 3. Avaliação semântica via Hermes Agent / IA
+    console.log(` -> Avaliando vaga: "${job.title}" | ${job.company}`);
+    const evalResult = await evaluator.evaluate(job);
+    evaluatedCount++;
+
+    // REGRA DE INGESTÃO MULTI-TENANT (Fases 68 & 91):
+    // Descartar apenas se NÃO for vaga de tecnologia/software ou se for classificada como 'Other' ou 'Não-Tech'
+    if (!evalResult.isTechSoftware || evalResult.category === 'Other' || evalResult.category === 'Não-Tech') {
+      discardedNonTechCount++;
+      const msg = `[INGESTÃO DESCARTADA (NÃO-TECH)] "${job.title}" (${job.company}) - Categoria: ${evalResult.category} | ${evalResult.reasoning}`;
+      console.log(`   ${msg}`);
+      logger.info(msg, {
+        step: 'PROGRESS',
+        data: { title: job.title, company: job.company, filter: 'non_tech', category: evalResult.category },
+      });
+      continue;
+    }
+
+    approvedCount++;
+    const topStacks = evalResult.techStack && evalResult.techStack.length > 0 ? evalResult.techStack.slice(0, 3).join(', ') : 'Gerais';
+    const msg = `[INGESTÃO APROVADA TECH] "${job.title}" (${job.company}) Nível: ${evalResult.requiredSeniority || 'Não especificado'} | Stacks: ${topStacks}`;
+    console.log(`   ${msg} [${evalResult.category}] | ${evalResult.reasoning}`);
+    logger.info(msg, {
+      step: 'PROGRESS',
+      data: { title: job.title, company: job.company, seniority: evalResult.requiredSeniority || 'Não especificado', category: evalResult.category },
+    });
+
+    // Inserir no banco de dados com análise enriquecida neutra
+    repo.insert(job, evalResult);
   }
 
-  const statsMsg = `Estatísticas do ciclo: ${rawJobs.length} coletadas, ${blacklistFilteredCount + whitelistFilteredCount} pré-filtradas, ${evaluatedCount} avaliadas, ${discardedNonTechCount} descartadas por não-tech, ${approvedCount} aprovadas no DB.`;
+  const statsMsg = `Estatísticas do ciclo: ${rawJobs.length} coletadas, ${blacklistFilteredCount + whitelistFilteredCount} pré-filtradas, ${duplicateFilteredCount} duplicadas descartadas, ${evaluatedCount} avaliadas, ${discardedNonTechCount} descartadas por não-tech, ${approvedCount} aprovadas no DB.`;
   console.log(`\nEstatísticas do ciclo:`);
   console.log(`- Vagas totais coletadas: ${rawJobs.length}`);
   console.log(`- Descartadas por blacklist de cargo: ${blacklistFilteredCount}`);
   console.log(`- Descartadas por falta de termo tech: ${whitelistFilteredCount}`);
+  console.log(`- Descartadas por duplicidade (Fingerprint/URL): ${duplicateFilteredCount}`);
   console.log(`- Vagas novas avaliadas pela IA: ${evaluatedCount}`);
   console.log(`- Vagas descartadas por não serem de TI: ${discardedNonTechCount}`);
   console.log(`- Vagas técnicas armazenadas no banco: ${approvedCount}`);
@@ -131,6 +143,7 @@ export async function runPipeline(customLogger?: ScraperLogger, targetScraperNam
       totalCollected: rawJobs.length,
       blacklistFiltered: blacklistFilteredCount,
       whitelistFiltered: whitelistFilteredCount,
+      duplicateFiltered: duplicateFilteredCount,
       evaluated: evaluatedCount,
       discardedNonTech: discardedNonTechCount,
       approved: approvedCount,

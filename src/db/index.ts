@@ -56,7 +56,8 @@ export function initDatabase() {
       tech_stack TEXT,
       work_model TEXT,
       is_tech_software INTEGER DEFAULT 1,
-      status TEXT DEFAULT 'active'
+      status TEXT DEFAULT 'active',
+      fingerprint TEXT
     );
 
     CREATE TABLE IF NOT EXISTS scraper_logs (
@@ -304,6 +305,7 @@ export function initDatabase() {
       { name: 'work_model', type: 'TEXT' },
       { name: 'is_tech_software', type: 'INTEGER DEFAULT 1' },
       { name: 'status', type: "TEXT DEFAULT 'active'" },
+      { name: 'fingerprint', type: 'TEXT' },
     ];
 
     for (const col of jobColumnsToAdd) {
@@ -311,6 +313,8 @@ export function initDatabase() {
         db.exec(`ALTER TABLE jobs ADD COLUMN ${col.name} ${col.type};`);
       }
     }
+
+    db.exec('CREATE INDEX IF NOT EXISTS idx_jobs_fingerprint ON jobs(fingerprint);');
 
     // Garante que registros sem status sejam marcados como 'active'
     db.exec("UPDATE jobs SET status = 'active' WHERE status IS NULL;");
